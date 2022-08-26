@@ -1,15 +1,15 @@
 """Provides Flask integration for the external user interface."""
 
 from typing import Any, Callable
-from datetime import datetime, timedelta
+from datetime import timedelta
 from functools import wraps
-from pytz import timezone, UTC
 from flask import Blueprint, render_template, url_for, request, \
     make_response, redirect, current_app, send_file, Response
 
 from arxiv import status
-from arxiv_auth import domain
 from arxiv.base import logging
+
+from arxiv_auth.auth.decorators import scoped
 
 from ..controllers import captcha_image, registration, authentication
 
@@ -153,7 +153,16 @@ def captcha() -> Response:
     return send_file(data['image'], mimetype=data['mimetype']), code, headers
 
 
-@blueprint.route('/auth_status', methods=['GET'])
+@blueprint.route('/auth_status')
 def auth_status() -> Response:
     """Get if the app is running."""
     return make_response("OK")
+
+
+@blueprint.route('/protected')
+@scoped()
+def an_example() -> Response:
+    """Example of a protected page.
+
+    see arxiv_auth.auth.decorators in arxiv-auth for more details."""
+    return make_response("This is an example of a protected page.")
