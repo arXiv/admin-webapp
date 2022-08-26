@@ -12,6 +12,7 @@ from arxiv_auth import domain
 from arxiv.base import logging
 
 #from .controllers import captcha_image, registration, authentication
+from ..controllers import authentication
 
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ def anonymous_only(func: Callable) -> Callable:
     """Redirect logged-in users to their profile."""
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        if request.auth:
+        if hasattr(request, 'auth') and request.auth:
             next_page = request.args.get('next_page',
                                          current_app.config['DEFAULT_LOGIN_REDIRECT_URL'])
             return make_response(redirect(next_page, code=status.HTTP_303_SEE_OTHER))
@@ -57,14 +58,14 @@ def set_cookies(response: Response, data: dict) -> None:
 
 
 
-# @blueprint.after_request
-# def apply_response_headers(response: Response) -> Response:
-#     """Apply response headers to all responses."""
-#     """Prevent UI redress attacks."""
-#     response.headers['Content-Security-Policy'] = "frame-ancestors 'none'"
-#     response.headers['X-Frame-Options'] = 'DENY'
+@blueprint.after_request
+def apply_response_headers(response: Response) -> Response:
+    """Apply response headers to all responses."""
+    """Prevent UI redress attacks."""
+    response.headers['Content-Security-Policy'] = "frame-ancestors 'none'"
+    response.headers['X-Frame-Options'] = 'DENY'
 
-#     return response
+    return response
 
 # # @blueprint.route('/register', methods=['GET', 'POST'])
 # @anonymous_only
@@ -88,34 +89,34 @@ def set_cookies(response: Response, data: dict) -> None:
 #     return response
 
 
-# @blueprint.route('/login', methods=['GET', 'POST'])
-# @anonymous_only
-# def login() -> Response:
-#     """User can log in with username and password, or permanent token."""
-#     ip_address = request.remote_addr
-#     form_data = request.form
-#     default_next_page = current_app.config['DEFAULT_LOGIN_REDIRECT_URL']
-#     next_page = request.args.get('next_page', default_next_page)
-#     logger.debug('Request to log in, then redirect to %s', next_page)
-#     data, code, headers = authentication.login(request.method,
-#                                                form_data, ip_address,
-#                                                next_page)
-#     data.update({'pagetitle': 'Log in to arXiv'})
-#     # Flask puts cookie-setting methods on the response, so we do that here
-#     # instead of in the controller.
-#     if code is status.HTTP_303_SEE_OTHER:
-#         # Set the session cookie.
-#         response = make_response(redirect(headers.get('Location'), code=code))
-#         set_cookies(response, data)
-#         unset_submission_cookie(response)    # Fix for ARXIVNG-1149.
-#         return response
+@blueprint.route('/login', methods=['GET', 'POST'])
+@anonymous_only
+def login() -> Response:
+    """User can log in with username and password, or permanent token."""
+    ip_address = request.remote_addr
+    form_data = request.form
+    default_next_page = current_app.config['DEFAULT_LOGIN_REDIRECT_URL']
+    next_page = request.args.get('next_page', default_next_page)
+    logger.debug('Request to log in, then redirect to %s', next_page)
+    data, code, headers = authentication.login(request.method,
+                                               form_data, ip_address,
+                                               next_page)
+    data.update({'pagetitle': 'Log in to arXiv'})
+    # Flask puts cookie-setting methods on the response, so we do that here
+    # instead of in the controller.
+    if code is status.HTTP_303_SEE_OTHER:
+        # Set the session cookie.
+        response = make_response(redirect(headers.get('Location'), code=code))
+        set_cookies(response, data)
+        unset_submission_cookie(response)    # Fix for ARXIVNG-1149.
+        return response
 
-#     # Form is invalid, or login failed.
-#     response = Response(
-#         render_template("accounts/login.html", **data),
-#         status=code
-#     )
-#     return response
+    # Form is invalid, or login failed.
+    response = Response(
+        render_template("login.html", **data),
+        status=code
+    )
+    return response
 
 
 # @blueprint.route('/logout', methods=['GET'])

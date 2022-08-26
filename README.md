@@ -9,22 +9,24 @@ pip install poetry
 poetry install  # installs to a venv
 poetry shell    # activates the venv
 pytest 
-CLASSIC_DATABASE_URI=sqlite:///my.db FLASK_APP=accounts/app.py FLASK_DEBUG=1 flask run
+REDIS_FAKE=True FLASK_DEBUG=True FLASK_APP=admin_webapp.app.py \
+ CLASSIC_DATABASE_URI=sqlite:///my.db FLASK_APP=accounts/app.py \
+ flask run
 ```
 
 To use MySQL/MariaDB:
 
 ```bash
 poetry shell
-CLASSIC_DATABASE_URI=mysql+mysqldb://[USERNAME]:[PASSWORD]@localhost:3306/[DATABASE] \
- FLASK_APP=app.py FLASK_DEBUG=1 flask run
+REDIS_FAKE=True FLASK_DEBUG=True FLASK_APP=admin_webapp.app.py \
+ CLASSIC_DATABASE_URI=mysql+mysqldb://[USERNAME]:[PASSWORD]@localhost:3306/[DATABASE] \
+ flask run
 ```
 Set the username, password, and database to whatever you're using. If
 the DB structure does not already exist, you will need to be able to
 create tables. Conventional read/write access should be sufficient.
 
-You should be able to register a new user at
-http://localhost:5000/register.
+You should be able to go to a page LIKE http://localhost:5000/login 
 
 
 # Code style

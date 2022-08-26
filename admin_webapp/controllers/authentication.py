@@ -1,5 +1,5 @@
 """
-Controllers for arXiv accounts application.
+Controllers for arXiv admin_webapp application.
 
 When a user logs in via the accounts service, they are issued a session key
 that is stored as a cookie in their browser. That session ID is registered in
@@ -33,7 +33,7 @@ from arxiv_auth.legacy import exceptions, sessions as legacy_sessions
 from arxiv_auth.legacy.authenticate import authenticate
 from arxiv_auth.legacy.util import transaction
 
-from accounts import config
+from admin_webapp import config
 
 logger = logging.getLogger(__name__)
 
