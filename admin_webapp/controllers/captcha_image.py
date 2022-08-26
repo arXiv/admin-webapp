@@ -5,7 +5,8 @@ from werkzeug.datastructures import MultiDict
 from werkzeug.exceptions import BadRequest
 from arxiv_auth import domain
 from arxiv import status
-from accounts import stateless_captcha
+
+from .. import stateless_captcha
 
 ResponseData = Tuple[dict, int, dict]
 
