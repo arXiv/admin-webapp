@@ -1,0 +1,16 @@
+[run]
+omit =
+    mock_vault.py
+    */app.py
+    */wsgi.py
+    */config.py
+    docs/*
+    */tests*
+    */controllers/captcha_image.py
+    */controllers/registration.py
+    */stateless_captcha/*
+    */controllers/util.py
+    generate_token.py
+    registry/create_client.py
+    registry/create_db.py
+    accounts/create_user.py
