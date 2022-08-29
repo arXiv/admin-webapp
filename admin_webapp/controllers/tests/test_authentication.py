@@ -1,4 +1,4 @@
-"""Tests for mod:`accounts.controllers`."""
+"""Tests for mod:`admin_webapp.controllers`."""
 
 from unittest import TestCase, mock
 from datetime import datetime
@@ -17,8 +17,8 @@ from arxiv import status
 from arxiv_auth import domain
 from arxiv_auth.legacy import exceptions, util, models
 
-from accounts.factory import create_web_app
-from accounts.controllers.authentication import login, logout, LoginForm
+from ...factory import create_web_app
+from ...controllers.authentication import login, logout, LoginForm
 
 
 EASTERN = timezone('US/Eastern')
@@ -106,8 +106,8 @@ class TestAuthenticationController(TestCase):
                 session.add(db_nick)
                 session.add(db_demo)
 
-    @mock.patch('accounts.controllers.authentication.SessionStore')
-    @mock.patch('accounts.controllers.authentication.legacy_sessions')
+    @mock.patch('admin_webapp.controllers.authentication.SessionStore')
+    @mock.patch('admin_webapp.controllers.authentication.legacy_sessions')
     def test_logout(self, mock_legacy_ses, mock_SessionStore):
         """A logged-in user requests to log out."""
         mock_legacy_ses.invalidate_session.return_value = None
@@ -123,8 +123,8 @@ class TestAuthenticationController(TestCase):
         self.assertEqual(header['Location'], next_page,
                          "Redirects user to next page.")
 
-    @mock.patch('accounts.controllers.authentication.SessionStore')
-    @mock.patch('accounts.controllers.authentication.legacy_sessions')
+    @mock.patch('admin_webapp.controllers.authentication.SessionStore')
+    @mock.patch('admin_webapp.controllers.authentication.legacy_sessions')
     def test_logout_anonymous(self, mock_legacy_ses, mock_SessionStore):
         """An anonymous user requests to log out."""
         mock_legacy_ses.invalidate_session.return_value = None
@@ -138,7 +138,7 @@ class TestAuthenticationController(TestCase):
         self.assertEqual(header['Location'], next_page,
                          "Redirects user to next page.")
 
-    @mock.patch('accounts.controllers.authentication.SessionStore')
+    @mock.patch('admin_webapp.controllers.authentication.SessionStore')
     def test_login(self, mock_SessionStore):
         """User requests the login page."""
         with self.app.app_context():
@@ -149,7 +149,7 @@ class TestAuthenticationController(TestCase):
         self.assertEqual(status_code, status.HTTP_200_OK)
 
 
-    @mock.patch('accounts.controllers.authentication.SessionStore')
+    @mock.patch('admin_webapp.controllers.authentication.SessionStore')
     def test_post_invalid_data(self, mock_SessionStore):
         """User submits invalid data."""
         form_data = MultiDict({'username': 'foouser'})     # Missing password.
@@ -165,7 +165,7 @@ class TestAuthenticationController(TestCase):
         self.assertEqual(status_code, status.HTTP_400_BAD_REQUEST,
                          "Response status is 400 bad request")
 
-    @mock.patch('accounts.controllers.authentication.authenticate')
+    @mock.patch('admin_webapp.controllers.authentication.authenticate')
     def test_post_valid_data_bad_credentials(self, mock_authenticate):
         """Form data are valid but don't check out."""
         mock_authenticate.side_effect = raise_authentication_failed
@@ -180,9 +180,9 @@ class TestAuthenticationController(TestCase):
         self.assertIsInstance(data['form'], LoginForm,
                               "Response includes a login form.")
 
-    @mock.patch('accounts.controllers.authentication.legacy_sessions')
-    @mock.patch('accounts.controllers.authentication.SessionStore')
-    @mock.patch('accounts.controllers.authentication.authenticate')
+    @mock.patch('admin_webapp.controllers.authentication.legacy_sessions')
+    @mock.patch('admin_webapp.controllers.authentication.SessionStore')
+    @mock.patch('admin_webapp.controllers.authentication.authenticate')
     def test_post_great(self, mock_authenticate, mock_SessionStore, mock_session):
         """Form data are valid and check out."""
         form_data = MultiDict({'username': 'foouser', 'password': 'bazpass'})
@@ -235,9 +235,9 @@ class TestAuthenticationController(TestCase):
         self.assertEqual(data['cookies']['classic_cookie'], (c_cookie, None),
                          "Classic session cookie is returned")
 
-    @mock.patch('accounts.controllers.authentication.SessionStore')
-    @mock.patch('accounts.controllers.authentication.legacy_sessions')
-    @mock.patch('accounts.controllers.authentication.authenticate')
+    @mock.patch('admin_webapp.controllers.authentication.SessionStore')
+    @mock.patch('admin_webapp.controllers.authentication.legacy_sessions')
+    @mock.patch('admin_webapp.controllers.authentication.authenticate')
     def test_post_not_verified(self, mock_authenticate, mock_legacy_sess, mock_SessionStore):
         """Form data are valid and check out."""
         form_data = MultiDict({'username': 'foouser', 'password': 'bazpass'})
@@ -284,7 +284,7 @@ class TestAuthenticationController(TestCase):
                          "Bad request error is returned")
 
 
-    @mock.patch('accounts.controllers.authentication.authenticate')
+    @mock.patch('admin_webapp.controllers.authentication.authenticate')
     def testpost_db_unaval(self, mock_authenticate):
         """POST but DB is unavailable.
 

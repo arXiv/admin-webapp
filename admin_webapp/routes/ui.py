@@ -1,7 +1,7 @@
 """Provides Flask integration for the external user interface."""
 
 from typing import Any, Callable
-from datetime import timedelta
+from datetime import timedelta, datetime
 from functools import wraps
 from flask import Blueprint, render_template, url_for, request, \
     make_response, redirect, current_app, send_file, Response
@@ -54,6 +54,39 @@ def set_cookies(response: Response, data: dict) -> None:
             params.update({'secure': True, 'samesite': 'lax'})
         response.set_cookie(cookie_name, cookie_value, max_age=max_age,
                             **params)
+
+
+# This is unlikely to be useful once the classic submission UI is disabled.
+def unset_submission_cookie(response: Response) -> None:
+    """
+    Unset the legacy Catalyst submission cookie.
+
+    In addition to the authenticated session (which was originally from the
+    Tapir auth system), Catalyst also tracks a session used specifically for
+    the submission process. The legacy Catalyst controller sets this
+    automatically, so we don't need to do anything on login. But on logout,
+    if this cookie is not cleared, Catalyst may attempt to use the same
+    submission session upon subsequent logins. This can lead to weird
+    inconsistencies.
+    """
+    response.set_cookie('submit_session', '', max_age=0, httponly=True)
+
+
+def unset_permanent_cookie(response: Response) -> None:
+    """
+    Users who elect a permanent cookie expect it to be unset when they log out.
+
+    If it is not unset, legacy components will attempt to log them back in.
+    """
+    permanent_cookie_name = current_app.config['CLASSIC_PERMANENT_COOKIE_NAME']
+    domain = current_app.config['AUTH_SESSION_COOKIE_DOMAIN']
+    now = datetime.utcnow()
+    response.set_cookie(permanent_cookie_name, '', max_age=0, expires=now,
+                        httponly=True)
+    response.set_cookie(permanent_cookie_name, '', max_age=0, expires=now,
+                        httponly=True, domain=domain)
+    response.set_cookie(permanent_cookie_name, '', max_age=0, expires=now,
+                        httponly=True, domain=domain.lstrip('.'))
 
 
 

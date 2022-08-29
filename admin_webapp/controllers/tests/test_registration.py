@@ -1,4 +1,4 @@
-"""Tests for :mod:`accounts.controllers.registration`."""
+"""Tests for :mod:`admin_webapp.controllers.registration`."""
 
 from unittest import TestCase, mock
 import hashlib
@@ -13,7 +13,7 @@ from arxiv import status
 
 from arxiv_auth.legacy import util, models
 
-from accounts.factory import create_web_app
+from ...factory import create_web_app
 
 from ..registration import register, edit_profile, view_profile
 from ...stateless_captcha import InvalidCaptchaValue, InvalidCaptchaToken
@@ -114,8 +114,8 @@ class TestRegister(TestCase):
         self.assertEqual(code, status.HTTP_400_BAD_REQUEST,
                          "Returns 400 response")
 
-    @mock.patch('accounts.controllers.registration.accounts')
-    @mock.patch('accounts.controllers.registration.stateless_captcha.check')
+    @mock.patch('admin_webapp.controllers.registration.accounts')
+    @mock.patch('admin_webapp.controllers.registration.stateless_captcha.check')
     def test_post_minimum(self, captcha, users):
         """POST request with minimum required data."""
         captcha.return_value = None     # No exception -> OK.
@@ -164,7 +164,7 @@ class TestRegister(TestCase):
                          'astro-ph')
         self.assertEqual(user.profile.default_category.subject, 'CO')
 
-    @mock.patch('accounts.controllers.registration.accounts')
+    @mock.patch('admin_webapp.controllers.registration.accounts')
     def test_missing_data(self, users):
         """POST request missing a required field."""
         users.does_username_exist.return_value = False
@@ -193,7 +193,7 @@ class TestRegister(TestCase):
             self.assertEqual(code, status.HTTP_400_BAD_REQUEST,
                              "Returns 400 response")
 
-    @mock.patch('accounts.controllers.registration.accounts')
+    @mock.patch('admin_webapp.controllers.registration.accounts')
     def test_password_mismatch(self, users):
         """POST with all required data, but passwords don't match."""
         users.does_username_exist.return_value = False
@@ -218,8 +218,8 @@ class TestRegister(TestCase):
         self.assertEqual(code, status.HTTP_400_BAD_REQUEST,
                          "Returns 400 response")
 
-    @mock.patch('accounts.controllers.registration.accounts')
-    @mock.patch('accounts.controllers.registration.stateless_captcha.check')
+    @mock.patch('admin_webapp.controllers.registration.accounts')
+    @mock.patch('admin_webapp.controllers.registration.stateless_captcha.check')
     def test_existing_username(self, captcha, users):
         """POST valid data, but username already exists."""
         captcha.return_value = None     # No exception -> OK.
@@ -248,8 +248,8 @@ class TestRegister(TestCase):
         self.assertEqual(code, status.HTTP_400_BAD_REQUEST,
                          "Returns 400 response")
 
-    @mock.patch('accounts.controllers.registration.accounts')
-    @mock.patch('accounts.controllers.registration.stateless_captcha.check')
+    @mock.patch('admin_webapp.controllers.registration.accounts')
+    @mock.patch('admin_webapp.controllers.registration.stateless_captcha.check')
     @unittest.skip("not in use and not ready to use")
     def test_existing_email(self, captcha, users):
         """POST valid data, but email already exists."""
@@ -278,8 +278,8 @@ class TestRegister(TestCase):
             self.assertEqual(code, status.HTTP_400_BAD_REQUEST,
                              "Returns 400 response")
 
-    @mock.patch('accounts.controllers.registration.accounts')
-    @mock.patch('accounts.controllers.registration.stateless_captcha.check')
+    @mock.patch('admin_webapp.controllers.registration.accounts')
+    @mock.patch('admin_webapp.controllers.registration.stateless_captcha.check')
     @unittest.skip("not in use and not ready to use")
     def test_captcha_mismatch(self, captcha, users):
         """POST valid data, but captcha value is incorrect."""
@@ -312,8 +312,8 @@ class TestRegister(TestCase):
         self.assertEqual(code, status.HTTP_400_BAD_REQUEST,
                          "Returns 400 response")
 
-    @mock.patch('accounts.controllers.registration.accounts')
-    @mock.patch('accounts.controllers.registration.stateless_captcha.check')
+    @mock.patch('admin_webapp.controllers.registration.accounts')
+    @mock.patch('admin_webapp.controllers.registration.stateless_captcha.check')
     def test_captcha_expired(self, captcha, users):
         """POST valid data, but captcha token has expired."""
         def raise_invalid_token(*args, **kwargs):
@@ -357,8 +357,8 @@ class TestRegister(TestCase):
         self.assertEqual(code, status.HTTP_400_BAD_REQUEST,
                          "Returns 400 response")
 
-    @mock.patch('accounts.controllers.registration.sessions.invalidate_by_id')
-    @mock.patch('accounts.controllers.registration.accounts')
+    @mock.patch('admin_webapp.controllers.registration.sessions.invalidate_by_id')
+    @mock.patch('admin_webapp.controllers.registration.accounts')
     @unittest.skip("not in use and not ready to use")
     def test_post_minimum(self, users, create, invalidate):
         """POST request with minimum required data."""
@@ -406,7 +406,7 @@ class TestRegister(TestCase):
                          'astro-ph')
         self.assertEqual(user.profile.default_category.subject, 'CO')
 
-    @mock.patch('accounts.controllers.registration.accounts')
+    @mock.patch('admin_webapp.controllers.registration.accounts')
     @unittest.skip("not in use and not ready to use")
     def test_missing_data(self, users):
         """POST request missing a required field."""
@@ -434,7 +434,7 @@ class TestRegister(TestCase):
             self.assertEqual(code, status.HTTP_400_BAD_REQUEST,
                              "Returns 400 response")
 
-    @mock.patch('accounts.controllers.registration.accounts')
+    @mock.patch('admin_webapp.controllers.registration.accounts')
     @unittest.skip("not in use and not ready to use")
     def test_existing_username(self, users):
         """POST valid data, but username already exists."""
@@ -463,7 +463,7 @@ class TestRegister(TestCase):
         self.assertEqual(code, status.HTTP_400_BAD_REQUEST,
                          "Returns 400 response")
 
-    @mock.patch('accounts.controllers.registration.accounts')
+    @mock.patch('admin_webapp.controllers.registration.accounts')
     @unittest.skip("not in use and not ready to use")
     def test_existing_email(self, users):
         """POST valid data, but email already exists."""

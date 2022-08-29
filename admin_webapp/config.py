@@ -96,3 +96,5 @@ FLASKS3_USE_HTTPS = os.environ.get('FLASKS3_USE_HTTPS', 1)
 FLASKS3_FORCE_MIMETYPE = os.environ.get('FLASKS3_FORCE_MIMETYPE', 1)
 FLASKS3_ACTIVE = os.environ.get('FLASKS3_ACTIVE', 0)
 """Flask-S3 plugin settings."""
+
+AUTH_UPDATED_SESSION_REF = True # see ARXIVNG-1920
