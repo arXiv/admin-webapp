@@ -46,6 +46,7 @@ def create_web_app() -> Flask:
 
     if app.config['CREATE_DB']:
         with app.app_context():
+            print("About to create the legacy DB")
             legacy_create_all()
 
     return app
