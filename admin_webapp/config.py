@@ -98,3 +98,19 @@ FLASKS3_ACTIVE = os.environ.get('FLASKS3_ACTIVE', 0)
 """Flask-S3 plugin settings."""
 
 AUTH_UPDATED_SESSION_REF = True # see ARXIVNG-1920
+
+LOCALHOST_DEV = os.environ.get('LOCALHOST_DEV', False)
+"""Enables a set of config vars that facilites development on localhost"""
+
+if LOCALHOST_DEV:
+    REDIS_FAKE=True
+    FLASK_DEBUG=True
+    DEBUG=True
+    CLASSIC_DATABASE_URI='sqlite:///../locahost_dev.db'
+    SQLALCHEMY_DATABASE_URI = CLASSIC_DATABASE_URI
+    DEFAULT_LOGIN_REDIRECT_URL='/protected'
+    AUTH_SESSION_COOKIE_DOMAIN='localhost.arxiv.org'
+    AUTH_SESSION_COOKIE_SECURE=0
+
+if not SQLALCHEMY_DATABASE_URI:
+    raise ValueError("SQLALCHEMY_DATABASE_URI is not set!")

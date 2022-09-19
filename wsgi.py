@@ -1,6 +1,6 @@
 """Web Server Gateway Interface entry-point."""
 
-from accounts.factory import create_web_app
+from admin_webapp.factory import create_web_app
 import os
 
 __flask_app__ = None

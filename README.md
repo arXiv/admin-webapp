@@ -8,12 +8,13 @@ cd admin-webapp
 pip install poetry
 poetry install  # installs to a venv
 poetry shell    # activates the venv
-REDIS_FAKE=True FLASK_DEBUG=True FLASK_APP=admin_webapp.app.py \
- CREATE_DB=1 \
- CLASSIC_DATABASE_URI=sqlite:///../dev-admin-webapp.db \
+LOCALHOST_DEV=1 \
+ python create_user.py  # fill out a test user
+LOCALHOST_DEV=1 \
  FLASK_APP=admin_webapp/app.py \
  flask run
 ```
+Then go to http://localhost.arxiv.org:5000/login and log in with the user and pw you just created.
 
 To use with MySQL:
 

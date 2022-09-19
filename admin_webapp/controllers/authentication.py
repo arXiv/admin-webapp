@@ -88,6 +88,7 @@ def login(method: str, form_data: MultiDict, ip: str,
 
     try:    # Attempt to authenticate the user with the credentials provided.
         user, auths = _do_authn(form.username.data, form.password.data)
+        logger.debug("authentication succeeded")
     except exceptions.AuthenticationFailed as ex:
         logger.debug('Authentication failed for %s: %s', form.username.data, ex)
         data.update({'error': 'Invalid username or password.'})
@@ -113,14 +114,12 @@ def login(method: str, form_data: MultiDict, ip: str,
         cookie = sessions.generate_cookie(session)
         logger.debug('Created session: %s', session.session_id)
     except sessions.exceptions.SessionCreationFailed as e:
-        logger.debug('Could not create session: %s', e)
         logger.info('Could not create session: %s', e)
         raise InternalServerError('Cannot log in') from e  # type: ignore
 
     try:    # Create a session in the legacy session store.
         c_session, c_cookie = _do_login(auths, ip, track, user)
     except exceptions.SessionCreationFailed as e:
-        logger.debug('Could not create legacy session: %s', e)
         logger.info('Could not create legacy session: %s', e)
         raise InternalServerError('Cannot log in') from e  # type: ignore
 

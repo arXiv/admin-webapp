@@ -46,8 +46,9 @@ def set_cookies(response: Response, data: dict) -> None:
         max_age = timedelta(seconds=expires)
         logger.debug('Set cookie %s with %s, max_age %s',
                      cookie_name, cookie_value, max_age)
-        domain = current_app.config['AUTH_SESSION_COOKIE_DOMAIN']
-        params = dict(httponly=True, domain=domain)
+        params = dict(httponly=True,
+                      domain= current_app.config['AUTH_SESSION_COOKIE_DOMAIN'])
+
         if current_app.config['AUTH_SESSION_COOKIE_SECURE']:
             # Setting samesite to lax, to allow reasonable links to
             # authenticated views using GET requests.
