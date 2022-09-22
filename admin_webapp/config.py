@@ -111,9 +111,9 @@ if LOCALHOST_DEV:
     # Need to use this funny name where we have a DNS entry to 127.0.0.1
     # because browsers will reject cookie domains with fewer than 2 dots
     AUTH_SESSION_COOKIE_DOMAIN='localhost.arxiv.org'
-    # Want to not conflicting with any existing cookies for subdomains of arxiv.org
+    # Want to not conflict with any existing cookies for subdomains of arxiv.org
     # so give it a different name
-    CLASSIC_COOKIE_NAME='admin_webapp_classic_cookie'
+    CLASSIC_COOKIE_NAME='LOCALHOST_DEV_admin_webapp_classic_cookie'
     # Don't want to use HTTPS for local dev
     AUTH_SESSION_COOKIE_SECURE=0
     # Redirect to relative pages instead of arxiv.org pages
