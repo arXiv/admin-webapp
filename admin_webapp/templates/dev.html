@@ -1,0 +1,17 @@
+{%- extends "base/base.html" -%}
+{% block content %}
+<div>
+  <h1>admin webapp landing page</h1>
+  <div>
+    You are {% if request.auth %} logged in {% else %} not logged in.{% endif %}
+  </div>
+  <div>
+    <ul>
+      <li><a href="{{url_for('ui.login')}}">login</a></li>
+      <li><a href="{{url_for('ui.logout')}}">logout</a></li>
+      <li><a href="{{url_for('ui.an_example')}}">an example protected page</a></li>
+    </ul>
+  </div>
+</div>
+
+{% endblock content %}

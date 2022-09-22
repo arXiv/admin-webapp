@@ -1,5 +1,7 @@
 """Application factory for admin_webapp."""
 
+import logging
+
 from flask import Flask
 from flask_s3 import FlaskS3
 
@@ -16,11 +18,33 @@ from .routes import ui
 
 s3 = FlaskS3()
 
+logger = logging.getLogger(__name__)
+
+def change_loglevel(pkg:str, level):
+    """change log leve on arxiv-base logging
+
+    arxiv-base logging isn't quite right in that the handler levels
+    don't get updated after they get intitialzied.
+
+    Use this like in the create_web_app function:
+
+        change_loglevel('arxiv_auth.auth', 'DEBUG')
+        change_loglevel('admin_webapp.controllers.authentication', 'DEBUG')
+        change_loglevel('admin_webapp.routes.ui', 'DEBUG')
+    """
+    logger = logging.getLogger(pkg)
+    logger.setLevel(level)
+    for handler in logger.handlers:
+        handler.setLevel(level)
 
 def create_web_app() -> Flask:
     """Initialize and configure the admin_webapp application."""
     app = Flask('admin_webapp')
     app.config.from_pyfile('config.py')
+
+    change_loglevel('arxiv_auth.auth', 'DEBUG')
+    change_loglevel('admin_webapp.controllers.authentication', 'DEBUG')
+    change_loglevel('admin_webapp.routes.ui', 'DEBUG')
 
     # Don't set SERVER_NAME, it switches flask blueprints to be
     # subdomain aware.  Then each blueprint will only be served on
@@ -43,6 +67,10 @@ def create_web_app() -> Flask:
     s3.init_app(app)
 
     wrap(app, [AuthMiddleware])
+
+
+    if not app.config['SQLALCHEMY_DATABASE_URI'] and not app.config['DEBUG']:
+        logger.error("SQLALCHEMY_DATABASE_URI is not set!")
 
     if app.config['CREATE_DB']:
         with app.app_context():

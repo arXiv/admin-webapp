@@ -78,9 +78,7 @@ CAPTCHA_SECRET = os.environ.get('CAPTCHA_SECRET', 'foocaptcha')
 CAPTCHA_FONT = os.environ.get('CAPTCHA_FONT', None)
 
 URLS = [
-    ("register", "/user/register", BASE_SERVER),
     ("lost_password", "/user/lost_password", BASE_SERVER),
-    ("login", "/login", BASE_SERVER),
     ("account", "/user", BASE_SERVER)
 ]
 
@@ -103,14 +101,21 @@ LOCALHOST_DEV = os.environ.get('LOCALHOST_DEV', False)
 """Enables a set of config vars that facilites development on localhost"""
 
 if LOCALHOST_DEV:
+    # Don't want to setup redis just for local developers
     REDIS_FAKE=True
     FLASK_DEBUG=True
     DEBUG=True
     CLASSIC_DATABASE_URI='sqlite:///../locahost_dev.db'
     SQLALCHEMY_DATABASE_URI = CLASSIC_DATABASE_URI
     DEFAULT_LOGIN_REDIRECT_URL='/protected'
+    # Need to use this funny name where we have a DNS entry to 127.0.0.1
+    # because browsers will reject cookie domains with fewer than 2 dots
     AUTH_SESSION_COOKIE_DOMAIN='localhost.arxiv.org'
+    # Want to not conflicting with any existing cookies for subdomains of arxiv.org
+    # so give it a different name
+    CLASSIC_COOKIE_NAME='admin_webapp_classic_cookie'
+    # Don't want to use HTTPS for local dev
     AUTH_SESSION_COOKIE_SECURE=0
-
-if not SQLALCHEMY_DATABASE_URI:
-    raise ValueError("SQLALCHEMY_DATABASE_URI is not set!")
+    # Redirect to relative pages instead of arxiv.org pages
+    DEFAULT_LOGOUT_REDIRECT_URL='/login'
+    DEFAULT_LOGIN_REDIRECT_URL='/protected'
