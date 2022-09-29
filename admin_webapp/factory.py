@@ -14,11 +14,18 @@ from arxiv_auth.auth.sessions import SessionStore
 from arxiv_auth.legacy.util import init_app as legacy_init_app
 from arxiv_auth.legacy.util import create_all as legacy_create_all
 
+from flask_sqlalchemy import SQLAlchemy
+
+import arxiv_db
+from arxiv_db.models import add_all_models_to_sqlalchemy
+
 from .routes import ui
 
 s3 = FlaskS3()
 
 logger = logging.getLogger(__name__)
+
+db = None
 
 def change_loglevel(pkg:str, level):
     """change log leve on arxiv-base logging
@@ -42,6 +49,7 @@ def create_web_app() -> Flask:
     app = Flask('admin_webapp')
     app.config.from_pyfile('config.py')
 
+    change_loglevel('arxiv_auth.legacy.authenticate', 'DEBUG')
     change_loglevel('arxiv_auth.auth', 'DEBUG')
     change_loglevel('admin_webapp.controllers.authentication', 'DEBUG')
     change_loglevel('admin_webapp.routes.ui', 'DEBUG')
@@ -61,13 +69,16 @@ def create_web_app() -> Flask:
     SessionStore.init_app(app)
     legacy_init_app(app)
 
+    add_all_models_to_sqlalchemy()
+    global db
+    db = SQLAlchemy(app, metadata=arxiv_db.Base.metadata).init_app(app)
+
     app.register_blueprint(ui.blueprint)
     Base(app)
     auth.Auth(app)
     s3.init_app(app)
 
     wrap(app, [AuthMiddleware])
-
 
     if not app.config['SQLALCHEMY_DATABASE_URI'] and not app.config['DEBUG']:
         logger.error("SQLALCHEMY_DATABASE_URI is not set!")
