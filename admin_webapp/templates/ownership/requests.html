@@ -8,17 +8,19 @@
 
 
 {% block content %}
-<h1>Ownership requests</h1>
+<strong>{{title}}</strong>
 <table>
   <tr>
     <th>request ID</th><th>user_id</th><th>status</th><th>endor. req.</th>
   </tr>
 {%for oreq in ownership_requests%}
   <tr>
-    <td>{{oreq.request_id}}</td>
-    <td>{{oreq.user_id}}</td>
+    <td><a href='{{url_for("ownership.display")}}'>{{oreq.request_id}}</a></td>
+    <td><a href='{{url_for("user.display", id=oreq.user_id)}}'>
+        {{oreq.user.first_name}} {{oreq.user.last_name}}</a>
+    </td>
     <td>{{oreq.workflow_status}}</td>
-    <td>{{oreq.endorsement_request_id}}</td>
+    <td>{% if oreq.endorsement_request_id %}url_for('endorsement.request'){%else%}None{%endif%}</td>
   </tr>
 {%endfor%}
 </table>

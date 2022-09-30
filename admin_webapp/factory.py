@@ -18,7 +18,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 import arxiv_db
 
-from .routes import ui, ownership
+from .routes import ui, ownership, endorsement, user
 
 s3 = FlaskS3()
 
@@ -71,6 +71,9 @@ def create_web_app() -> Flask:
 
     app.register_blueprint(ui.blueprint)
     app.register_blueprint(ownership.blueprint)
+    app.register_blueprint(endorsement.blueprint)
+    app.register_blueprint(user.blueprint)
+
     Base(app)
     auth.Auth(app)
     s3.init_app(app)
