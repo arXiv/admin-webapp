@@ -25,5 +25,5 @@
 {%endfor%}
 </table>
 
-{{ render_pagination(pagination, 'ownership.pending') }}
+{{ render_pagination(pagination, request.endpoint) }}
 {% endblock content %}
