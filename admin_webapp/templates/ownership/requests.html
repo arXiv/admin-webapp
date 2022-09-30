@@ -1,9 +1,27 @@
-{%- extends "base/base.html" %}
+{%- extends "base.html" -%}
+{%- from "macros.html" import render_pagination with context -%}
+
+
+{% block addl_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='table.css')}}" />
+{% endblock addl_head %}
+
+
 {% block content %}
 <h1>Ownership requests</h1>
-<ul>
+<table>
+  <tr>
+    <th>request ID</th><th>user_id</th><th>status</th><th>endor. req.</th>
+  </tr>
 {%for oreq in ownership_requests%}
-<li>{{oreq.request_id}} {{oreq.user_id}} {{oreq.workflow_status}} {{oreq.endorsement_request_id}}</li>
+  <tr>
+    <td>{{oreq.request_id}}</td>
+    <td>{{oreq.user_id}}</td>
+    <td>{{oreq.workflow_status}}</td>
+    <td>{{oreq.endorsement_request_id}}</td>
+  </tr>
 {%endfor%}
-</ul>
+</table>
+
+{{ render_pagination(pagination, 'ownership.pending') }}
 {% endblock content %}
