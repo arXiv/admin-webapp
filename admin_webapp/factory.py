@@ -18,7 +18,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 import arxiv_db
 
-from .routes import ui
+from .routes import ui, ownership
 
 s3 = FlaskS3()
 
@@ -37,9 +37,9 @@ def change_loglevel(pkg:str, level):
         change_loglevel('admin_webapp.controllers.authentication', 'DEBUG')
         change_loglevel('admin_webapp.routes.ui', 'DEBUG')
     """
-    logger = logging.getLogger(pkg)
-    logger.setLevel(level)
-    for handler in logger.handlers:
+    logger_x = logging.getLogger(pkg)
+    logger_x.setLevel(level)
+    for handler in logger_x.handlers:
         handler.setLevel(level)
 
 def create_web_app() -> Flask:
@@ -70,6 +70,7 @@ def create_web_app() -> Flask:
     SQLAlchemy(app, metadata=arxiv_db.Base.metadata)
 
     app.register_blueprint(ui.blueprint)
+    app.register_blueprint(ownership.blueprint)
     Base(app)
     auth.Auth(app)
     s3.init_app(app)

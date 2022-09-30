@@ -66,10 +66,7 @@ SESSION_DURATION = os.environ.get(
     '36000'
 )
 
-CLASSIC_DATABASE_URI = os.environ.get('CLASSIC_DATABASE_URI')
-"""If not set, legacy database integrations will not be available."""
-
-SQLALCHEMY_DATABASE_URI = CLASSIC_DATABASE_URI
+SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 CAPTCHA_SECRET = os.environ.get('CAPTCHA_SECRET', 'foocaptcha')
@@ -105,8 +102,9 @@ if LOCALHOST_DEV:
     REDIS_FAKE=True
     FLASK_DEBUG=True
     DEBUG=True
-    CLASSIC_DATABASE_URI='sqlite:///../locahost_dev.db'
-    SQLALCHEMY_DATABASE_URI = CLASSIC_DATABASE_URI
+    if not SQLALCHEMY_DATABASE_URI:
+        SQLALCHEMY_DATABASE_URI = 'sqlite:///../locahost_dev.db'
+
     DEFAULT_LOGIN_REDIRECT_URL='/protected'
     # Need to use this funny name where we have a DNS entry to 127.0.0.1
     # because browsers will reject cookie domains with fewer than 2 dots

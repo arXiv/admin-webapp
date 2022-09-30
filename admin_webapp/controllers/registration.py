@@ -16,7 +16,6 @@ from werkzeug.exceptions import BadRequest, InternalServerError
 from arxiv import status
 from arxiv_auth import domain
 from arxiv.base import logging
-from arxiv_auth import domain
 
 from arxiv_auth.auth.sessions import SessionStore
 
@@ -32,6 +31,7 @@ from .util import MultiCheckboxField, OptGroupSelectField
 
 from .. import stateless_captcha
 
+from arxiv_auth import legacy
 from arxiv_auth.legacy import accounts
 from arxiv_auth.legacy.exceptions import RegistrationFailed, SessionCreationFailed, SessionDeletionFailed
 
@@ -119,10 +119,6 @@ def register(method: str, params: MultiDict, captcha_secret: str, ip: str,
     return data, status.HTTP_200_OK, {}
 
 
-def view_profile(user_id: str, session: domain.Session) -> ResponseData:
-    """Handle requests to view a user's profile."""
-    user = accounts.get_user_by_id(user_id)
-    return {'user': user}, status.HTTP_200_OK, {}
 
 
 def edit_profile(method: str, user_id: str, session: domain.Session,
@@ -150,8 +146,9 @@ def edit_profile(method: str, user_id: str, session: domain.Session,
         user = form.to_domain()
         try:
             user, auth = accounts.update(user)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             data['error'] = 'Could not save user profile; please try again'
+            logger.error('Problem while editing profile', e)
             return data, status.HTTP_500_INTERNAL_SERVER_ERROR, {}
 
         # We need a new session, to update user's data.
@@ -297,6 +294,8 @@ class RegistrationForm(Form):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Grab `next_page` param, if provided."""
         self.next_page = kwargs.pop('next_page', None)
+        self.captcha_secret = None
+        self.ip = None
         super(RegistrationForm, self).__init__(*args, **kwargs)
 
     def configure_captcha(self, captcha_secret: str, ip: str) -> None:
@@ -339,9 +338,9 @@ class RegistrationForm(Form):
             # It is convenient to provide feedback to the user via the
             # form, so we'll do that here if the captcha doesn't check out.
             self.captcha_value.data = ''    # Clear the field.
-            raise ValidationError('Please try again')
+            raise ValidationError('Please try again') from e
 
-    def validate_password(self, field: StringField) -> None:
+    def validate_password(self) -> None:
         """Verify that the password is the same in both fields."""
         if self.password.data != self.password2.data:
             raise ValidationError('Passwords must match')

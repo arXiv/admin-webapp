@@ -38,7 +38,7 @@ class TestRegister(TestCase):
         self.app.config['AUTH_SESSION_COOKIE_SECURE'] = '0'
         self.app.config['SESSION_DURATION'] = self.expiry
         self.app.config['JWT_SECRET'] = self.secret
-        self.app.config['CLASSIC_DATABASE_URI'] = f'sqlite:///{self.db}'
+        self.app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{self.db}'
         self.app.config['CLASSIC_SESSION_HASH'] = 'xyz1234'
         self.app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{self.db}'
         self.app.config['REDIS_FAKE'] = True

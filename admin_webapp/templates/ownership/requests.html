@@ -1,0 +1,9 @@
+{%- extends "base/base.html" %}
+{% block content %}
+<h1>Ownership requests</h1>
+<ul>
+{%for oreq in ownership_requests%}
+<li>{{oreq.request_id}} {{oreq.user_id}} {{oreq.workflow_status}} {{oreq.endorsement_request_id}}</li>
+{%endfor%}
+</ul>
+{% endblock content %}
