@@ -17,7 +17,6 @@ from arxiv_auth.legacy.util import create_all as legacy_create_all
 from flask_sqlalchemy import SQLAlchemy
 
 import arxiv_db
-from arxiv_db.models import add_all_models_to_sqlalchemy
 
 from .routes import ui
 
@@ -25,7 +24,6 @@ s3 = FlaskS3()
 
 logger = logging.getLogger(__name__)
 
-db = None
 
 def change_loglevel(pkg:str, level):
     """change log leve on arxiv-base logging
@@ -69,9 +67,7 @@ def create_web_app() -> Flask:
     SessionStore.init_app(app)
     legacy_init_app(app)
 
-    add_all_models_to_sqlalchemy()
-    global db
-    db = SQLAlchemy(app, metadata=arxiv_db.Base.metadata).init_app(app)
+    SQLAlchemy(app, metadata=arxiv_db.Base.metadata)
 
     app.register_blueprint(ui.blueprint)
     Base(app)
