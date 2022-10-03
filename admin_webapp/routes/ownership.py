@@ -67,21 +67,19 @@ def rejected() -> Response:
 def _ownership_listing(workflow_status:str, per_page:int, page: int,
                        days_back:int) -> dict:
     session = get_state(current_app).db.session
-
-    stmt = (select(OwnershipRequestsAudit)
-            .options(selectinload(OwnershipRequestsAudit.user))
-            .filter(OwnershipRequests.workflow_status == workflow_status))
+    report_stmt = (select(OwnershipRequestsAudit)
+                   .options(selectinload(OwnershipRequestsAudit.user))
+                   .filter(OwnershipRequests.workflow_status == workflow_status)
+                   .limit(per_page).offset((page -1) * per_page))
+    count_stmt = (select(func.count(OwnershipRequests.request_id))
+                  .where(OwnershipRequests.workflow_status == workflow_status))
 
     if workflow_status in ('accepted', 'rejected'):
         now = datetime.now() - timedelta(days=days_back)
-        stmt = stmt.filter(OwnershipRequestsAudit.date > now.timestamp())
+        report_stmt = report_stmt.filter(OwnershipRequestsAudit.date > now.timestamp())
+        count_stmt = count_stmt.filter(OwnershipRequestsAudit.date > now.timestamp())
 
-    stmt = stmt.limit(per_page).offset((page -1) * per_page)
-    oreqs = session.scalars(stmt)
-
-    stmt2 = (select(func.count(OwnershipRequests.request_id))
-             .where(OwnershipRequests.workflow_status == 'pending'))
-    count = session.execute(stmt2).scalar_one()
-
+    oreqs = session.scalars(report_stmt)
+    count = session.execute(count_stmt).scalar_one()
     pagination = Pagination(query=None, page=page, per_page=per_page, total=count, items=None)
     return dict(pagination=pagination, count=count, ownership_requests=oreqs, worflow_status=workflow_status, days_back=days_back)

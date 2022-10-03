@@ -8,8 +8,8 @@
 
 
 {% block content %}
-  <strong>{{title}}</strong>
-  Found {{count}} ownership requests.
+  <h1>{{title}}</h1>
+  <div>Found {{count}} ownership requests. Page {{pagination.page}} of {{pagination.pages}}.</div>
 <table>
   <tr>
     <th>request ID</th><th>user_id</th><th>status</th><th>endor. req.</th>

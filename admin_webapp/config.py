@@ -67,6 +67,7 @@ SESSION_DURATION = os.environ.get(
 )
 
 SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
+CLASSIC_DATABASE_URI = SQLALCHEMY_DATABASE_URI
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 CAPTCHA_SECRET = os.environ.get('CAPTCHA_SECRET', 'foocaptcha')
@@ -104,6 +105,7 @@ if LOCALHOST_DEV:
     DEBUG=True
     if not SQLALCHEMY_DATABASE_URI:
         SQLALCHEMY_DATABASE_URI = 'sqlite:///../locahost_dev.db'
+        CLASSIC_DATABASE_URI = SQLALCHEMY_DATABASE_URI
 
     DEFAULT_LOGIN_REDIRECT_URL='/protected'
     # Need to use this funny name where we have a DNS entry to 127.0.0.1
