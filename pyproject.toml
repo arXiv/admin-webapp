@@ -39,8 +39,12 @@ astroid = "*"
 "nose2" = "*"
 hypothesis = "^6.54.3"
 fakeredis = "^1.9.0"
+pytest-flask = "*"
 
 
+
+[tool.poetry.group.dev.dependencies]
+pytest-flask = "^1.2.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -11,7 +11,7 @@ vine = ">=5.0.0"
 
 [[package]]
 name = "arxiv-auth"
-version = "1.0.0rc2"
+version = "1.0.0rc3"
 description = "Auth libraries for arXiv."
 category = "main"
 optional = false
@@ -965,6 +965,22 @@ pytest = ">=4.6"
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtualenv"]
 
 [[package]]
+name = "pytest-flask"
+version = "1.2.0"
+description = "A set of py.test fixtures to test Flask applications."
+category = "dev"
+optional = false
+python-versions = ">=3.5"
+
+[package.dependencies]
+Flask = "*"
+pytest = ">=5.2"
+Werkzeug = ">=0.7"
+
+[package.extras]
+docs = ["Sphinx", "sphinx-rtd-theme"]
+
+[[package]]
 name = "python-dateutil"
 version = "2.8.2"
 description = "Extensions to the standard Python datetime module"
@@ -1243,7 +1259,7 @@ email = ["email-validator"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "a785de9ad4443fe51704ad51008bc353eb93fde4a0ecdcf5b07af42f77a61f18"
+content-hash = "3f51c222d80a0fac25460f1bb7cda92a51183e317cdeeb5f6ffd9f0d3806e04d"
 
 [metadata.files]
 amqp = [
@@ -1251,8 +1267,8 @@ amqp = [
     {file = "amqp-5.1.1.tar.gz", hash = "sha256:2c1b13fecc0893e946c65cbd5f36427861cffa4ea2201d8f6fca22e2a373b5e2"},
 ]
 arxiv-auth = [
-    {file = "arxiv-auth-1.0.0rc2.tar.gz", hash = "sha256:3a9bb817bc80598068d4d67cc2c2337081a36d82c4a3b12e0eb0eb5836f3b3c5"},
-    {file = "arxiv_auth-1.0.0rc2-py3-none-any.whl", hash = "sha256:89181641ac05f61cf4ef4081280aa271a720edcafa3ccc174e9ab9c852317e45"},
+    {file = "arxiv-auth-1.0.0rc3.tar.gz", hash = "sha256:e61aad76d0b141dc26838361a4bdfe06779c62aad785c732b0ab1f09d4db9722"},
+    {file = "arxiv_auth-1.0.0rc3-py3-none-any.whl", hash = "sha256:38993012c4da686a09fc5763ff2caa257e68872d87cb1da1fc75bcceff0a5def"},
 ]
 arxiv-base = [
     {file = "arxiv-base-1.0.0a3.tar.gz", hash = "sha256:88bc7db5c50b1e345ab5da1a8e3f728d0c25ed0599e0fab25dc3ed8f5847ceb8"},
@@ -1920,6 +1936,10 @@ pytest = [
 pytest-cov = [
     {file = "pytest-cov-4.0.0.tar.gz", hash = "sha256:996b79efde6433cdbd0088872dbc5fb3ed7fe1578b68cdbba634f14bb8dd0470"},
     {file = "pytest_cov-4.0.0-py3-none-any.whl", hash = "sha256:2feb1b751d66a8bd934e5edfa2e961d11309dc37b73b0eabe73b5945fee20f6b"},
+]
+pytest-flask = [
+    {file = "pytest-flask-1.2.0.tar.gz", hash = "sha256:46fde652f77777bf02dc91205aec4ce20cdf2acbbbd66a918ab91f5c14693d3d"},
+    {file = "pytest_flask-1.2.0-py3-none-any.whl", hash = "sha256:fe25b39ad0db09c3d1fe728edecf97ced85e774c775db259a6d25f0270a4e7c9"},
 ]
 python-dateutil = [
     {file = "python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},
