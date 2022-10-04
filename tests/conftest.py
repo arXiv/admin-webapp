@@ -16,11 +16,12 @@ means that the fixture will be re-run for each test function.
 """
 import pytest
 
-from pathlib import Path
+from pathlib import Path, PurePath
 import hashlib
 from base64 import b64encode
+import pathlib
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from arxiv_db import test_load_db_file, models
@@ -29,10 +30,6 @@ from admin_webapp.factory import create_web_app
 
 DB_FILE = "./pytest.db"
 
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_FILE}"
-
-CONNECT_ARGS = {"check_same_thread": False} if 'sqlite' in SQLALCHEMY_DATABASE_URL  \
-    else {}
 
 SQL_DATA_FILE = './tests/data/data.sql'
 
@@ -42,31 +39,45 @@ DELETE_DB_FILE_ON_EXIT = True
 
 @pytest.fixture(scope='session')
 def engine():
-    engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=CONNECT_ARGS)
-    return engine
-
+    db_file = pathlib.Path(DB_FILE).resolve()
+    try:
+        print(f"Created db at {db_file}")
+        connect_args = {"check_same_thread": False}
+        engine = create_engine(f"sqlite:///{db_file}",
+                               connect_args=connect_args)
+        yield engine
+    finally: # cleanup
+        if DELETE_DB_FILE_ON_EXIT:
+            db_file.unlink(missing_ok=True)
+            print(f"Deleted {db_file} at end of test. "
+                  "Set DELETE_DB_FILE_ON_EXIT to control.")
 
 @pytest.fixture(scope='session')
 def db(engine):
     """Create and load db tables."""
     print("Making tables...")
-    try:
-        from arxiv_db.tables import arxiv_tables
-        arxiv_tables.metadata.create_all(bind=engine)
-        print("Done making tables.")
-        test_load_db_file(engine, SQL_DATA_FILE)
-        yield engine
-    finally: # cleanup
-        if DELETE_DB_FILE_ON_EXIT:
-            Path(DB_FILE).unlink(missing_ok=True)
-            print(f"Deleted {DB_FILE}. Set DELETE_DB_FILE_ON_EXIT to control.")
+    from arxiv_db.tables import arxiv_tables
+    arxiv_tables.metadata.create_all(bind=engine)
+    print("Done making tables.")
+    test_load_db_file(engine, SQL_DATA_FILE)
+    yield engine
 
 @pytest.fixture(scope='session')
 def admin_user(db):
-    with Session(engine) as session:
+    with Session(db) as session:
+        admin_exits = select(models.TapirUsers).where(models.TapirUsers.email == 'testadmin@example.con')
+        admin = session.scalar(admin_exits)
+        if admin:
+            return admin
+
+        salt = b'fdoo'
+        password = b'thepassword'
+        hashed = hashlib.sha1(salt + b'-' + password).digest()
+        encrypted = b64encode(salt + hashed)
+
         # We have a good old-fashioned user.
-        db_user = models.TapirUsers(
-            user_id=1,
+        db_user = models.TapirUsersPassword(
+            user_id=59999,
             first_name='testadmin',
             last_name='admin',
             suffix_name='',
@@ -78,12 +89,14 @@ def admin_user(db):
             flag_approved=1,
             flag_deleted=0,
             flag_banned=0,
-                tracking_cookie='foocookie',
+            tracking_cookie='foocookie',
+            password_storage=2,
+            password_enc=encrypted
         )
-        db_nick = models.TapirNicknames(
-            nick_id=1,
+
+        db_nick=models.TapirNicknames(
+            user_id = db_user.user_id,
             nickname='foouser',
-            user_id=1,
             user_seq=1,
             flag_valid=1,
             role=0,
@@ -91,28 +104,23 @@ def admin_user(db):
             flag_primary=1
         )
         # db_demo = models.Demographics(
-        #     user_id=1,
+        #     user_id=db_user.user_id,
         #     country='US',
         #     affiliation='Cornell U.',
         #     url='http://example.com/bogus',
         #     rank=2,
         #     original_subject_classes='cs.OH',
         # )
-        salt = b'fdoo'
-        password = b'thepassword'
-        hashed = hashlib.sha1(salt + b'-' + password).digest()
-        encrypted = b64encode(salt + hashed)
-        db_password = models.TapirUsersPassword(
-            user_id=1,
-            password_storage=2,
-            password_enc=encrypted
-        )
+
+
         session.add(db_user)
-        session.add(db_password)
+        #session.add(db_password)
         session.add(db_nick)
         #session.add(db_demo)
 
-        return db_user
+        session.commit()
+        rd=dict(email=db_user.email, password_cleartext=password)
+        return rd
 
 @pytest.fixture(scope='session')
 def secret():
