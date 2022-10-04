@@ -115,14 +115,14 @@ webencodings = "*"
 
 [[package]]
 name = "boto3"
-version = "1.24.85"
+version = "1.24.86"
 description = "The AWS SDK for Python"
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 
 [package.dependencies]
-botocore = ">=1.27.85,<1.28.0"
+botocore = ">=1.27.86,<1.28.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.6.0,<0.7.0"
 
@@ -131,7 +131,7 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.27.85"
+version = "1.27.86"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = false
@@ -458,15 +458,15 @@ six = "*"
 
 [[package]]
 name = "flask-sqlalchemy"
-version = "3.0.0"
-description = "Add SQLAlchemy support to your Flask application."
+version = "2.5.1"
+description = "Adds SQLAlchemy support to your Flask application."
 category = "main"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">= 2.7, != 3.0.*, != 3.1.*, != 3.2.*, != 3.3.*"
 
 [package.dependencies]
-Flask = ">=2.2"
-SQLAlchemy = ">=1.4.18"
+Flask = ">=0.10"
+SQLAlchemy = ">=0.8.0"
 
 [[package]]
 name = "greenlet"
@@ -1259,7 +1259,7 @@ email = ["email-validator"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "d1abcdb72f68e11f701c34332590f5ecd31419a3f7d5630d2ec69dd3466a540a"
+content-hash = "1f63b46b5f180a043ad1561409d4f87bf13fef8ea1fa988d98721b232101fd11"
 
 [metadata.files]
 amqp = [
@@ -1295,12 +1295,12 @@ bleach = [
     {file = "bleach-3.3.1.tar.gz", hash = "sha256:306483a5a9795474160ad57fce3ddd1b50551e981eed8e15a582d34cef28aafa"},
 ]
 boto3 = [
-    {file = "boto3-1.24.85-py3-none-any.whl", hash = "sha256:714b06755bd76b2001f7099a8e406604c0a0e76a8ff0425480bf1555bcbecee1"},
-    {file = "boto3-1.24.85.tar.gz", hash = "sha256:2c9004c1f0a47807c73247abe8cb2b8a7054c34b9cf6e90f448d51560de20ca1"},
+    {file = "boto3-1.24.86-py3-none-any.whl", hash = "sha256:c1d4e5d73d7720402c6538965efd6df5807492db8a71f30221dc11355d06db05"},
+    {file = "boto3-1.24.86.tar.gz", hash = "sha256:59e9c39c867b5fd0575a50d8fafdf72c823c5510254a8615dff24f1584408121"},
 ]
 botocore = [
-    {file = "botocore-1.27.85-py3-none-any.whl", hash = "sha256:06b3ebacbe9a532074db4ad68040235e3c7bd52741e3ff6710cef8ab144ecdfe"},
-    {file = "botocore-1.27.85.tar.gz", hash = "sha256:2b4c86178b5a5a2baa0a065aaf9ef9d33a7ac67bf3f30e39005de151b0408cac"},
+    {file = "botocore-1.27.86-py3-none-any.whl", hash = "sha256:830359c8bf22f2a386431825060ff9666519c032f2ccd4a69f1a702f7195f6c0"},
+    {file = "botocore-1.27.86.tar.gz", hash = "sha256:dcfe1825b84d17cf11653f8bb4bc77c2f172dcec1dc68eee932d68e5e6ed89d5"},
 ]
 captcha = [
     {file = "captcha-0.4-py3-none-any.whl", hash = "sha256:529941705c01c20143d030805f82a362ba5a2af898e59426acc2c8d649ba034c"},
@@ -1518,8 +1518,8 @@ Flask-S3 = [
     {file = "Flask_S3-0.3.3-py3.6.egg", hash = "sha256:d6e1fc3834f0be74c17e26bb8d0f506f711eb888775ab6af9164c0abb6f4c97c"},
 ]
 flask-sqlalchemy = [
-    {file = "Flask-SQLAlchemy-3.0.0.tar.gz", hash = "sha256:b54939fd5f48184742b7d5b222d86983e233b43140c1071a36327353e86f3b56"},
-    {file = "Flask_SQLAlchemy-3.0.0-py3-none-any.whl", hash = "sha256:741dabf0903569a89e4793667e25be5bb9581e614fa0eeb81a395cc7dee40c4b"},
+    {file = "Flask-SQLAlchemy-2.5.1.tar.gz", hash = "sha256:2bda44b43e7cacb15d4e05ff3cc1f8bc97936cc464623424102bfc2c35e95912"},
+    {file = "Flask_SQLAlchemy-2.5.1-py2.py3-none-any.whl", hash = "sha256:f12c3d4cc5cc7fdcc148b9527ea05671718c3ea45d50c7e732cceb33f574b390"},
 ]
 greenlet = [
     {file = "greenlet-1.1.3-cp27-cp27m-macosx_10_14_x86_64.whl", hash = "sha256:8c287ae7ac921dfde88b1c125bd9590b7ec3c900c2d3db5197f1286e144e712b"},

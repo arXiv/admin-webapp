@@ -5,13 +5,14 @@ from datetime import datetime, timedelta
 from flask import Blueprint, render_template, url_for, request, \
     make_response, redirect, current_app, send_file, Response, flash
 
-from flask_sqlalchemy import get_state, Pagination
+from flask_sqlalchemy import Pagination
 
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from arxiv.base import logging
 
 from arxiv_auth.auth.decorators import scoped
+from admin_webapp.db import get_db
 
 from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, TapirUsers
 
@@ -66,7 +67,7 @@ def rejected() -> Response:
 
 def _ownership_listing(workflow_status:str, per_page:int, page: int,
                        days_back:int) -> dict:
-    session = get_state(current_app).db.session
+    session = get_db(current_app).session
     report_stmt = (select(OwnershipRequestsAudit)
                    .options(selectinload(OwnershipRequestsAudit.user))
                    .filter(OwnershipRequests.workflow_status == workflow_status)

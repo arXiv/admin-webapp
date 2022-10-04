@@ -125,7 +125,8 @@ def admin_user(db):
             url='http://example.com/bogus',
             original_subject_classes='cs.OH',
             subject_class = 'OH',
-            archive ='cs'
+            archive ='cs',
+            type=5,
         )
 
 
