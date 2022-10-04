@@ -14,6 +14,7 @@ for the whole test run session. The default scope is 'function' which
 means that the fixture will be re-run for each test function.
 
 """
+import os
 import pytest
 
 from pathlib import Path, PurePath
@@ -35,6 +36,20 @@ SQL_DATA_FILE = './tests/data/data.sql'
 
 DELETE_DB_FILE_ON_EXIT = True
 
+
+def parse_cookies(cookie_data):
+    """This should be moved to a library function in arxiv-auth for reuse in tests."""
+    cookies = {}
+    for cdata in cookie_data:
+        parts = cdata.split('; ')
+        data = parts[0]
+        key, value = data[:data.index('=')], data[data.index('=') + 1:]
+        extra = {
+            part[:part.index('=')]: part[part.index('=') + 1:]
+            for part in parts[1:] if '=' in part
+        }
+        cookies[key] = dict(value=value, **extra)
+    return cookies
 
 
 @pytest.fixture(scope='session')
@@ -103,20 +118,20 @@ def admin_user(db):
             policy=0,
             flag_primary=1
         )
-        # db_demo = models.Demographics(
-        #     user_id=db_user.user_id,
-        #     country='US',
-        #     affiliation='Cornell U.',
-        #     url='http://example.com/bogus',
-        #     rank=2,
-        #     original_subject_classes='cs.OH',
-        # )
+        db_demo = models.Demographics(
+            user_id=db_user.user_id,
+            country='US',
+            affiliation='Cornell U.',
+            url='http://example.com/bogus',
+            original_subject_classes='cs.OH',
+            subject_class = 'OH',
+            archive ='cs'
+        )
 
 
         session.add(db_user)
-        #session.add(db_password)
         session.add(db_nick)
-        #session.add(db_demo)
+        session.add(db_demo)
 
         session.commit()
         rd=dict(email=db_user.email, password_cleartext=password)
@@ -141,7 +156,19 @@ def app(db, secret, admin_user):
     return app
 
 
-@pytest.fixture
-def user_ng_auth(userid):
-    """Create a authenticated NG JWT."""
-    return "TODO!"
+@pytest.fixture(scope='session')
+def admin_client(app, admin_user):
+    """A flask app client pre configured to send admin cookies"""
+    client = app.test_client()
+    resp = client.post('/login', data=dict(username=admin_user['email'],
+                                           password=admin_user['password_cleartext']))
+    assert resp.status_code == 303
+
+    cookies = parse_cookies(resp.headers.getlist('Set-Cookie'))
+    ngcookie_name = app.config['AUTH_SESSION_COOKIE_NAME']
+    assert ngcookie_name in cookies
+    classic_cookie_name = app.config['CLASSIC_COOKIE_NAME']
+    assert classic_cookie_name in cookies
+    client.set_cookie('', ngcookie_name, cookies[ngcookie_name]['value'])
+    client.set_cookie('', classic_cookie_name, cookies[classic_cookie_name]['value'])
+    return client
