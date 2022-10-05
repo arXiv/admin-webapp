@@ -54,7 +54,7 @@ wtforms = "*"
 
 [[package]]
 name = "arxiv-db"
-version = "0.4.0"
+version = "0.6.0"
 description = "SQLAlchemy models for arXiv DB tables"
 category = "main"
 optional = false
@@ -114,15 +114,27 @@ six = ">=1.9.0"
 webencodings = "*"
 
 [[package]]
+name = "Bootstrap-Flask"
+version = "2.1.0"
+description = "Bootstrap 4 & 5 helper for your Flask projects."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+Flask = "*"
+WTForms = "*"
+
+[[package]]
 name = "boto3"
-version = "1.24.86"
+version = "1.24.87"
 description = "The AWS SDK for Python"
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 
 [package.dependencies]
-botocore = ">=1.27.86,<1.28.0"
+botocore = ">=1.27.87,<1.28.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.6.0,<0.7.0"
 
@@ -131,7 +143,7 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.27.86"
+version = "1.27.87"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = false
@@ -481,7 +493,7 @@ docs = ["Sphinx"]
 
 [[package]]
 name = "hypothesis"
-version = "6.56.0"
+version = "6.56.1"
 description = "A library for property-based testing"
 category = "dev"
 optional = false
@@ -1259,7 +1271,7 @@ email = ["email-validator"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "3c046c355ed144ab286a568be6095a483d7be5921fba7258e79e168c8f27b119"
+content-hash = "813b00bddb923e3dccf83d24877aa8a168830b50799b654b0d3c9a72163cd8c7"
 
 [metadata.files]
 amqp = [
@@ -1275,8 +1287,8 @@ arxiv-base = [
     {file = "arxiv_base-1.0.0a3-py3-none-any.whl", hash = "sha256:5343e2f9eed77cbd864ccdda9c41ef85ae8d156960b1e72d5cc6e9aa4d556ab6"},
 ]
 arxiv-db = [
-    {file = "arxiv-db-0.4.0.tar.gz", hash = "sha256:a67d7ed566ef1d65d2b0c90f8f27eceb1bd8980878afd4ded91f124621a27e63"},
-    {file = "arxiv_db-0.4.0-py3-none-any.whl", hash = "sha256:1dcac3e4c9c6a8a3780917a263dc4ae1334f19c0047fd4c2ad13671ef1158de9"},
+    {file = "arxiv-db-0.6.0.tar.gz", hash = "sha256:645be9dcc490ac1d0fa1a4d1d2c222ce4abc1ffe60afded699c7ca3b546c4e12"},
+    {file = "arxiv_db-0.6.0-py3-none-any.whl", hash = "sha256:86d2bb8eaf8925343e519a4340af6e277ecf55a78adc509bd0fb3dbbd90ccb20"},
 ]
 astroid = [
     {file = "astroid-2.12.10-py3-none-any.whl", hash = "sha256:997e0c735df60d4a4caff27080a3afc51f9bdd693d3572a4a0b7090b645c36c5"},
@@ -1294,13 +1306,17 @@ bleach = [
     {file = "bleach-3.3.1-py2.py3-none-any.whl", hash = "sha256:ae976d7174bba988c0b632def82fdc94235756edfb14e6558a9c5be555c9fb78"},
     {file = "bleach-3.3.1.tar.gz", hash = "sha256:306483a5a9795474160ad57fce3ddd1b50551e981eed8e15a582d34cef28aafa"},
 ]
+Bootstrap-Flask = [
+    {file = "Bootstrap-Flask-2.1.0.tar.gz", hash = "sha256:dc4f9c463727f3a59a6bfb17b7f9d13fd07646ba852f94285542c6a1e4e457e3"},
+    {file = "Bootstrap_Flask-2.1.0-py2.py3-none-any.whl", hash = "sha256:52e360421aafbf117f59ed8237391b2a4c77592e35ab7b4566d4fde3b277825a"},
+]
 boto3 = [
-    {file = "boto3-1.24.86-py3-none-any.whl", hash = "sha256:c1d4e5d73d7720402c6538965efd6df5807492db8a71f30221dc11355d06db05"},
-    {file = "boto3-1.24.86.tar.gz", hash = "sha256:59e9c39c867b5fd0575a50d8fafdf72c823c5510254a8615dff24f1584408121"},
+    {file = "boto3-1.24.87-py3-none-any.whl", hash = "sha256:bcc579e801774cb2c7dda87ff985feda1ae7e10591d11ef37526363139138bd4"},
+    {file = "boto3-1.24.87.tar.gz", hash = "sha256:3dd7ed74d1d29dd8094a078be86ed61c45de6638fe18856f7a1ff9282b4d929e"},
 ]
 botocore = [
-    {file = "botocore-1.27.86-py3-none-any.whl", hash = "sha256:830359c8bf22f2a386431825060ff9666519c032f2ccd4a69f1a702f7195f6c0"},
-    {file = "botocore-1.27.86.tar.gz", hash = "sha256:dcfe1825b84d17cf11653f8bb4bc77c2f172dcec1dc68eee932d68e5e6ed89d5"},
+    {file = "botocore-1.27.87-py3-none-any.whl", hash = "sha256:c4cbd22056ace4c7aa99e62e8ae629865ab80cc8bbf7c6d68ccf0f768f0034b6"},
+    {file = "botocore-1.27.87.tar.gz", hash = "sha256:216de9751116d0d1cc3901e26d95a5c9a30ecb6973ae6147af1cf504858d845a"},
 ]
 captcha = [
     {file = "captcha-0.4-py3-none-any.whl", hash = "sha256:529941705c01c20143d030805f82a362ba5a2af898e59426acc2c8d649ba034c"},
@@ -1515,7 +1531,6 @@ Flask = [
 Flask-S3 = [
     {file = "Flask-S3-0.3.3.tar.gz", hash = "sha256:1d49061d4b78759df763358a901f4ed32bb43f672c9f8e1ec7226793f6ae0fd2"},
     {file = "Flask_S3-0.3.3-py3-none-any.whl", hash = "sha256:23cbbb1db4c29c313455dbe16f25be078d6318f0a11abcbb610f99e116945b62"},
-    {file = "Flask_S3-0.3.3-py3.6.egg", hash = "sha256:d6e1fc3834f0be74c17e26bb8d0f506f711eb888775ab6af9164c0abb6f4c97c"},
 ]
 flask-sqlalchemy = [
     {file = "Flask-SQLAlchemy-2.5.1.tar.gz", hash = "sha256:2bda44b43e7cacb15d4e05ff3cc1f8bc97936cc464623424102bfc2c35e95912"},
@@ -1578,8 +1593,8 @@ greenlet = [
     {file = "greenlet-1.1.3.tar.gz", hash = "sha256:bcb6c6dd1d6be6d38d6db283747d07fda089ff8c559a835236560a4410340455"},
 ]
 hypothesis = [
-    {file = "hypothesis-6.56.0-py3-none-any.whl", hash = "sha256:dc3a296f1c23fc402ec50a3d90785fcf4a6290156ad4c97e23b0f972b0c3e32c"},
-    {file = "hypothesis-6.56.0.tar.gz", hash = "sha256:38ac02dba2801e26b964da57950cbc574fb22a3e16951c227150282b986ed002"},
+    {file = "hypothesis-6.56.1-py3-none-any.whl", hash = "sha256:df01b518d3c79c34ca5a15462af5407d1e73dd2d7003d374299dddb195aa155d"},
+    {file = "hypothesis-6.56.1.tar.gz", hash = "sha256:cefdaf6143170f1aa28adf4816d12547ab60f93c143f7d5205507d9e4804fccd"},
 ]
 idna = [
     {file = "idna-3.4-py3-none-any.whl", hash = "sha256:90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2"},

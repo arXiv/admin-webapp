@@ -4,6 +4,7 @@ import logging
 
 from flask import Flask
 from flask_s3 import FlaskS3
+from flask_bootstrap import Bootstrap5
 
 from arxiv.base import Base
 from arxiv.base.middleware import wrap
@@ -46,6 +47,8 @@ def create_web_app() -> Flask:
     """Initialize and configure the admin_webapp application."""
     app = Flask('admin_webapp')
     app.config.from_pyfile('config.py')
+
+    Bootstrap5(app)
 
     change_loglevel('arxiv_auth.legacy.authenticate', 'DEBUG')
     change_loglevel('arxiv_auth.auth', 'DEBUG')

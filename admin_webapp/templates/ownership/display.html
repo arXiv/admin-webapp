@@ -1,12 +1,70 @@
-{%- extends "base.html" -%}
+{% macro render_paper(paper, original) %}
+<div class='card'>
+  <div>
+    <input type='hidden' name='document_id_1' value='{{paper.document_id}}'/>
+    <input type='checkbox' name='approve_1' value=1 {{'checked=checked' if original}} />
+    <a href='todo'>{{paper.paper_id}}</a> [<a href='https://arxiv.org/abs/{{paper_id}}'>{{paper.paper_id}}</a>]
+  </div>
+  {% if paper.already_ownes %}<div>User already ownes this paper!</div>{% endif %}
+  <div>{{paper.title}}</div>
+  <div>{{paper.authors}}</div>
+  <div>{{paper.submitter_email}}</div>
+</div>
+{% endmacro %}
 
+{%- extends "base.html" -%}
 {%block content%}
 <h1>
   {{nickname}} wants to claim ownership of
-  {%- for paper in papers -%}
-  {{- paper.paper_id -}}
+  {%- for paper in papers %}
+  {{ paper.paper_id -}}
   {% if not loop.last %} and {% endif %}
   {%- endfor -%}
 </h1>
 
+<div class='row user'>
+  <div class='column'>
+    <div>Name:{{user.first_name}} {{user.last_name}}</div>
+    <div>Email: {{user.email}}</div>
+    <div>Nickname: {{nickname}}</div>
+  </div>
+  <div class='column'>
+    <div>Policy Class: {{user.tapir_policy_classes.name}}</div>
+    <div>Joined On: {{user.joined_date}}</div>
+  </div>
+</div>
+
+<div class='row ownership_reqeust'>
+  <div class='column'>
+    <div>Request Status: {{ownership.workflow_status}}</div>
+    <div>Request Date: {{audit.date}}</div>
+  </div>
+  <div class='column'>
+    <div>Remote Host: {{audit.remote_host}}</div>
+    <div>Remote Addr: {{audit.remote_addr}}</div>
+    <div>cookie: {{audit.tracking_cookie}} </div>
+  </div>
+</div>
+
+<h1>Request is currently {{ownership.workflow_status}}</h1>
+<form>
+{%- for paper in papers -%}
+{{ render_paper(paper, True) }}
+{%- endfor -%}
+
+<div>Documents below this line have a matching submission e-mail</div>
+
+{%- for paper in other_papers -%}
+{{ render_paper(paper, False) }}
+{%- endfor -%}
+
+
+  <select name='is_author'>
+    <option value="1">Author</option>
+    <option value="2">Not Author</option>
+  </select>
+  <input type="submit" value="Make Owner" name="make_owner">
+  <input type="submit" value="Reject" name="reject">
+  <--- These do not work yet
+</form>
 {%endblock content%}
