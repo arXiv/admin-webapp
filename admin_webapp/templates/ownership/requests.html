@@ -16,7 +16,7 @@
   </tr>
 {%for oreq in ownership_requests%}
   <tr>
-    <td><a href='{{url_for("ownership.display")}}'>{{oreq.request_id}}</a></td>
+    <td><a href='{{url_for("ownership.display", ownership_id=oreq.request_id)}}'>{{oreq.request_id}}</a></td>
     <td><a href='{{url_for("user.display", id=oreq.user_id)}}'>
         {{oreq.user.first_name}} {{oreq.user.last_name}}</a>
     </td>

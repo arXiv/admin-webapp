@@ -2,8 +2,8 @@
 
 from datetime import datetime, timedelta
 
-from flask import Blueprint, render_template, url_for, request, \
-    make_response, redirect, current_app, send_file, Response, flash
+from flask import Blueprint, render_template, request, \
+    make_response, current_app, Response, abort
 
 from flask_sqlalchemy import Pagination
 
@@ -19,10 +19,22 @@ from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, TapirUser
 blueprint = Blueprint('ownership', __name__, url_prefix='/ownership')
 
 
-@blueprint.route('/display', methods=['GET'])
-def display() -> Response:
+@blueprint.route('/<int:ownership_id>', methods=['GET'])
+def display(ownership_id:int) -> Response:
     """Display a ownership request."""
-    return render_template('ownership/display.html')
+    stmt = (select(OwnershipRequests)
+            .options(
+                selectinload(OwnershipRequests.user).selectinload(TapirUsers.tapir_nicknames),
+                selectinload(OwnershipRequests.documents))
+            .where( OwnershipRequests.request_id == ownership_id))
+    oreq = get_db(current_app).session.scalar(stmt)
+    if not oreq:
+        abort(404)
+
+    return render_template('ownership/display.html',
+                           **dict(ownership=oreq, user=oreq.user, nickname= oreq.user.tapir_nicknames[0].nickname,
+                                papers=oreq.documents,
+                                ownership_id=ownership_id))
 
 @blueprint.route('/pending', methods=['GET'])
 def pending() -> Response:

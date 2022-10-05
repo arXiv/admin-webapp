@@ -5,4 +5,4 @@ from flask import Flask
 
 def get_db(app:Flask) -> SQLAlchemy:
     """Gets the SQLAlchemy object for the flask app."""
-    return app.extensions['sqlalchemy']
+    return app.extensions['sqlalchemy'].db
