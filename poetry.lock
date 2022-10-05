@@ -1259,7 +1259,7 @@ email = ["email-validator"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "1f63b46b5f180a043ad1561409d4f87bf13fef8ea1fa988d98721b232101fd11"
+content-hash = "3c046c355ed144ab286a568be6095a483d7be5921fba7258e79e168c8f27b119"
 
 [metadata.files]
 amqp = [

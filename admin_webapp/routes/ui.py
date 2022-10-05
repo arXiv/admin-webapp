@@ -198,12 +198,12 @@ def auth_status() -> Response:
 def an_example() -> Response:
     """Example of a protected page.
 
-    see arxiv_auth.auth.decorators in arxiv-auth for more details."""
+    see arxiv_auth.auth.decorators in arxiv-auth for more details.
+    """
     return make_response("This is an example of a protected page.")
 
 
 @blueprint.route('/auth/v2/dev')
 def dev() -> Response:
-    """Dev landing page"""
-
+    """Dev landing page."""
     return render_template('dev.html')

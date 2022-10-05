@@ -33,7 +33,8 @@ from .. import stateless_captcha
 
 from arxiv_auth import legacy
 from arxiv_auth.legacy import accounts
-from arxiv_auth.legacy.exceptions import RegistrationFailed, SessionCreationFailed, SessionDeletionFailed
+from arxiv_auth.legacy.exceptions import RegistrationFailed, \
+    SessionCreationFailed, SessionDeletionFailed
 
 logger = logging.getLogger(__name__)
 
@@ -46,9 +47,9 @@ def _login_classic(user: domain.User, auth: domain.Authorizations,
         c_session = legacy.create(auth, ip, ip, user=user)
         c_cookie = legacy.generate_cookie(c_session)
         logger.debug('Created classic session: %s', c_session.session_id)
-    except SessionCreationFailed as e:
-        logger.debug('Could not create classic session: %s', e)
-        raise InternalServerError('Cannot log in') from e  # type: ignore
+    except SessionCreationFailed as ee:
+        logger.debug('Could not create classic session: %s', ee)
+        raise InternalServerError('Cannot log in') from ee # type: ignore
     return c_session, c_cookie
 
 

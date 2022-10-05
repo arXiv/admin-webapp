@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 def change_loglevel(pkg:str, level):
-    """change log leve on arxiv-base logging
+    """Change log leve on arxiv-base logging.
 
     arxiv-base logging isn't quite right in that the handler levels
     don't get updated after they get intitialzied.
@@ -49,6 +49,9 @@ def create_web_app() -> Flask:
 
     change_loglevel('arxiv_auth.legacy.authenticate', 'DEBUG')
     change_loglevel('arxiv_auth.auth', 'DEBUG')
+    change_loglevel('arxiv_auth.auth.decorator', 'DEBUG')
+    change_loglevel('arxiv_auth.legacy.util', 'DEBUG')
+
     change_loglevel('admin_webapp.controllers.authentication', 'DEBUG')
     change_loglevel('admin_webapp.routes.ui', 'DEBUG')
 

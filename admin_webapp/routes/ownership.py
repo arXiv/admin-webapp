@@ -21,6 +21,7 @@ blueprint = Blueprint('ownership', __name__, url_prefix='/ownership')
 
 @blueprint.route('/display', methods=['GET'])
 def display() -> Response:
+    """Display a ownership request."""
     return render_template('ownership/display.html')
 
 @blueprint.route('/pending', methods=['GET'])
@@ -38,7 +39,7 @@ def pending() -> Response:
 
 @blueprint.route('/accepted', methods=['GET'])
 def accepted() -> Response:
-    """accepted ownership reqeusts."""
+    """Accepted ownership reqeusts."""
     args = request.args
     per_page = args.get('per_page', default=12, type=int)
     page = args.get('page', default=1, type=int)

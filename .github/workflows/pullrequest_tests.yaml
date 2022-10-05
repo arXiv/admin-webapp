@@ -24,10 +24,10 @@ jobs:
       - name: linter
         run: |
           pip install pylint
-          ./tests/lint.sh arxiv-auth accounts
+          ./tests/lint.sh admin_webapp
       - name: style check
         run: |
           pip install pydocstyle
-          ./tests/style.sh arxiv-auth/arxiv_auth accounts/accounts
+          ./tests/style.sh admin_webapp
 
 
