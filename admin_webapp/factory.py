@@ -6,6 +6,8 @@ from flask import Flask
 from flask_s3 import FlaskS3
 from flask_bootstrap import Bootstrap5
 
+from flask_wtf.csrf import CSRFProtect
+
 from arxiv.base import Base
 from arxiv.base.middleware import wrap
 
@@ -19,12 +21,14 @@ from flask_sqlalchemy import SQLAlchemy
 
 import arxiv_db
 
-from .routes import ui, ownership, endorsement, user
+from .routes import ui, ownership, endorsement, user, paper
 
 s3 = FlaskS3()
 
 logger = logging.getLogger(__name__)
 
+
+csrf = CSRFProtect()
 
 def change_loglevel(pkg:str, level):
     """Change log leve on arxiv-base logging.
@@ -50,13 +54,13 @@ def create_web_app() -> Flask:
 
     Bootstrap5(app)
 
-    change_loglevel('arxiv_auth.legacy.authenticate', 'DEBUG')
-    change_loglevel('arxiv_auth.auth', 'DEBUG')
-    change_loglevel('arxiv_auth.auth.decorator', 'DEBUG')
-    change_loglevel('arxiv_auth.legacy.util', 'DEBUG')
+    # change_loglevel('arxiv_auth.legacy.authenticate', 'DEBUG')
+    # change_loglevel('arxiv_auth.auth', 'DEBUG')
+    # change_loglevel('arxiv_auth.auth.decorator', 'DEBUG')
+    # change_loglevel('arxiv_auth.legacy.util', 'DEBUG')
 
-    change_loglevel('admin_webapp.controllers.authentication', 'DEBUG')
-    change_loglevel('admin_webapp.routes.ui', 'DEBUG')
+    # change_loglevel('admin_webapp.controllers.authentication', 'DEBUG')
+    # change_loglevel('admin_webapp.routes.ui', 'DEBUG')
 
     # Don't set SERVER_NAME, it switches flask blueprints to be
     # subdomain aware.  Then each blueprint will only be served on
@@ -79,10 +83,13 @@ def create_web_app() -> Flask:
     app.register_blueprint(ownership.blueprint)
     app.register_blueprint(endorsement.blueprint)
     app.register_blueprint(user.blueprint)
+    app.register_blueprint(paper.blueprint)
 
     Base(app)
     auth.Auth(app)
     s3.init_app(app)
+    csrf.init_app(app)
+    csrf.exempt('admin_webapp.routes.ui.login')
 
     wrap(app, [AuthMiddleware])
 

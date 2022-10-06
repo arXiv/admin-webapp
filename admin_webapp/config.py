@@ -2,7 +2,7 @@
 
 import os
 import re
-
+from zoneinfo import ZoneInfo
 
 BASE_SERVER = os.environ.get('BASE_SERVER', 'arxiv.org')
 
@@ -66,6 +66,8 @@ SESSION_DURATION = os.environ.get(
     '36000'
 )
 
+ARXIV_BUSINESS_TZ = ZoneInfo(os.environ.get('ARXIV_BUSINESS_TZ', 'America/New_York'))
+
 SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
 CLASSIC_DATABASE_URI = SQLALCHEMY_DATABASE_URI
 SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -97,6 +99,11 @@ AUTH_UPDATED_SESSION_REF = True # see ARXIVNG-1920
 
 LOCALHOST_DEV = os.environ.get('LOCALHOST_DEV', False)
 """Enables a set of config vars that facilites development on localhost"""
+
+WTF_CSRF_CHECK_DEFAULT = False
+"""Don't do CSRF by default on every POST.
+
+Setting this to true messes up login."""
 
 if LOCALHOST_DEV:
     # Don't want to setup redis just for local developers

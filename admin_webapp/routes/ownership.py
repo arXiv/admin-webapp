@@ -1,26 +1,39 @@
 """arXiv paper ownership routes."""
 
 from datetime import datetime, timedelta
+import logging
 
 from flask import Blueprint, render_template, request, \
     make_response, current_app, Response, abort
 
 from flask_sqlalchemy import Pagination
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text, insert, update
 from sqlalchemy.orm import joinedload, selectinload
 from arxiv.base import logging
 
 from arxiv_auth.auth.decorators import scoped
-from admin_webapp.db import get_db
-
+from admin_webapp.extensions import get_csrf, get_db
 from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, TapirUsers, Documents
+from arxiv_db.models.associative_tables import t_arXiv_paper_owners
+
+from admin_webapp.controllers.ownership import ownership_detail, ownership_listing, ownership_post
+
+logger = logging.getLogger(__file__)
 
 blueprint = Blueprint('ownership', __name__, url_prefix='/ownership')
 
 
-@blueprint.route('/<int:ownership_id>', methods=['GET'])
+@blueprint.route('/<int:ownership_id>', methods=['GET', 'POST'])
 def display(ownership_id:int) -> Response:
+    if request.method == 'GET':
+        return render_template('ownership/display.html',**ownership_detail(ownership_id, None))
+    elif request.method == 'POST':
+        return render_template('ownership/display.html', **ownership_detail(ownership_id, ownership_post))
+
+
+# @blueprint.route('/<int:ownership_id>', methods=['GET', 'POST'])
+# def display(ownership_id:int) -> Response:
     """Display a ownership request.
 
     Need to display:
@@ -37,6 +50,23 @@ def display(ownership_id:int) -> Response:
 
     * Grant authorship of any/all papers
     * Grant authorhsip to papers that have same submission E-mail
+
+
+    On POST:
+
+    On reject, it should set the ownership as "rejected".
+
+    On revisit is should set the ownership as "pending".
+
+    Otherwise,
+    it should make a list of all ids from the form that are checked,
+    check they are not already owned,
+    set the values in arXiv_paper_owners,
+    set a row in admin_log with "add-paper-owner-2"
+
+    See tapir/site-src/admin/code/process-ownership-head.php.m4
+
+    Note: This doesn't do "bulk" mode
     """
     session = get_db(current_app).session
     stmt = (select(OwnershipRequests)
@@ -51,15 +81,56 @@ def display(ownership_id:int) -> Response:
     if not oreq:
         abort(404)
 
+    data={}
     already_ownes =[paper.paper_id for paper in oreq.user.owned_papers]
-    docids= [paper.paper_id for paper in oreq.documents] + already_ownes
-    other_papers=[]
-    for email in  set([paper.submitter_email for paper in oreq.documents]):
-        stmt=(select(Documents)
-              .where(Documents.submitter_email == email)
-              .where(Documents.document_id.not_in(docids)))
-        more=session.scalars(stmt)
-        other_papers.extend(more)
+    # TODO all of these need a success method
+    if request.method == 'POST':
+        get_csrf(current_app).protect()
+        admin_id = 1234 #request.auth.user.user_id
+
+        breakpoint()
+        if 'make_owner' in request.form:
+            docs_to_own = [ key.split('_')[1] for key, value in request.form.items()
+                            if key.startswith('approve_')]
+            is_author = 1 if request.form['is_author'] else 0
+
+            #todo add this to config:
+            cookie = request.cookies.get(current_app.config['CLASSIC_TRACKING_COOKIE'])
+            now = int(datetime.now().astimezone(current_app.config['ARXIV_BUSINESS_TZ']).timestamp())
+            for doc_id in docs_to_own:
+                stmt = insert(t_arXiv_paper_owners).values(
+                    document_id=doc_id, user_id=oreq.user.user_id, date=now,
+                    added_by=admin_id, remote_addr=request.remote_addr, tracking_cookie=cookie,
+                    flag_auto=0, flag_author=is_author)
+                session.execute(stmt)
+
+            # TODO add admin log (user_id 'add-paper-owner-2' doc_id)
+            # user_id is the affected_user,
+            oreq.workflow_status = 'accepted'
+            session.execute(update(OwnershipRequests)
+                            .where(OwnershipRequests.request_id == ownership_id)
+                            .values(workflow_status = 'accepted'))
+            data['success']='accepted'
+        elif 'reject' in request.form:
+            stmt=text("""UPDATE arXiv_ownership_requests SET workflow_status='rejected'
+            WHERE request_id=:reqid""")
+            session.execute(stmt, dict(reqid=oreq.request_id))
+            data['success']='rejected'
+        elif 'revisit' in request.form:
+            stmt=text("""UPDATE arXiv_ownership_requests SET workflow_status='pending'
+            WHERE request_id=:reqid""")
+            session.execute(stmt, dict(reqid=oreq.request_id))
+            data['success']='revisited'
+        else:
+            abort(400)
+
+        session.commit()
+
+    docids= [paper.paper_id for paper in oreq.documents]
+    stmt=(select(Documents)
+          .filter(Documents.submitter_email.in_(set([paper.submitter_email for paper in oreq.documents])))
+          .filter(Documents.paper_id.not_in(docids)))
+    other_papers = session.scalars(stmt)
 
     for paper in oreq.documents:
         setattr(paper, 'already_ownes', paper.paper_id in already_ownes)
@@ -75,7 +146,9 @@ def display(ownership_id:int) -> Response:
                                   audit=oreq.request_audit[0],
                                   ownership_id=ownership_id,
                                   other_papers=other_papers,
-                                  docids = docids))
+                                  docids = docids),
+                           **data)
+
 
 @blueprint.route('/pending', methods=['GET'])
 def pending() -> Response:
@@ -84,9 +157,9 @@ def pending() -> Response:
     per_page = args.get('per_page', default=12, type=int)
     page = args.get('page', default=1, type=int)
 
-    data = _ownership_listing('pending', per_page, page, 0)
+    data = ownership_listing('pending', per_page, page, 0)
     data['title'] = "Ownership Reqeusts: Pending"
-    return render_template('ownership/requests.html',
+    return render_template('ownership/list.html',
                            **data)
 
 
@@ -98,9 +171,9 @@ def accepted() -> Response:
     page = args.get('page', default=1, type=int)
     days_back = args.get('days_back', default=7, type=int)
 
-    data = _ownership_listing('accepted', per_page, page, days_back=days_back)
+    data = ownership_listing('accepted', per_page, page, days_back=days_back)
     data['title'] = f"Ownership Reqeusts: accepted last {days_back} days"
-    return render_template('ownership/requests.html',
+    return render_template('ownership/list.html',
                            **data)
 
 
@@ -112,29 +185,7 @@ def rejected() -> Response:
     page = args.get('page', default=1, type=int)
     days_back = args.get('days_back', default=7, type=int)
 
-    data = _ownership_listing('rejected', per_page, page, days_back=days_back)
+    data = ownership_listing('rejected', per_page, page, days_back=days_back)
     data['title'] = f"Ownership Reqeusts: Rejected last {days_back} days"
-    return render_template('ownership/requests.html',
+    return render_template('ownership/list.html',
                            **data)
-
-
-
-def _ownership_listing(workflow_status:str, per_page:int, page: int,
-                       days_back:int) -> dict:
-    session = get_db(current_app).session
-    report_stmt = (select(OwnershipRequestsAudit)
-                   .options(selectinload(OwnershipRequestsAudit.user))
-                   .filter(OwnershipRequests.workflow_status == workflow_status)
-                   .limit(per_page).offset((page -1) * per_page))
-    count_stmt = (select(func.count(OwnershipRequests.request_id))
-                  .where(OwnershipRequests.workflow_status == workflow_status))
-
-    if workflow_status in ('accepted', 'rejected'):
-        now = datetime.now() - timedelta(days=days_back)
-        report_stmt = report_stmt.filter(OwnershipRequestsAudit.date > now.timestamp())
-        count_stmt = count_stmt.filter(OwnershipRequestsAudit.date > now.timestamp())
-
-    oreqs = session.scalars(report_stmt)
-    count = session.execute(count_stmt).scalar_one()
-    pagination = Pagination(query=None, page=page, per_page=per_page, total=count, items=None)
-    return dict(pagination=pagination, count=count, ownership_requests=oreqs, worflow_status=workflow_status, days_back=days_back)

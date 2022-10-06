@@ -1,11 +1,11 @@
 {% macro render_paper(paper, original) %}
 <div class='card'>
   <div>
-    <input type='hidden' name='document_id_1' value='{{paper.document_id}}'/>
-    <input type='checkbox' name='approve_1' value=1 {{'checked=checked' if original}} />
-    <a href='todo'>{{paper.paper_id}}</a> [<a href='https://arxiv.org/abs/{{paper_id}}'>{{paper.paper_id}}</a>]
+    <input type='checkbox' name='approve_{{paper.document_id}}' value=1 {{'checked=checked' if original}} />
+    <a href='{{url_for("paper.detail", paper_id=paper.paper_id)}}'>{{paper.paper_id}}</a> [<a href='https://arxiv.org/abs/{{paper_id}}'>abs</a>]
+      {% if paper.already_ownes %}<span class='text-warning'>User already ownes this paper!</span>{% endif %}
   </div>
-  {% if paper.already_ownes %}<div>User already ownes this paper!</div>{% endif %}
+
   <div>{{paper.title}}</div>
   <div>{{paper.authors}}</div>
   <div>{{paper.submitter_email}}</div>
@@ -21,6 +21,12 @@
   {% if not loop.last %} and {% endif %}
   {%- endfor -%}
 </h1>
+
+{% if success %}
+<div class="alert alert-success" role="alert">
+  Ownership request {{success}}. Continue to TODO
+</div>
+{% endif %}
 
 <div class='row user'>
   <div class='column'>
@@ -46,18 +52,24 @@
   </div>
 </div>
 
-<h1>Request is currently {{ownership.workflow_status}}</h1>
-<form>
-{%- for paper in papers -%}
-{{ render_paper(paper, True) }}
-{%- endfor -%}
+<form action='{{url_for(request.endpoint, ownership_id=ownership.request_id)}}' method='post' enctype="multipart/form-data">
+  <input type=hidden name='reqeust_id' value='{{ownership.request_id}}'/>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+  <div class="alert {{'alert-info' if ownership.workflow_status == 'accepted' else 'alert-warning'}}" role="alert">Request is currently {{ownership.workflow_status}}
+  {% if ownership.workflow_status == 'accepted' -%}
+  <input type='submit' value='Revisit request' name='revisit'/>
+  {%- endif -%}
+</div>
 
-<div>Documents below this line have a matching submission e-mail</div>
+  {%- for paper in papers -%}
+  {{ render_paper(paper, True) }}
+  {%- endfor -%}
 
-{%- for paper in other_papers -%}
-{{ render_paper(paper, False) }}
-{%- endfor -%}
+  <div>Documents below this line have a matching submission e-mail</div>
 
+  {%- for paper in other_papers -%}
+  {{ render_paper(paper, False) }}
+  {%- endfor -%}
 
   <select name='is_author'>
     <option value="1">Author</option>
