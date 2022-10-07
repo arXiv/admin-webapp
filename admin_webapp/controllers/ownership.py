@@ -48,10 +48,10 @@ def ownership_post(data:dict) -> Response:
     if request.method == 'POST':
         admin_id = 1234 #request.auth.user.user_id
         if 'make_owner' in request.form:
-            already_ownes = set([doc.document_id for doc in oreq.user.owned_papers])
+            already_owns = set([doc.document_id for doc in oreq.user.owned_papers])
             docs_to_own = set([ int(key.split('_')[1]) for key, _ in request.form.items()
                             if key.startswith('approve_')])
-            to_add_ownership = docs_to_own - already_ownes
+            to_add_ownership = docs_to_own - already_owns
 
             is_author = 1 if request.form['is_author'] else 0
             cookie = request.cookies.get(current_app.config['CLASSIC_TRACKING_COOKIE'])
@@ -71,8 +71,8 @@ def ownership_post(data:dict) -> Response:
                             .values(workflow_status = 'accepted'))
 
             data['success']='accepted'
-            data['success_count'] = len(docs_to_own - already_ownes)
-            data['success_already_owned'] = len(docs_to_own & already_ownes)
+            data['success_count'] = len(docs_to_own - already_owns)
+            data['success_already_owned'] = len(docs_to_own & already_owns)
         elif 'reject' in request.form:
             stmt=text("""UPDATE arXiv_ownership_requests SET workflow_status='rejected'
             WHERE request_id=:reqid""")
@@ -110,7 +110,7 @@ def ownership_detail(ownership_id:int, postfn=None) -> dict:
     if not oreq:
         abort(404)
 
-    already_ownes =[paper.paper_id for paper in oreq.user.owned_papers]
+    already_owns =[paper.paper_id for paper in oreq.user.owned_papers]
     docids= [paper.paper_id for paper in oreq.documents]
     endorsement_req = oreq.endorsement_request if oreq.endorsement_request else None
     data = dict(ownership=oreq,
@@ -131,7 +131,7 @@ def ownership_detail(ownership_id:int, postfn=None) -> dict:
     other_papers = session.scalars(stmt)
     data['other_papers'] = other_papers
     for paper in oreq.documents:
-        setattr(paper, 'already_ownes', paper.paper_id in already_ownes)
+        setattr(paper, 'already_owns', paper.paper_id in already_owns)
 
     # TODO approved when user is in author list
     # TODO things related to endorsement
