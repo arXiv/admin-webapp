@@ -24,7 +24,7 @@ for use elsewhere.
 
 import random
 import io
-from typing import Dict, Mapping, Any, Optional
+from typing import Any, Mapping, Optional
 from datetime import datetime, timedelta
 from pytz import timezone, UTC
 import dateutil.parser

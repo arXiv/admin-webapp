@@ -6,7 +6,6 @@ from pytz import timezone, UTC
 
 import hashlib
 from base64 import b64encode
-import os
 
 from flask import Flask
 from werkzeug.datastructures import MultiDict

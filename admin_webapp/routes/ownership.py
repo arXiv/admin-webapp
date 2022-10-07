@@ -2,19 +2,17 @@
 
 from datetime import datetime, timedelta
 
-from flask import Blueprint, render_template, url_for, request, \
-    make_response, redirect, current_app, send_file, Response, flash
+from flask import Blueprint, render_template, request, current_app, \
+    Response
 
 from flask_sqlalchemy import Pagination
 
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
-from arxiv.base import logging
 
-from arxiv_auth.auth.decorators import scoped
 from admin_webapp.db import get_db
 
-from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, TapirUsers
+from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit
 
 blueprint = Blueprint('ownership', __name__, url_prefix='/ownership')
 

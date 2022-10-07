@@ -1,10 +1,9 @@
 """Helpers for :mod:`accounts.controllers`."""
-from typing import Dict, Any
+from typing import Any
 
 from wtforms.widgets import ListWidget, CheckboxInput, Select, \
     html_params
-from wtforms import StringField, PasswordField, SelectField, \
-    SelectMultipleField, Form
+from wtforms import SelectField, SelectMultipleField, Form
 from markupsafe import Markup
 
 class MultiCheckboxField(SelectMultipleField):
