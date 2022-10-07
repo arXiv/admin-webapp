@@ -54,7 +54,7 @@ wtforms = "*"
 
 [[package]]
 name = "arxiv-db"
-version = "0.6.0"
+version = "0.7.0"
 description = "SQLAlchemy models for arXiv DB tables"
 category = "main"
 optional = false
@@ -127,14 +127,14 @@ WTForms = "*"
 
 [[package]]
 name = "boto3"
-version = "1.24.87"
+version = "1.24.88"
 description = "The AWS SDK for Python"
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 
 [package.dependencies]
-botocore = ">=1.27.87,<1.28.0"
+botocore = ">=1.27.88,<1.28.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.6.0,<0.7.0"
 
@@ -143,7 +143,7 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.27.87"
+version = "1.27.88"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = false
@@ -1197,7 +1197,7 @@ python-versions = ">=3.6,<4.0"
 
 [[package]]
 name = "typing-extensions"
-version = "4.3.0"
+version = "4.4.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
 category = "main"
 optional = false
@@ -1287,7 +1287,7 @@ email = ["email-validator"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "44dd0a3e75cd688e33551d18a08e5b88c2895dc806bfc672250b4a4099574846"
+content-hash = "86f0065f0f3d4e264364f54a714498857fdf63d10d09b8e4f07539e6ca290b02"
 
 [metadata.files]
 amqp = [
@@ -1303,8 +1303,8 @@ arxiv-base = [
     {file = "arxiv_base-1.0.0a3-py3-none-any.whl", hash = "sha256:5343e2f9eed77cbd864ccdda9c41ef85ae8d156960b1e72d5cc6e9aa4d556ab6"},
 ]
 arxiv-db = [
-    {file = "arxiv-db-0.6.0.tar.gz", hash = "sha256:645be9dcc490ac1d0fa1a4d1d2c222ce4abc1ffe60afded699c7ca3b546c4e12"},
-    {file = "arxiv_db-0.6.0-py3-none-any.whl", hash = "sha256:86d2bb8eaf8925343e519a4340af6e277ecf55a78adc509bd0fb3dbbd90ccb20"},
+    {file = "arxiv-db-0.7.0.tar.gz", hash = "sha256:9b583e58972c1b71d054bc8470f495dca801a3c516d6718b2626c5d2a3cf9c26"},
+    {file = "arxiv_db-0.7.0-py3-none-any.whl", hash = "sha256:62bbb90a0cd66f802315b914311fc3baa48e3dc5e265094002b292ad9b7c7bb7"},
 ]
 astroid = [
     {file = "astroid-2.12.10-py3-none-any.whl", hash = "sha256:997e0c735df60d4a4caff27080a3afc51f9bdd693d3572a4a0b7090b645c36c5"},
@@ -1327,12 +1327,12 @@ Bootstrap-Flask = [
     {file = "Bootstrap_Flask-2.1.0-py2.py3-none-any.whl", hash = "sha256:52e360421aafbf117f59ed8237391b2a4c77592e35ab7b4566d4fde3b277825a"},
 ]
 boto3 = [
-    {file = "boto3-1.24.87-py3-none-any.whl", hash = "sha256:bcc579e801774cb2c7dda87ff985feda1ae7e10591d11ef37526363139138bd4"},
-    {file = "boto3-1.24.87.tar.gz", hash = "sha256:3dd7ed74d1d29dd8094a078be86ed61c45de6638fe18856f7a1ff9282b4d929e"},
+    {file = "boto3-1.24.88-py3-none-any.whl", hash = "sha256:6b4cf1cd0be65202c4cf0e4c69099bac3620bcd4049ca25a5e223c668401dd69"},
+    {file = "boto3-1.24.88.tar.gz", hash = "sha256:93934343cac76084600a520e5be70c52152364d0c410681c2e25c2290f0e151c"},
 ]
 botocore = [
-    {file = "botocore-1.27.87-py3-none-any.whl", hash = "sha256:c4cbd22056ace4c7aa99e62e8ae629865ab80cc8bbf7c6d68ccf0f768f0034b6"},
-    {file = "botocore-1.27.87.tar.gz", hash = "sha256:216de9751116d0d1cc3901e26d95a5c9a30ecb6973ae6147af1cf504858d845a"},
+    {file = "botocore-1.27.88-py3-none-any.whl", hash = "sha256:de4e087b24cd3bc369eb2e27f8fe94a6499f7dea08c919fba13cefb2496bd2bb"},
+    {file = "botocore-1.27.88.tar.gz", hash = "sha256:ded0a4035baf91eb358ef501c92a8512543f5ab7658f459df3077a70a555b5cd"},
 ]
 captcha = [
     {file = "captcha-0.4-py3-none-any.whl", hash = "sha256:529941705c01c20143d030805f82a362ba5a2af898e59426acc2c8d649ba034c"},
@@ -2107,8 +2107,8 @@ tomlkit = [
     {file = "tomlkit-0.11.5.tar.gz", hash = "sha256:571854ebbb5eac89abcb4a2e47d7ea27b89bf29e09c35395da6f03dd4ae23d1c"},
 ]
 typing-extensions = [
-    {file = "typing_extensions-4.3.0-py3-none-any.whl", hash = "sha256:25642c956049920a5aa49edcdd6ab1e06d7e5d467fc00e0506c44ac86fbfca02"},
-    {file = "typing_extensions-4.3.0.tar.gz", hash = "sha256:e6d2677a32f47fc7eb2795db1dd15c1f34eff616bcaf2cfb5e997f854fa1c4a6"},
+    {file = "typing_extensions-4.4.0-py3-none-any.whl", hash = "sha256:16fa4864408f655d35ec496218b85f79b3437c829e93320c7c9215ccfd92489e"},
+    {file = "typing_extensions-4.4.0.tar.gz", hash = "sha256:1511434bb92bf8dd198c12b1cc812e800d4181cfcb867674e0f8279cc93087aa"},
 ]
 urllib3 = [
     {file = "urllib3-1.26.12-py2.py3-none-any.whl", hash = "sha256:b930dd878d5a8afb066a637fbb35144fe7901e3b209d1cd4f524bd0e9deee997"},

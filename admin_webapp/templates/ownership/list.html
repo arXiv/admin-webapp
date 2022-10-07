@@ -22,7 +22,7 @@
     </td>
     <td>{{oreq.workflow_status}}</td>
     <td>{% if oreq.endorsement_request_id %}
-      <a href='{{url_for("endorsement.display")}}'>{{oreq.endorsement_request_id}}</a>
+      <a href='{{url_for("endorsement.request_detail", request_id=oreq.endorsement_request_id)}}'>{{oreq.endorsement_request_id}}</a>
         {%else%}None{%endif%}
     </td>
   </tr>

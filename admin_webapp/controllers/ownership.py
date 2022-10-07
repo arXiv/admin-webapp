@@ -2,6 +2,7 @@
 
 from datetime import datetime, timedelta
 import logging
+from admin_webapp.routes import endorsement
 
 from flask import Blueprint, render_template, request, \
     make_response, current_app, Response, abort
@@ -14,7 +15,7 @@ from arxiv.base import logging
 
 from arxiv_auth.auth.decorators import scoped
 
-from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, TapirUsers, Documents
+from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, TapirUsers, Documents, EndorsementRequests
 from arxiv_db.models.associative_tables import t_arXiv_paper_owners
 
 from admin_webapp.extensions import get_csrf, get_db
@@ -102,6 +103,7 @@ def ownership_detail(ownership_id:int, postfn=None) -> dict:
                 joinedload(OwnershipRequests.user).joinedload(TapirUsers.owned_papers),
                 joinedload(OwnershipRequests.request_audit),
                 joinedload(OwnershipRequests.documents),
+                joinedload(OwnershipRequests.endorsement_request).joinedload(EndorsementRequests.audit)
             )
             .where( OwnershipRequests.request_id == ownership_id))
     oreq = session.scalar(stmt)
@@ -110,13 +112,15 @@ def ownership_detail(ownership_id:int, postfn=None) -> dict:
 
     already_ownes =[paper.paper_id for paper in oreq.user.owned_papers]
     docids= [paper.paper_id for paper in oreq.documents]
+    endorsement_req = oreq.endorsement_request if oreq.endorsement_request else None
     data = dict(ownership=oreq,
-         user=oreq.user,
-         nickname= oreq.user.tapir_nicknames[0].nickname,
-         papers=oreq.documents,
-         audit=oreq.request_audit[0],
-         ownership_id=ownership_id,
-         docids = docids)
+                user=oreq.user,
+                nickname= oreq.user.tapir_nicknames[0].nickname,
+                papers=oreq.documents,
+                audit=oreq.request_audit[0],
+                ownership_id=ownership_id,
+                docids = docids,
+                endorsement_req=endorsement_req,)
 
     if postfn:
         data=postfn(data)
