@@ -3,7 +3,7 @@
   <div>
     <input type='checkbox' name='approve_{{paper.document_id}}' value=1 {{'checked=checked' if original}} />
     <a href='{{url_for("paper.detail", paper_id=paper.paper_id)}}'>{{paper.paper_id}}</a> [<a href='https://arxiv.org/abs/{{paper_id}}'>abs</a>]
-      {% if paper.already_ownes %}<span class='text-warning'>User already ownes this paper!</span>{% endif %}
+      {% if paper.already_owns %}<span class='text-warning'>User already owns this paper!</span>{% endif %}
   </div>
 
   <div>{{paper.title}}</div>
