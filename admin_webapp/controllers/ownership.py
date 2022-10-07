@@ -111,7 +111,9 @@ def ownership_detail(ownership_id:int, postfn=None) -> dict:
         abort(404)
 
     already_owns =[paper.paper_id for paper in oreq.user.owned_papers]
-    docids= [paper.paper_id for paper in oreq.documents]
+    for paper in oreq.documents:
+        setattr(paper, 'already_owns', paper.paper_id in already_owns)
+
     endorsement_req = oreq.endorsement_request if oreq.endorsement_request else None
     data = dict(ownership=oreq,
                 user=oreq.user,
@@ -119,28 +121,17 @@ def ownership_detail(ownership_id:int, postfn=None) -> dict:
                 papers=oreq.documents,
                 audit=oreq.request_audit[0],
                 ownership_id=ownership_id,
-                docids = docids,
+                docids =  [paper.paper_id for paper in oreq.documents],
                 endorsement_req=endorsement_req,)
 
     if postfn:
         data=postfn(data)
 
-    stmt=(select(Documents)
-          .filter(Documents.submitter_email.in_(set([paper.submitter_email for paper in oreq.documents])))
-          .filter(Documents.paper_id.not_in(docids)))
-    other_papers = session.scalars(stmt)
-    data['other_papers'] = other_papers
-    for paper in oreq.documents:
-        setattr(paper, 'already_owns', paper.paper_id in already_owns)
-
-    # TODO approved when user is in author list
-    # TODO things related to endorsement
     return data
 
 def ownership_listing(workflow_status:str, per_page:int, page: int,
                        days_back:int) -> dict:
     session = get_db(current_app).session
-    #session.execute(text("SET NAMES latin1"))
     report_stmt = (select(OwnershipRequests)
                    .options(joinedload(OwnershipRequests.user))
                    .filter(OwnershipRequests.workflow_status == workflow_status)

@@ -90,18 +90,11 @@
   {{ render_paper(paper, True) }}
   {%- endfor -%}
 
-  <div>Documents below this line have a matching submission e-mail</div>
-
-  {%- for paper in other_papers -%}
-  {{ render_paper(paper, False) }}
-  {%- endfor -%}
-
   <select name='is_author'>
     <option value="1">Author</option>
     <option value="2">Not Author</option>
   </select>
   <input type="submit" value="Make Owner" name="make_owner">
   <input type="submit" value="Reject" name="reject">
-  <--- These do not work yet
 </form>
 {%endblock content%}
