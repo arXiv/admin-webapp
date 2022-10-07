@@ -88,13 +88,13 @@ def create_web_app() -> Flask:
     Base(app)
     auth.Auth(app)
     s3.init_app(app)
+
     csrf.init_app(app)
-    csrf.exempt('admin_webapp.routes.ui.login')
+    csrf.exempt('admin_webapp.routes.ui.login')  # currently login lacks csrf
 
     wrap(app, [AuthMiddleware])
 
-    if not app.config['SQLALCHEMY_DATABASE_URI'] and not app.config['DEBUG']:
-        logger.error("SQLALCHEMY_DATABASE_URI is not set!")
+    settup_warnings(app)
 
     if app.config['CREATE_DB']:
         with app.app_context():
@@ -102,3 +102,11 @@ def create_web_app() -> Flask:
             legacy_create_all()
 
     return app
+
+
+def settup_warnings(app):
+    if not app.config['SQLALCHEMY_DATABASE_URI'] and not app.config['DEBUG']:
+        logger.error("SQLALCHEMY_DATABASE_URI is not set!")
+
+    if not app.config['WTF_CSRF_ENABLED'] and not(app.config['FLASK_DEBUG'] or app.config['DEBUG']):
+        logger.warning("CSRF protection is DISABLED, Do not disable CSRF in production")

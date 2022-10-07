@@ -105,6 +105,12 @@ WTF_CSRF_CHECK_DEFAULT = False
 
 Setting this to true messes up login."""
 
+WTF_CSRF_ENABLED = os.environ.get('WTF_CSRF_ENABLED', True)
+"""Enable CSRF.
+
+Do not disable in production."""
+
+
 if LOCALHOST_DEV:
     # Don't want to setup redis just for local developers
     REDIS_FAKE=True

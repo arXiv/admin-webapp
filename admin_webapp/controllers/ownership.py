@@ -69,12 +69,14 @@ def ownership_post(data:dict) -> Response:
                             .values(workflow_status = 'accepted'))
 
             data['success']='accepted'
+            # TODO data['success_count']= ?
         elif 'reject' in request.form:
             stmt=text("""UPDATE arXiv_ownership_requests SET workflow_status='rejected'
             WHERE request_id=:reqid""")
             session.execute(stmt, dict(reqid=oreq.request_id))
             data['success']='rejected'
         elif 'revisit' in request.form:
+            # A revisit does not undo the paper ownership. This the same as legacy.
             stmt=text("""UPDATE arXiv_ownership_requests SET workflow_status='pending'
             WHERE request_id=:reqid""")
             session.execute(stmt, dict(reqid=oreq.request_id))
