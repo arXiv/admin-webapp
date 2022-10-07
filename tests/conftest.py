@@ -148,6 +148,7 @@ def app(db, secret, admin_user):
     app = create_web_app()
     #app.config['CLASSIC_COOKIE_NAME'] = 'foo_tapir_session'
     #app.config['AUTH_SESSION_COOKIE_NAME'] = 'baz_session'
+    app.config['WTF_CSRF_ENABLED'] = False
     app.config['AUTH_SESSION_COOKIE_SECURE'] = '0'
     app.config['JWT_SECRET'] = "jwt_" + secret
     app.config['CLASSIC_SESSION_HASH'] = "classic_hash_" +secret
@@ -172,4 +173,5 @@ def admin_client(app, admin_user):
     assert classic_cookie_name in cookies
     client.set_cookie('', ngcookie_name, cookies[ngcookie_name]['value'])
     client.set_cookie('', classic_cookie_name, cookies[classic_cookie_name]['value'])
+    client.set_cookie('', app.config['CLASSIC_TRACKING_COOKIE'], 'fake_browser_tracking_cookie_value')
     return client

@@ -21,10 +21,10 @@ jobs:
         run: |
           poetry install
           poetry run pytest --cov=admin_webapp
-      - name: linter
-        run: |
-          pip install pylint
-          ./tests/lint.sh admin_webapp
+      # - name: linter
+      #   run: |
+      #     pip install pylint
+      #     ./tests/lint.sh admin_webapp
       - name: style check
         run: |
           pip install pydocstyle

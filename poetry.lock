@@ -54,7 +54,7 @@ wtforms = "*"
 
 [[package]]
 name = "arxiv-db"
-version = "0.4.0"
+version = "0.7.0"
 description = "SQLAlchemy models for arXiv DB tables"
 category = "main"
 optional = false
@@ -114,15 +114,27 @@ six = ">=1.9.0"
 webencodings = "*"
 
 [[package]]
+name = "Bootstrap-Flask"
+version = "2.1.0"
+description = "Bootstrap 4 & 5 helper for your Flask projects."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+Flask = "*"
+WTForms = "*"
+
+[[package]]
 name = "boto3"
-version = "1.24.86"
+version = "1.24.88"
 description = "The AWS SDK for Python"
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 
 [package.dependencies]
-botocore = ">=1.27.86,<1.28.0"
+botocore = ">=1.27.88,<1.28.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.6.0,<0.7.0"
 
@@ -131,7 +143,7 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.27.86"
+version = "1.27.88"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = false
@@ -469,6 +481,22 @@ Flask = ">=0.10"
 SQLAlchemy = ">=0.8.0"
 
 [[package]]
+name = "Flask-WTF"
+version = "1.0.1"
+description = "Form rendering, validation, and CSRF protection for Flask with WTForms."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+Flask = "*"
+itsdangerous = "*"
+WTForms = "*"
+
+[package.extras]
+email = ["email-validator"]
+
+[[package]]
 name = "greenlet"
 version = "1.1.3"
 description = "Lightweight in-process concurrent programming"
@@ -481,7 +509,7 @@ docs = ["Sphinx"]
 
 [[package]]
 name = "hypothesis"
-version = "6.56.0"
+version = "6.56.1"
 description = "A library for property-based testing"
 category = "dev"
 optional = false
@@ -1169,7 +1197,7 @@ python-versions = ">=3.6,<4.0"
 
 [[package]]
 name = "typing-extensions"
-version = "4.3.0"
+version = "4.4.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
 category = "main"
 optional = false
@@ -1259,7 +1287,7 @@ email = ["email-validator"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "3c046c355ed144ab286a568be6095a483d7be5921fba7258e79e168c8f27b119"
+content-hash = "86f0065f0f3d4e264364f54a714498857fdf63d10d09b8e4f07539e6ca290b02"
 
 [metadata.files]
 amqp = [
@@ -1275,8 +1303,8 @@ arxiv-base = [
     {file = "arxiv_base-1.0.0a3-py3-none-any.whl", hash = "sha256:5343e2f9eed77cbd864ccdda9c41ef85ae8d156960b1e72d5cc6e9aa4d556ab6"},
 ]
 arxiv-db = [
-    {file = "arxiv-db-0.4.0.tar.gz", hash = "sha256:a67d7ed566ef1d65d2b0c90f8f27eceb1bd8980878afd4ded91f124621a27e63"},
-    {file = "arxiv_db-0.4.0-py3-none-any.whl", hash = "sha256:1dcac3e4c9c6a8a3780917a263dc4ae1334f19c0047fd4c2ad13671ef1158de9"},
+    {file = "arxiv-db-0.7.0.tar.gz", hash = "sha256:9b583e58972c1b71d054bc8470f495dca801a3c516d6718b2626c5d2a3cf9c26"},
+    {file = "arxiv_db-0.7.0-py3-none-any.whl", hash = "sha256:62bbb90a0cd66f802315b914311fc3baa48e3dc5e265094002b292ad9b7c7bb7"},
 ]
 astroid = [
     {file = "astroid-2.12.10-py3-none-any.whl", hash = "sha256:997e0c735df60d4a4caff27080a3afc51f9bdd693d3572a4a0b7090b645c36c5"},
@@ -1294,13 +1322,17 @@ bleach = [
     {file = "bleach-3.3.1-py2.py3-none-any.whl", hash = "sha256:ae976d7174bba988c0b632def82fdc94235756edfb14e6558a9c5be555c9fb78"},
     {file = "bleach-3.3.1.tar.gz", hash = "sha256:306483a5a9795474160ad57fce3ddd1b50551e981eed8e15a582d34cef28aafa"},
 ]
+Bootstrap-Flask = [
+    {file = "Bootstrap-Flask-2.1.0.tar.gz", hash = "sha256:dc4f9c463727f3a59a6bfb17b7f9d13fd07646ba852f94285542c6a1e4e457e3"},
+    {file = "Bootstrap_Flask-2.1.0-py2.py3-none-any.whl", hash = "sha256:52e360421aafbf117f59ed8237391b2a4c77592e35ab7b4566d4fde3b277825a"},
+]
 boto3 = [
-    {file = "boto3-1.24.86-py3-none-any.whl", hash = "sha256:c1d4e5d73d7720402c6538965efd6df5807492db8a71f30221dc11355d06db05"},
-    {file = "boto3-1.24.86.tar.gz", hash = "sha256:59e9c39c867b5fd0575a50d8fafdf72c823c5510254a8615dff24f1584408121"},
+    {file = "boto3-1.24.88-py3-none-any.whl", hash = "sha256:6b4cf1cd0be65202c4cf0e4c69099bac3620bcd4049ca25a5e223c668401dd69"},
+    {file = "boto3-1.24.88.tar.gz", hash = "sha256:93934343cac76084600a520e5be70c52152364d0c410681c2e25c2290f0e151c"},
 ]
 botocore = [
-    {file = "botocore-1.27.86-py3-none-any.whl", hash = "sha256:830359c8bf22f2a386431825060ff9666519c032f2ccd4a69f1a702f7195f6c0"},
-    {file = "botocore-1.27.86.tar.gz", hash = "sha256:dcfe1825b84d17cf11653f8bb4bc77c2f172dcec1dc68eee932d68e5e6ed89d5"},
+    {file = "botocore-1.27.88-py3-none-any.whl", hash = "sha256:de4e087b24cd3bc369eb2e27f8fe94a6499f7dea08c919fba13cefb2496bd2bb"},
+    {file = "botocore-1.27.88.tar.gz", hash = "sha256:ded0a4035baf91eb358ef501c92a8512543f5ab7658f459df3077a70a555b5cd"},
 ]
 captcha = [
     {file = "captcha-0.4-py3-none-any.whl", hash = "sha256:529941705c01c20143d030805f82a362ba5a2af898e59426acc2c8d649ba034c"},
@@ -1521,6 +1553,10 @@ flask-sqlalchemy = [
     {file = "Flask-SQLAlchemy-2.5.1.tar.gz", hash = "sha256:2bda44b43e7cacb15d4e05ff3cc1f8bc97936cc464623424102bfc2c35e95912"},
     {file = "Flask_SQLAlchemy-2.5.1-py2.py3-none-any.whl", hash = "sha256:f12c3d4cc5cc7fdcc148b9527ea05671718c3ea45d50c7e732cceb33f574b390"},
 ]
+Flask-WTF = [
+    {file = "Flask-WTF-1.0.1.tar.gz", hash = "sha256:34fe5c6fee0f69b50e30f81a3b7ea16aa1492a771fe9ad0974d164610c09a6c9"},
+    {file = "Flask_WTF-1.0.1-py3-none-any.whl", hash = "sha256:9d733658c80be551ce7d5bc13c7a7ac0d80df509be1e23827c847d9520f4359a"},
+]
 greenlet = [
     {file = "greenlet-1.1.3-cp27-cp27m-macosx_10_14_x86_64.whl", hash = "sha256:8c287ae7ac921dfde88b1c125bd9590b7ec3c900c2d3db5197f1286e144e712b"},
     {file = "greenlet-1.1.3-cp27-cp27m-manylinux1_x86_64.whl", hash = "sha256:870a48007872d12e95a996fca3c03a64290d3ea2e61076aa35d3b253cf34cd32"},
@@ -1578,8 +1614,8 @@ greenlet = [
     {file = "greenlet-1.1.3.tar.gz", hash = "sha256:bcb6c6dd1d6be6d38d6db283747d07fda089ff8c559a835236560a4410340455"},
 ]
 hypothesis = [
-    {file = "hypothesis-6.56.0-py3-none-any.whl", hash = "sha256:dc3a296f1c23fc402ec50a3d90785fcf4a6290156ad4c97e23b0f972b0c3e32c"},
-    {file = "hypothesis-6.56.0.tar.gz", hash = "sha256:38ac02dba2801e26b964da57950cbc574fb22a3e16951c227150282b986ed002"},
+    {file = "hypothesis-6.56.1-py3-none-any.whl", hash = "sha256:df01b518d3c79c34ca5a15462af5407d1e73dd2d7003d374299dddb195aa155d"},
+    {file = "hypothesis-6.56.1.tar.gz", hash = "sha256:cefdaf6143170f1aa28adf4816d12547ab60f93c143f7d5205507d9e4804fccd"},
 ]
 idna = [
     {file = "idna-3.4-py3-none-any.whl", hash = "sha256:90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2"},
@@ -2071,8 +2107,8 @@ tomlkit = [
     {file = "tomlkit-0.11.5.tar.gz", hash = "sha256:571854ebbb5eac89abcb4a2e47d7ea27b89bf29e09c35395da6f03dd4ae23d1c"},
 ]
 typing-extensions = [
-    {file = "typing_extensions-4.3.0-py3-none-any.whl", hash = "sha256:25642c956049920a5aa49edcdd6ab1e06d7e5d467fc00e0506c44ac86fbfca02"},
-    {file = "typing_extensions-4.3.0.tar.gz", hash = "sha256:e6d2677a32f47fc7eb2795db1dd15c1f34eff616bcaf2cfb5e997f854fa1c4a6"},
+    {file = "typing_extensions-4.4.0-py3-none-any.whl", hash = "sha256:16fa4864408f655d35ec496218b85f79b3437c829e93320c7c9215ccfd92489e"},
+    {file = "typing_extensions-4.4.0.tar.gz", hash = "sha256:1511434bb92bf8dd198c12b1cc812e800d4181cfcb867674e0f8279cc93087aa"},
 ]
 urllib3 = [
     {file = "urllib3-1.26.12-py2.py3-none-any.whl", hash = "sha256:b930dd878d5a8afb066a637fbb35144fe7901e3b209d1cd4f524bd0e9deee997"},
