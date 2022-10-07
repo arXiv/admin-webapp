@@ -26,20 +26,20 @@ def display() -> Response:
 
 @blueprint.route('/pending', methods=['GET'])
 def pending() -> Response:
-    """Pending ownership reqeusts."""
+    """Pending ownership requests."""
     args = request.args
     per_page = args.get('per_page', default=12, type=int)
     page = args.get('page', default=1, type=int)
 
     data = _ownership_listing('pending', per_page, page, 0)
-    data['title'] = "Ownership Reqeusts: Pending"
+    data['title'] = "Ownership Requests: Pending"
     return render_template('ownership/requests.html',
                            **data)
 
 
 @blueprint.route('/accepted', methods=['GET'])
 def accepted() -> Response:
-    """Accepted ownership reqeusts."""
+    """Accepted ownership requests."""
     args = request.args
     per_page = args.get('per_page', default=12, type=int)
     page = args.get('page', default=1, type=int)
