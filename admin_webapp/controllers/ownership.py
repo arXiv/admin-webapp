@@ -42,20 +42,23 @@ def ownership_post(data:dict) -> Response:
 
     Note: This doesn't do "bulk" mode
     """
+    print(request.form)
     session = get_db(current_app).session
     oreq = data['ownership']
     if request.method == 'POST':
         get_csrf(current_app).protect()
         admin_id = 1234 #request.auth.user.user_id
-
         if 'make_owner' in request.form:
-            docs_to_own = [ key.split('_')[1] for key, _ in request.form.items()
-                            if key.startswith('approve_')]
+            already_ownes = set([doc.document_id for doc in oreq.user.owned_papers])
+            docs_to_own = set([ int(key.split('_')[1]) for key, _ in request.form.items()
+                            if key.startswith('approve_')])
+            to_add_ownership = docs_to_own - already_ownes
+
             is_author = 1 if request.form['is_author'] else 0
             cookie = request.cookies.get(current_app.config['CLASSIC_TRACKING_COOKIE'])
             now = int(datetime.now().astimezone(current_app.config['ARXIV_BUSINESS_TZ']).timestamp())
 
-            for doc_id in docs_to_own:
+            for doc_id in to_add_ownership:
                 stmt = insert(t_arXiv_paper_owners).values(
                     document_id=doc_id, user_id=oreq.user.user_id, date=now,
                     added_by=admin_id, remote_addr=request.remote_addr, tracking_cookie=cookie,
@@ -69,7 +72,8 @@ def ownership_post(data:dict) -> Response:
                             .values(workflow_status = 'accepted'))
 
             data['success']='accepted'
-            # TODO data['success_count']= ?
+            data['success_count'] = len(docs_to_own - already_ownes)
+            data['success_already_owned'] = len(docs_to_own & already_ownes)
         elif 'reject' in request.form:
             stmt=text("""UPDATE arXiv_ownership_requests SET workflow_status='rejected'
             WHERE request_id=:reqid""")

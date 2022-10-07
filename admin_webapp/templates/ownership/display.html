@@ -14,6 +14,17 @@
 
 {%- extends "base.html" -%}
 {%block content%}
+{% if success %}
+<div class="alert alert-success" role="alert">
+  Ownership request {{success}},
+  {% if success_count is defined and success_count >0 %}owner of {{success_count}} papers.{% endif %}
+  {% if success_count is defined and success_count == 0 %}Set ownership on {{success_count}} papers.
+    {% if success_already_owned > 0 %}{{success_already_owned}} were already owned.{% endif %}
+  {% endif %}
+  Continue to <a href='{{url_for('ownership.pending')}}'>pending</a>
+</div>
+{% endif %}
+
 <h1>
   {{nickname}} wants to claim ownership of
   {%- for paper in papers %}
@@ -21,12 +32,6 @@
   {% if not loop.last %} and {% endif %}
   {%- endfor -%}
 </h1>
-
-{% if success %}
-<div class="alert alert-success" role="alert">
-  Ownership request {{success}}. Continue to TODO
-</div>
-{% endif %}
 
 <div class='row user'>
   <div class='column'>
