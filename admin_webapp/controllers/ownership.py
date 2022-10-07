@@ -42,11 +42,9 @@ def ownership_post(data:dict) -> Response:
 
     Note: This doesn't do "bulk" mode
     """
-    print(request.form)
     session = get_db(current_app).session
     oreq = data['ownership']
     if request.method == 'POST':
-        get_csrf(current_app).protect()
         admin_id = 1234 #request.auth.user.user_id
         if 'make_owner' in request.form:
             already_ownes = set([doc.document_id for doc in oreq.user.owned_papers])

@@ -173,4 +173,5 @@ def admin_client(app, admin_user):
     assert classic_cookie_name in cookies
     client.set_cookie('', ngcookie_name, cookies[ngcookie_name]['value'])
     client.set_cookie('', classic_cookie_name, cookies[classic_cookie_name]['value'])
+    client.set_cookie('', app.config['CLASSIC_TRACKING_COOKIE'], 'fake_browser_tracking_cookie_value')
     return client

@@ -90,7 +90,8 @@ def create_web_app() -> Flask:
     s3.init_app(app)
 
     csrf.init_app(app)
-    csrf.exempt('admin_webapp.routes.ui.login')  # currently login lacks csrf
+    [csrf.exempt(view.strip())
+     for view in app.config['WTF_CSRF_EXEMPT'].split(',')]
 
     wrap(app, [AuthMiddleware])
 

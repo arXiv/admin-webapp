@@ -100,16 +100,18 @@ AUTH_UPDATED_SESSION_REF = True # see ARXIVNG-1920
 LOCALHOST_DEV = os.environ.get('LOCALHOST_DEV', False)
 """Enables a set of config vars that facilites development on localhost"""
 
-WTF_CSRF_CHECK_DEFAULT = False
-"""Don't do CSRF by default on every POST.
 
-Setting this to true messes up login."""
 
 WTF_CSRF_ENABLED = os.environ.get('WTF_CSRF_ENABLED', True)
 """Enable CSRF.
 
 Do not disable in production."""
 
+WTF_CSRF_EXEMPT = os.environ.get('WTF_CSRF_EXEMPT',
+                                 '''admin_webapp.routes.ui.login,admin_webapp.routes.ui.logout''')
+"""Comma seperted list of views to not do CSRF protection on.
+
+Login and logout lack the setup for this."""
 
 if LOCALHOST_DEV:
     # Don't want to setup redis just for local developers

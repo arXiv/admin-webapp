@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
-from sqlalchemy import insert
+from sqlalchemy import insert, select
 from flask import url_for
 import pytest
 
@@ -102,5 +102,53 @@ def test_get_detailed_report(admin_client, fake_ownerships):
     resp = admin_client.get(url_for('ownership.display', ownership_id = fake_ownerships[2]))
     assert resp.status_code == 200
 
-def test_change_to_accepted(admin_client, fake_ownerships, db):
-    pass
+    resp = admin_client.get(url_for('ownership.display', ownership_id = 0))
+    assert resp.status_code == 404
+
+def test_edits(admin_client, fake_ownerships, db):
+    with Session(db) as session:
+        oreq = session.execute(select(OwnershipRequests).where(OwnershipRequests.user_id==246231,OwnershipRequests.workflow_status=='pending')).scalar()
+        request_id = oreq.request_id
+        assert oreq
+        resp = admin_client.post(url_for('ownership.display', ownership_id=oreq.request_id),
+                            data = dict(request_id=request_id,
+                                        make_owner='make owner',
+                                        approve_1111=1,
+                                        is_author=1)
+                            )
+        assert resp.status_code == 200
+        session.expire(oreq)
+        assert oreq and oreq.workflow_status == 'accepted'
+
+        resp = admin_client.post(url_for('ownership.display', ownership_id=oreq.request_id),
+                            data = dict(request_id=request_id,
+                                        revisit='revisit',
+                                        approve_1111=1,
+                                        is_author=1)
+                            )
+        assert resp.status_code == 200
+        session.expire(oreq)
+        assert oreq and oreq.workflow_status == 'pending'
+
+        resp = admin_client.post(url_for('ownership.display', ownership_id=oreq.request_id),
+                            data = dict(request_id=request_id,
+                                        reject='reject',
+                                        approve_1111=1,
+                                        is_author=1)
+                            )
+        assert resp.status_code == 200
+        session.expire(oreq)
+        assert oreq and oreq.workflow_status == 'rejected'
+
+
+        resp = admin_client.post(url_for('ownership.display', ownership_id=oreq.request_id),
+                            data = dict(request_id=request_id,
+                                        no_action='no defined submit actions for form')
+                            )
+        assert resp.status_code == 400
+
+        resp = admin_client.post(url_for('ownership.display', ownership_id=0),
+                                 data = dict(request_id=request_id,
+                                             make_owner='1')
+                                 )
+        assert resp.status_code == 404
