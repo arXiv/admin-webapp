@@ -12,6 +12,7 @@ blueprint = Blueprint('ownership', __name__, url_prefix='/ownership')
 
 @blueprint.route('/<int:ownership_id>', methods=['GET', 'POST'])
 def display(ownership_id:int) -> Response:
+    """Displays a ownership request."""
     if request.method == 'GET':
         return render_template('ownership/display.html',**ownership_detail(ownership_id, None))
     elif request.method == 'POST':

@@ -2,7 +2,7 @@
 
 import logging
 
-from flask import Flask
+from flask import Flask, current_app
 from flask_s3 import FlaskS3
 from flask_bootstrap import Bootstrap5
 
@@ -15,7 +15,7 @@ from arxiv_auth import auth
 from arxiv_auth.auth.middleware import AuthMiddleware
 from arxiv_auth.auth.sessions import SessionStore
 from arxiv_auth.legacy.util import init_app as legacy_init_app
-from arxiv_auth.legacy.util import create_all as legacy_create_all
+#from arxiv_auth.legacy.util import create_all as legacy_create_all
 
 from flask_sqlalchemy import SQLAlchemy
 
@@ -77,7 +77,7 @@ def create_web_app() -> Flask:
     SessionStore.init_app(app)
     legacy_init_app(app)
 
-    SQLAlchemy(app, metadata=arxiv_db.Base.metadata)
+    db = SQLAlchemy(app, metadata=arxiv_db.Base.metadata)
 
     app.register_blueprint(ui.blueprint)
     app.register_blueprint(ownership.blueprint)
@@ -95,17 +95,67 @@ def create_web_app() -> Flask:
 
     wrap(app, [AuthMiddleware])
 
-    settup_warnings(app)
+    _settup_warnings(app)
 
     if app.config['CREATE_DB']:
         with app.app_context():
             print("About to create the legacy DB")
-            legacy_create_all()
+            #legacy_create_all()
+            from datetime import datetime, timedelta
+            from sqlalchemy.orm import Session
+            from sqlalchemy import insert, select
+            from flask import url_for
+            from arxiv_db.models import Endorsements, EndorsementRequests, Demographics, TapirUsers
+            from .extensions import get_db
+            from arxiv_db import test_load_db_file, models
+            from arxiv_db.tables import arxiv_tables
+            arxiv_tables.metadata.create_all(bind=db.engine)
+
+            session = db.session
+            SQL_DATA_FILE = './tests/data/data.sql'
+            test_load_db_file(db.engine, SQL_DATA_FILE)
+            endorser = TapirUsers(first_name='Sally', last_name='LongCareer', policy_class=2, email='slc234@cornell.edu')
+            session.add(endorser)
+            endorsee = TapirUsers(first_name='Aspen', last_name='Early', policy_class=2, email='ase12@cornell.edu')
+            session.add(endorsee)
+            endorsee_sus = TapirUsers(first_name='Bobby', last_name='NoPapers', policy_class=2, email='bob@scamy.example.com')
+            endorsee_sus.demographics = Demographics(flag_suspect=1, archive='cs', subject_class='CR')
+            session.add(endorsee_sus)
+
+            req1 = EndorsementRequests(endorsee=endorsee,
+                                    secret='end_sec_0',
+                                    archive='cs', subject_class='CR',
+                                    issued_when=datetime.now(),
+                                    flag_valid=1, point_value=10)
+            req1.endorsement = Endorsements(endorser=endorser, endorsee=endorsee,                                     archive='cs', subject_class='CR',)
+
+            req2 = EndorsementRequests(endorsee=endorsee_sus,
+                                    secret='end_sec_1',
+                                    archive='cs', subject_class='CR',
+                                    issued_when=datetime.now(),
+                                    flag_valid=1, point_value=10)
+            req2.endorsement = Endorsements(endorser=endorser,                   endorsee=endorsee_sus    ,              archive='cs', subject_class='CR',)
+
+            req3 = EndorsementRequests(endorsee=endorsee,
+                                    secret='end_sec_2',
+                                    archive='cs', subject_class='CV',
+                                    issued_when=datetime.now(),
+                                    flag_valid=1, point_value=-10)
+            req3.endorsement = Endorsements(endorser=endorser, endorsee=endorsee         ,                            archive='cs', subject_class='CV')
+
+            req4 = EndorsementRequests(endorsee=endorsee,
+                                    secret='end_sec_3',
+                                    archive='cs', subject_class='DL',
+                                    issued_when=datetime.now() - timedelta(days=4),
+                                    flag_valid=1, point_value=10)
+            req4.endorsement = Endorsements(endorser=endorser,                  endorsee=endorsee  ,                 archive='cs', subject_class='DL')
+
+            session.commit()
 
     return app
 
 
-def settup_warnings(app):
+def _settup_warnings(app):
     if not app.config['SQLALCHEMY_DATABASE_URI'] and not app.config['DEBUG']:
         logger.error("SQLALCHEMY_DATABASE_URI is not set!")
 
