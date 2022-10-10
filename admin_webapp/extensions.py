@@ -9,5 +9,5 @@ def get_db(app:Flask) -> SQLAlchemy:
     return app.extensions['sqlalchemy'].db
 
 def get_csrf(app:Flask) -> CSRFProtect:
-    """Gets CSRF for the app"""
+    """Gets CSRF for the app."""
     return app.extensions['csrf']

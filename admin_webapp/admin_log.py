@@ -1,3 +1,5 @@
+"""Functions to write to the Admin log."""
+
 from datetime import datetime
 from typing import Literal, Union
 

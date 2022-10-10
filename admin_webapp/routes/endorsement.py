@@ -7,7 +7,7 @@ from flask_sqlalchemy import Pagination
 from sqlalchemy import select, func
 from sqlalchemy.orm import joinedload
 
-from flask import Blueprint, render_template, Response, request, current_app
+from flask import Blueprint, render_template, Response, request, current_app, abort
 
 from arxiv_db.models import EndorsementRequests, Endorsements, TapirUsers, Demographics
 
@@ -43,11 +43,10 @@ def endorsement_listing(report_type:str, per_page:int, page: int, days_back:int,
         report_stmt = report_stmt.filter(EndorsementRequests.point_value <= 0)
         count_stmt = count_stmt.filter(EndorsementRequests.point_value <= 0)
 
-    if not days_back:
-        if report_type == 'today':
-            days_back = 1
-        if report_type == 'last_week':
-            days_back = 7
+    if report_type == 'today':
+        days_back = 1
+    elif not days_back:
+        days_back = 7
 
     window = datetime.now() - timedelta(days=days_back)
     report_stmt = report_stmt.filter(EndorsementRequests.issued_when > window)
@@ -62,23 +61,26 @@ def endorsement_listing(report_type:str, per_page:int, page: int, days_back:int,
 
 @blueprint.route('/requests/today', methods=['GET'])
 def today() -> Response:
+    """Reports todays endorsement requests."""
     args = request.args
     per_page = args.get('per_page', default=12, type=int)
     page = args.get('page', default=1, type=int)
     flagged = args.get('flagged', default=0, type=int)
-    days_back = args.get('days_back', default=7, type=int)
-    data = endorsement_listing('today', per_page, page, days_back, flagged)
+    _check_report_args(per_page, page, 0, flagged)
+    data = endorsement_listing('today', per_page, page, 0, flagged)
     data['title'] = "Today's Endorsement Requests"
     return render_template('endorsement/list.html', **data)
 
 
 @blueprint.route('/requests/last_week', methods=['GET'])
 def last_week() -> Response:
+    """Reports last 7 days endorsement requests."""
     args = request.args
     per_page = args.get('per_page', default=12, type=int)
     page = args.get('page', default=1, type=int)
     flagged = args.get('flagged', default=0, type=int)
     days_back = args.get('days_back', default=7, type=int)
+    _check_report_args(per_page, page, days_back, flagged)
     data = endorsement_listing('last_week', per_page, page, days_back, flagged)
     data['title'] = f"Endorsement Requests Last {days_back} Days"
     return render_template('endorsement/list.html', **data)
@@ -86,10 +88,23 @@ def last_week() -> Response:
 
 @blueprint.route('/requests/negative', methods=['GET'])
 def negative() -> Response:
+    """Reports non-positive scored  endorsement requests for last 7 days."""
     args = request.args
     per_page = args.get('per_page', default=12, type=int)
     page = args.get('page', default=1, type=int)
     days_back = args.get('days_back', default=7, type=int)
+    _check_report_args(per_page, page, days_back, 0)
     data = endorsement_listing('negative', per_page, page, days_back, False, not_positive=1)
     data['title'] = "Negative Endorsement Requests"
     return render_template('endorsement/list.html', **data)
+
+
+def _check_report_args(per_page, page, days_back, flagged):
+    if per_page > 1000:
+        abort(400)
+    if page > 10000:
+        abort(400)
+    if days_back > 365 * 10:
+        abort(400)
+    if flagged not in [1, 0]:
+        abort(400)

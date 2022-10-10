@@ -92,9 +92,7 @@ def ownership_post(data:dict) -> Response:
 
 @blueprint.route('/<int:ownership_id>', methods=['GET', 'POST'])
 def ownership_detail(ownership_id:int, postfn=None) -> dict:
-    """Display a ownership request.
-
-    """
+    """Display a ownership request."""
     session = get_db(current_app).session
     stmt = (select(OwnershipRequests)
             .options(
@@ -130,6 +128,7 @@ def ownership_detail(ownership_id:int, postfn=None) -> dict:
 
 def ownership_listing(workflow_status:str, per_page:int, page: int,
                        days_back:int) -> dict:
+    """Gets the data for ownership reports."""
     session = get_db(current_app).session
     report_stmt = (select(OwnershipRequests)
                    .options(joinedload(OwnershipRequests.user))
