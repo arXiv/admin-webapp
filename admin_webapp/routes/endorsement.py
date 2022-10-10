@@ -68,7 +68,7 @@ def today() -> Response:
     flagged = args.get('flagged', default=0, type=int)
     _check_report_args(per_page, page, 0, flagged)
     data = endorsement_listing('today', per_page, page, 0, flagged)
-    data['title'] = "Today's Endorsement Requests"
+    data['title'] = f"Today's {'Flagged ' if flagged else ''}Endorsement Requests"
     return render_template('endorsement/list.html', **data)
 
 
@@ -82,7 +82,7 @@ def last_week() -> Response:
     days_back = args.get('days_back', default=7, type=int)
     _check_report_args(per_page, page, days_back, flagged)
     data = endorsement_listing('last_week', per_page, page, days_back, flagged)
-    data['title'] = f"Endorsement Requests Last {days_back} Days"
+    data['title'] = f"Endorsement {'Flagged ' if flagged else ''}Requests Last {days_back} Days"
     return render_template('endorsement/list.html', **data)
 
 
