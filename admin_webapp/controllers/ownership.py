@@ -2,15 +2,14 @@
 
 from datetime import datetime, timedelta
 import logging
-from admin_webapp.routes import endorsement
 
-from flask import Blueprint, render_template, request, \
-    make_response, current_app, Response, abort
+from flask import Blueprint, request, \
+    current_app, Response, abort
 
 from flask_sqlalchemy import Pagination
 
 from sqlalchemy import select, func, text, insert, update
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload
 from arxiv.base import logging
 
 from arxiv_auth.auth.decorators import scoped
@@ -18,7 +17,7 @@ from arxiv_auth.auth.decorators import scoped
 from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, TapirUsers, Documents, EndorsementRequests
 from arxiv_db.models.associative_tables import t_arXiv_paper_owners
 
-from admin_webapp.extensions import get_csrf, get_db
+from admin_webapp.extensions import get_db
 from admin_webapp.admin_log import audit_admin
 
 logger = logging.getLogger(__file__)
