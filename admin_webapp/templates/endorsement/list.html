@@ -21,7 +21,7 @@
   </tr>
   {%for row in endorsements%}
   <tr>
-    <td><a href='{{url_for("endorsement.request_detail", endorsement_req_id=row.request_id)}}'>{{row.request_id}}</a></td>f
+    <td><a href='{{url_for("endorsement.request_detail", endorsement_req_id=row.request_id)}}'>{{row.request_id}}</a></td>
 
     <td>
       {% if row.endorsement and row.endorsement.endorser %}

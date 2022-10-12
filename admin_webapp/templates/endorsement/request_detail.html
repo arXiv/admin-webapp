@@ -27,7 +27,7 @@
 
 <tr><td>Valid?:</td><td> {{ yn(endo_req.flag_valid) }}  {{flipbtn(url_for('endorsement.flip_valid', endorsement_req_id=endo_req.request_id))}}</td></tr>
 
-<tr><td>Positive?:</td><td> {{ yn( endo_req.point_value)}} {{ flipbtn(url_for('endorsement.flip_positive', endorsement_req_id=endo_req.request_id))}} </td></tr>
+<tr><td>Positive?:</td><td> {{ yn( endo_req.endorsement.point_value)}} {{ flipbtn(url_for('endorsement.flip_score', endorsement_req_id=endo_req.request_id))}} </td></tr>
 
 <tr><td>Knows Personally?:</td><td> {{ yn( endo_req.audit.flag_knows_personally ) }}</td></tr>
 <tr><td>  Has Seen Paper?:</td><td> {{ yn(endo_req.audit.flag_seen_paper ) }}</td></tr>
