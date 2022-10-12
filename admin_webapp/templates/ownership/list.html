@@ -17,12 +17,12 @@
   {%for oreq in ownership_requests%}
   <tr>
     <td><a href='{{url_for("ownership.display", ownership_id=oreq.request_id)}}'>{{oreq.request_id}}</a></td>
-    <td><a href='{{url_for("user.display", id=oreq.user_id)}}'>
+    <td><a href='{{url_for("user.detail", user_id=oreq.user_id)}}'>
         {{oreq.user.first_name}} {{oreq.user.last_name}}</a>
     </td>
     <td>{{oreq.workflow_status}}</td>
     <td>{% if oreq.endorsement_request_id %}
-      <a href='{{url_for("endorsement.request_detail", request_id=oreq.endorsement_request_id)}}'>{{oreq.endorsement_request_id}}</a>
+      <a href='{{url_for("endorsement.request_detail", endorsement_req_id=oreq.endorsement_request_id)}}'>{{oreq.endorsement_request_id}}</a>
         {%else%}None{%endif%}
     </td>
   </tr>

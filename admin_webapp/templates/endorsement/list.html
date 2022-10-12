@@ -21,17 +21,17 @@
   </tr>
   {%for row in endorsements%}
   <tr>
-    <td><a href='{{url_for("endorsement.request_detail", endorsement_id=row.request_id)}}'>{{row.request_id}}</a></td>
+    <td><a href='{{url_for("endorsement.request_detail", endorsement_req_id=row.request_id)}}'>{{row.request_id}}</a></td>f
 
     <td>
       {% if row.endorsement and row.endorsement.endorser %}
-      <a href='{{url_for("user.display", id=row.endorsement.endorser.user_id)}}'>
+      <a href='{{url_for("user.detail", user_id=row.endorsement.endorser.user_id)}}'>
         {{row.endorsement.endorser.first_name}} {{row.endorsement.endorser.last_name}}</a>
       {% else %}
       (missing)
       {% endif %}
     </td>
-    <td><a href='{{url_for("user.display", id=row.endorsee_id)}}'>
+    <td><a href='{{url_for("user.detail", user_id=row.endorsee_id)}}'>
         {{row.endorsee.first_name}} {{row.endorsee.last_name}}</a>
     </td>
     <td>

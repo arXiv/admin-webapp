@@ -8,7 +8,7 @@ from arxiv_db.models import Endorsements, EndorsementRequests, Demographics, Tap
 
 
 @pytest.fixture(scope='session')
-def fake_ownerships(db):
+def fake_endorsements(db):
      with Session(db) as session:
          endorser = TapirUsers(first_name='Sally', last_name='LongCareer', policy_class=2, email='slc234@cornell.edu')
          session.add(endorser)
@@ -57,45 +57,62 @@ def fake_ownerships(db):
          def as_html_parts(id):
              return f">{id}</a>";
 
-         return dict(negative=as_html_parts(req3.request_id),
-                     older=as_html_parts(req4.request_id),
-                     flagged=as_html_parts(req2.request_id),
-                     today=as_html_parts(req1.request_id),
+         return dict(negative=dict(id=req3.request_id,html=as_html_parts(req3.request_id)),
+                     older=dict(id=req4.request_id,html=as_html_parts(req4.request_id)),
+                     flagged=dict(id=req2.request_id,html=as_html_parts(req2.request_id)),
+                     today=dict(id=req1.request_id,html=as_html_parts(req1.request_id)),
                      )
 
 
-def test_endorsement_reports(admin_client, fake_ownerships):
+def test_endorsement_reports(admin_client, fake_endorsements):
     resp = admin_client.get(url_for('endorsement.today', flagged=1))
     assert resp.status_code == 200
     txt = resp.data.decode()
-    assert fake_ownerships['negative'] not in txt
-    assert fake_ownerships['flagged'] in txt
-    assert fake_ownerships['today'] not in txt
-    assert fake_ownerships['older'] not in txt
+    assert fake_endorsements['negative']['html'] not in txt
+    assert fake_endorsements['flagged']['html'] in txt
+    assert fake_endorsements['today']['html'] not in txt
+    assert fake_endorsements['older']['html'] not in txt
 
     resp = admin_client.get(url_for('endorsement.last_week'))
     assert resp.status_code == 200
     txt = resp.data.decode()
-    assert fake_ownerships['negative'] in txt
-    assert fake_ownerships['flagged'] in txt
-    assert fake_ownerships['today'] in txt
-    assert fake_ownerships['older'] in txt
+    assert fake_endorsements['negative']['html'] in txt
+    assert fake_endorsements['flagged']['html'] in txt
+    assert fake_endorsements['today']['html'] in txt
+    assert fake_endorsements['older']['html'] in txt
 
     resp = admin_client.get(url_for('endorsement.negative'))
     assert resp.status_code == 200
     txt = resp.data.decode()
-    assert fake_ownerships['negative'] in txt
-    assert fake_ownerships['flagged'] not in txt
-    assert fake_ownerships['today'] not in txt
-    assert fake_ownerships['older'] not in txt
+    assert fake_endorsements['negative']['html'] in txt
+    assert fake_endorsements['flagged']['html'] not in txt
+    assert fake_endorsements['today']['html'] not in txt
+    assert fake_endorsements['older']['html'] not in txt
 
     resp = admin_client.get(url_for('endorsement.today'))
     assert resp.status_code == 200
     txt = resp.data.decode()
-    assert fake_ownerships['negative'] in txt
-    assert fake_ownerships['flagged'] in txt
-    assert fake_ownerships['today'] in txt
-    assert fake_ownerships['older'] not in txt
+    assert fake_endorsements['negative']['html'] in txt
+    assert fake_endorsements['flagged']['html'] in txt
+    assert fake_endorsements['today']['html'] in txt
+    assert fake_endorsements['older']['html'] not in txt
+
+def test_endorsement_detail(admin_client, fake_endorsements):
+    resp = admin_client.get(url_for('endorsement.request_detail', endorsement_req_id=0))
+    assert resp.status_code == 404
+
+    resp = admin_client.get(url_for('endorsement.request_detail', endorsement_req_id=fake_endorsements['today']['id']))
+    assert resp.status_code == 200
+
+    resp = admin_client.get(url_for('endorsement.request_detail', endorsement_req_id=fake_endorsements['flagged']['id']))
+    assert resp.status_code == 200
+
+    resp = admin_client.get(url_for('endorsement.request_detail', endorsement_req_id=fake_endorsements['older']['id']))
+    assert resp.status_code == 200
+
+    resp = admin_client.get(url_for('endorsement.request_detail', endorsement_req_id=fake_endorsements['negative']['id']))
+    assert resp.status_code == 200
+
 
 def test_bad(admin_client):
     admin_client.get(url_for('endorsement.today', flagged=99)).status_code == 400
