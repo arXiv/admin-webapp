@@ -54,7 +54,7 @@ wtforms = "*"
 
 [[package]]
 name = "arxiv-db"
-version = "0.8.0"
+version = "0.9.0"
 description = "SQLAlchemy models for arXiv DB tables"
 category = "main"
 optional = false
@@ -1287,7 +1287,7 @@ email = ["email-validator"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "eb8f367508303a27a1b2f1213fdd3a458d1f616bd62093d3b73c32752a7a784e"
+content-hash = "c14435151646ab41e46930c972fd2c7be15d4fe64b2ced4d868e1b0f7d796e40"
 
 [metadata.files]
 amqp = [
@@ -1303,8 +1303,8 @@ arxiv-base = [
     {file = "arxiv_base-1.0.0a3-py3-none-any.whl", hash = "sha256:5343e2f9eed77cbd864ccdda9c41ef85ae8d156960b1e72d5cc6e9aa4d556ab6"},
 ]
 arxiv-db = [
-    {file = "arxiv-db-0.8.0.tar.gz", hash = "sha256:5cebd4cd6ef42feed143d4686140808f2be295844f2956419a8cd6dad088152f"},
-    {file = "arxiv_db-0.8.0-py3-none-any.whl", hash = "sha256:9e0c910388e3d76f198cbc3d645edacc9a5256135d992786082707000a17ad0c"},
+    {file = "arxiv-db-0.9.0.tar.gz", hash = "sha256:8a38a83b5b35ac5e38b60cf7dadef73f65c5aaabc0c9e11b97d22402ccb0f14e"},
+    {file = "arxiv_db-0.9.0-py3-none-any.whl", hash = "sha256:d46deae747230c1505c026a54172b47f6d755680c7c97ae6073728819001d9fb"},
 ]
 astroid = [
     {file = "astroid-2.12.11-py3-none-any.whl", hash = "sha256:867a756bbf35b7bc07b35bfa6522acd01f91ad9919df675e8428072869792dce"},

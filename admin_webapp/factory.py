@@ -2,7 +2,7 @@
 
 import logging
 
-from flask import Flask, current_app
+from flask import Flask
 from flask_s3 import FlaskS3
 from flask_bootstrap import Bootstrap5
 
@@ -21,7 +21,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 import arxiv_db
 
-from .routes import ui, ownership, endorsement, user, paper
+from .routes import ui, ownership, endorsement, user, paper, tapir_session
 
 s3 = FlaskS3()
 
@@ -84,6 +84,7 @@ def create_web_app() -> Flask:
     app.register_blueprint(endorsement.blueprint)
     app.register_blueprint(user.blueprint)
     app.register_blueprint(paper.blueprint)
+    app.register_blueprint(tapir_session.blueprint)
 
     Base(app)
     auth.Auth(app)

@@ -7,7 +7,7 @@ from flask_sqlalchemy import Pagination
 from sqlalchemy import select, func
 from sqlalchemy.orm import joinedload
 
-from flask import Blueprint, render_template, Response, request, current_app, abort
+from flask import Blueprint, render_template, Response, request, current_app, abort, redirect, url_for
 
 from arxiv_db.models import EndorsementRequests, Endorsements, TapirUsers, Demographics
 
@@ -16,12 +16,55 @@ from admin_webapp.extensions import get_db
 blueprint = Blueprint('endorsement', __name__, url_prefix='/endorsement')
 
 
-@blueprint.route('/request/<int:endorsement_id>', methods=['GET'])
-def request_detail(endorsement_id:int) -> Response:
-    """Display a endorsement."""
-    data=dict(endorsement_id=endorsement_id)
-    return render_template('endorsement/request_detail.html', **data)
+@blueprint.route('/request/<int:endorsement_req_id>', methods=['GET'])
+def request_detail(endorsement_req_id:int) -> Response:
+    """Display a single request for endorsement."""
+    session = get_db(current_app).session
+    stmt = (select(EndorsementRequests)
+            .options(joinedload(EndorsementRequests.endorsee).joinedload(TapirUsers.tapir_nicknames),
+                     joinedload(EndorsementRequests.endorsement).joinedload(Endorsements.endorser).joinedload(TapirUsers.tapir_nicknames),
+                     joinedload(EndorsementRequests.audit))
+            .filter(EndorsementRequests.request_id == endorsement_req_id)
+            )
+    endo_req = session.execute(stmt).scalar() or abort(404)
+    return render_template('endorsement/request_detail.html',
+                           **dict(endorsement_req_id=endorsement_req_id,
+                                  endo_req=endo_req,
+                                  ))
 
+@blueprint.route('/request/<int:endorsement_req_id>/flip_valid', methods=['POST'])
+def flip_valid(endorsement_req_id:int) -> Response:
+    """Flip an endorsement_req valid column."""
+
+    # TODO Is this in the endorsement or request?
+
+    session = get_db(current_app).session
+    stmt = (select(EndorsementRequests)
+            .options(joinedload(EndorsementRequests.endorsement))
+            .filter(EndorsementRequests.request_id == endorsement_req_id))
+    endo_req = session.execute(stmt).scalar() or abort(404)
+    endo_req.flag_valid = not bool(endo_req.flag_valid)
+    session.commit()
+    redirect(url_for('endorsement.request_detail', endorsement_req_id=endorsement_req_id))
+
+
+@blueprint.route('/request/<int:endorsement_req_id>/flip_positive', methods=['POST'])
+def flip_positive(endorsement_req_id:int) -> Response:
+    """Flip an endorsement_req score."""
+    session = get_db(current_app).session
+    stmt = (select(EndorsementRequests)
+            .options(joinedload(EndorsementRequests.endorsement))
+            .filter(EndorsementRequests.request_id == endorsement_req_id))
+    endo_req = session.execute(stmt).scalar() or abort(404)
+    endo_req.flag_valid = not bool(endo_req.flag_valid)
+    session.commit()
+    redirect(url_for('endorsement.request_detail', endorsement_req_id=endorsement_req_id))
+
+
+@blueprint.route('/<int:endorsement_id>', methods=['GET'])
+def detail(endorsement_id: int) -> Response:
+    """Display a single endorsement."""
+    abort(500)
 
 def endorsement_listing(report_type:str, per_page:int, page: int, days_back:int,
                         flagged:bool, not_positive:bool=False):

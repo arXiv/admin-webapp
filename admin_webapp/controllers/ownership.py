@@ -114,7 +114,7 @@ def ownership_detail(ownership_id:int, postfn=None) -> dict:
     endorsement_req = oreq.endorsement_request if oreq.endorsement_request else None
     data = dict(ownership=oreq,
                 user=oreq.user,
-                nickname= oreq.user.tapir_nicknames[0].nickname,
+                nickname= oreq.user.nickname,
                 papers=oreq.documents,
                 audit=oreq.request_audit[0],
                 ownership_id=ownership_id,
