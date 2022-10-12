@@ -5,7 +5,7 @@ from admin_webapp.routes import endorsement
 from flask import url_for
 import pytest
 
-from arxiv_db.models import Endorsements, EndorsementRequests, Demographics, TapirUsers
+from arxiv_db.models import Endorsements, EndorsementRequests, Demographics, TapirUsers, EndorsementRequestsAudit, EndorsementsAudit
 
 
 @pytest.fixture(scope='session')
@@ -25,6 +25,7 @@ def fake_endorsements(db):
                                     issued_when=datetime.now(),
                                     flag_valid=1, point_value=10)
          req1.endorsement = Endorsements(endorser=endorser, endorsee=endorsee, archive='cs', subject_class='CR',flag_valid=1, point_value=10)
+         req1.endorsement.audit = EndorsementsAudit(session_id=1234, remote_addr='127.0.0.1', remote_host='fake.example.com', tracking_cookie='fakycookie', comment="""Test fake comment.""")
 
          req2 = EndorsementRequests(endorsee=endorsee_sus,
                                     secret='end_sec_1',
