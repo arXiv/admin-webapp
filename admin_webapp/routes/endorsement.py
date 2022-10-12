@@ -35,7 +35,6 @@ def request_detail(endorsement_req_id:int) -> Response:
 @blueprint.route('/request/<int:endorsement_req_id>/flip_valid', methods=['POST'])
 def flip_valid(endorsement_req_id:int) -> Response:
     """Flip an endorsement_req valid column."""
-
     session = get_db(current_app).session
     stmt = (select(EndorsementRequests)
             .options(joinedload(EndorsementRequests.endorsement))

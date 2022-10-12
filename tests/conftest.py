@@ -56,6 +56,7 @@ def parse_cookies(cookie_data):
 def engine():
     db_file = pathlib.Path(DB_FILE).resolve()
     try:
+        assert not db_file.exists()
         print(f"Created db at {db_file}")
         connect_args = {"check_same_thread": False}
         engine = create_engine(f"sqlite:///{db_file}",
