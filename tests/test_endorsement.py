@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import insert, select
+from admin_webapp.routes import endorsement
 from flask import url_for
 import pytest
 
@@ -23,35 +24,35 @@ def fake_endorsements(db):
                                     archive='cs', subject_class='CR',
                                     issued_when=datetime.now(),
                                     flag_valid=1, point_value=10)
-         req1.endorsement = Endorsements(endorser=endorser, endorsee=endorsee,                                     archive='cs', subject_class='CR',)
+         req1.endorsement = Endorsements(endorser=endorser, endorsee=endorsee, archive='cs', subject_class='CR',flag_valid=1, point_value=10)
 
          req2 = EndorsementRequests(endorsee=endorsee_sus,
                                     secret='end_sec_1',
                                     archive='cs', subject_class='CR',
                                     issued_when=datetime.now(),
                                     flag_valid=1, point_value=10)
-         req2.endorsement = Endorsements(endorser=endorser,                   endorsee=endorsee_sus    ,              archive='cs', subject_class='CR',)
+         req2.endorsement = Endorsements(endorser=endorser, endorsee=endorsee_sus, archive='cs', subject_class='CR',flag_valid=1, point_value=10)
 
          req3 = EndorsementRequests(endorsee=endorsee,
                                     secret='end_sec_2',
                                     archive='cs', subject_class='CV',
                                     issued_when=datetime.now(),
                                     flag_valid=1, point_value=-10)
-         req3.endorsement = Endorsements(endorser=endorser, endorsee=endorsee         ,                            archive='cs', subject_class='CV')
+         req3.endorsement = Endorsements(endorser=endorser, endorsee=endorsee, archive='cs', subject_class='CV',flag_valid=1, point_value=-10)
 
          req4 = EndorsementRequests(endorsee=endorsee,
                                     secret='end_sec_3',
                                     archive='cs', subject_class='DL',
                                     issued_when=datetime.now() - timedelta(days=4),
                                     flag_valid=1, point_value=10)
-         req4.endorsement = Endorsements(endorser=endorser,                  endorsee=endorsee  ,                 archive='cs', subject_class='DL')
+         req4.endorsement = Endorsements(endorser=endorser, endorsee=endorsee, archive='cs', subject_class='DL',flag_valid=1, point_value=10)
 
          req5 = EndorsementRequests(endorsee=endorsee,
                                     secret='end_sec_5',
                                     archive='cs', subject_class='ET',
                                     issued_when=datetime.now() - timedelta(days=50),
                                     flag_valid=1, point_value=10)
-         req5.endorsement = Endorsements(endorser=endorser,                  endorsee=endorsee  ,                 archive='cs', subject_class='ET')
+         req5.endorsement = Endorsements(endorser=endorser, endorsee=endorsee, archive='cs', subject_class='ET', flag_valid=1, point_value=10)
 
          session.commit()
          def as_html_parts(id):
@@ -112,6 +113,69 @@ def test_endorsement_detail(admin_client, fake_endorsements):
 
     resp = admin_client.get(url_for('endorsement.request_detail', endorsement_req_id=fake_endorsements['negative']['id']))
     assert resp.status_code == 200
+
+
+
+# def test_endorsement_detail_score_flip(admin_client, fake_endorsements, db):
+#     id = fake_endorsements['today']['id']
+#     resp = admin_client.get(url_for('endorsement.request_detail', endorsement_req_id=id))
+#     assert resp.status_code == 200
+
+#     with Session(db) as session:
+#         stmt = select(EndorsementRequests).filter(EndorsementRequests.request_id == id)
+#         endo = session.execute(stmt).scalar()
+#         assert endo
+#         pre_flip_score = endo.endorsement.point_value
+#         pre_flip_valid = endo.endorsement.flag_valid
+
+#         resp = admin_client.post(url_for('endorsement.flip_score', endorsement_req_id=id))
+#         session.expire(endo)
+
+#         post_flip1_score = endo.endorsement.point_value
+#         post_flip1_valid = endo.endorsement.flag_valid
+#         assert pre_flip_score != post_flip1_score
+#         assert bool(pre_flip_score) == (not bool(post_flip1_score))
+#         assert pre_flip_valid == post_flip1_valid
+
+#         resp = admin_client.post(url_for('endorsement.flip_score', endorsement_req_id=id))
+#         session.expire(endo)
+
+#         post_flip2_score = endo.endorsement.point_value
+#         post_flip2_valid = endo.endorsement.flag_valid
+#         assert post_flip2_score == pre_flip_score
+#         assert post_flip1_valid == post_flip2_valid
+
+# def test_endorsement_detail_flips(admin_client, fake_endorsements, db):
+#     id = fake_endorsements['today']['id']
+#     resp = admin_client.get(url_for('endorsement.request_detail', endorsement_req_id=id))
+#     assert resp.status_code == 200
+
+#     def valid_and_score(id):
+#         with Session(db) as session:
+#             stmt = select(EndorsementRequests).filter(EndorsementRequests.request_id == id)
+#             endo = session.execute(stmt).scalar()
+#             assert endo
+#             return (endo.endorsement.flag_valid, endo.endorsement.point_value)
+
+#     pre_flip_valid, pre_flip_score = valid_and_score(id)
+#     resp = admin_client.post(url_for('endorsement.flip_score', endorsement_req_id=id))
+
+#     post_flip1_valid, post_flip1_score = valid_and_score(id)
+#     assert pre_flip_score != post_flip1_score
+#     assert bool(pre_flip_score) == (not bool(post_flip1_score))
+#     assert pre_flip_valid == post_flip1_valid
+
+#     resp = admin_client.post(url_for('endorsement.flip_valid', endorsement_req_id=id))
+#     post_flip2_valid, post_flip2_score = valid_and_score(id)
+#     assert post_flip1_score == post_flip2_score
+#     assert bool(post_flip1_valid) == (not bool(post_flip2_valid))
+
+
+
+
+
+
+
 
 
 def test_bad(admin_client):
