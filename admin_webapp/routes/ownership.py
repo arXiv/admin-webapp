@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, \
     Response
 
 from admin_webapp.controllers.ownership import ownership_detail, \
-    ownership_listing, ownership_post
+    ownership_listing, ownership_post, paper_password
 
 
 blueprint = Blueprint('ownership', __name__, url_prefix='/ownership')
@@ -57,3 +57,10 @@ def rejected() -> Response:
     data['title'] = f"Ownership Reqeusts: Rejected last {days_back} days"
     return render_template('ownership/list.html',
                            **data)
+
+
+@blueprint.route('/need-paper-password', methods=['GET','POST'])
+def need_papper_password() -> Response:
+    """User claims ownership of a paper using submitter provided password."""
+    data=paper_password()
+    return render_template('ownership/need_paper_password.html', **data)
