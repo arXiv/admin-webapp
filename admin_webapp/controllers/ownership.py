@@ -3,19 +3,25 @@
 from datetime import datetime, timedelta
 import logging
 
+from socket import gethostbyaddr
+
 from flask import Blueprint, request, \
     current_app, Response, abort
 
 from flask_sqlalchemy import Pagination
 
-from sqlalchemy import select, func, text, insert, update
+from sqlalchemy import Integer, String, select, func, text, insert, update
 from sqlalchemy.orm import joinedload
+from sqlalchemy.exc import IntegrityError
+
+from flask_wtf import FlaskForm
+from wtforms import StringField, BooleanField, SelectField
+
 from arxiv.base import logging
 
 from arxiv_auth.auth.decorators import scoped
 
-from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, TapirUsers, Documents, EndorsementRequests
-from arxiv_db.models.associative_tables import t_arXiv_paper_owners
+from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, TapirUsers, Documents, EndorsementRequests, PaperOwners
 
 from admin_webapp.extensions import get_db
 from admin_webapp.admin_log import audit_admin
@@ -57,11 +63,11 @@ def ownership_post(data:dict) -> Response:
             now = int(datetime.now().astimezone(current_app.config['ARXIV_BUSINESS_TZ']).timestamp())
 
             for doc_id in to_add_ownership:
-                stmt = insert(t_arXiv_paper_owners).values(
+                session.add(
+                    PaperOwners(
                     document_id=doc_id, user_id=oreq.user.user_id, date=now,
                     added_by=admin_id, remote_addr=request.remote_addr, tracking_cookie=cookie,
-                    flag_auto=0, flag_author=is_author)
-                session.execute(stmt)
+                    flag_auto=0, flag_author=is_author))
                 #audit_admin(oreq.user_id, 'add-paper-owner-2', doc_id)
 
             oreq.workflow_status = 'accepted'
@@ -107,9 +113,9 @@ def ownership_detail(ownership_id:int, postfn=None) -> dict:
     if not oreq:
         abort(404)
 
-    already_owns =[paper.paper_id for paper in oreq.user.owned_papers]
-    for paper in oreq.documents:
-        setattr(paper, 'already_owns', paper.paper_id in already_owns)
+    already_owns =[own.document_id for own in oreq.user.owned_papers]
+    for doc in oreq.documents:
+        setattr(doc, 'already_owns', doc.document_id in already_owns)
 
     endorsement_req = oreq.endorsement_request if oreq.endorsement_request else None
     data = dict(ownership=oreq,
@@ -146,3 +152,58 @@ def ownership_listing(workflow_status:str, per_page:int, page: int,
     count = session.execute(count_stmt).scalar_one()
     pagination = Pagination(query=None, page=page, per_page=per_page, total=count, items=None)
     return dict(pagination=pagination, count=count, ownership_requests=oreqs, worflow_status=workflow_status, days_back=days_back)
+
+
+@scoped()
+def paper_password() -> Response:
+    """Controller for need paper password route.
+
+    Logged in users can claim ownership on a paper if they have the password for it.
+    Usually the submitter emails the password to collaborators.
+    """
+    form = PaperPasswordForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        session = get_db(current_app).session
+        stmt=select(Documents)\
+            .filter(Documents.paper_id == form.paperid.data)\
+            .options([joinedload(Documents.password), joinedload(Documents.owners)])
+        doc = session.execute(stmt).scalar() or abort(404) # TODO Instead do a nice paper not found msg
+
+        if doc.password.password_storage != 0 :
+            abort(500, description='Paper password encoded must use arxiv pw encoding zero')
+
+        if doc.password.password_end != form.password.data:
+            abort(401, description='bad password')  # Maybe an error message or page?
+
+        if request.auth.user.user_id in [po.user_id for po in doc.owners]:
+            abort(400, description='already an owner')
+
+        doc.owners.append(
+            PaperOwners(user_id=request.auth.user.user_id,
+                        date=datetime.now(),
+                        added_by=request.auth.user.user_id,
+                        remote_addr=request.remote_addr,
+                        remote_host=request.auth.remote_host,  # TODO arxiv-auth needs to set this!
+                        tracking_cookie=request.cookies.get(current_app.config['CLASSIC_COOKIE_NAME'], ''),
+                        valid=1,
+                        author=form.author.data,
+                        flag_auto=0,))
+        session.commit()
+
+    return dict(form=form)
+
+
+
+
+
+class PaperPasswordForm(FlaskForm):
+    """
+    Form for paper ownership.
+
+    The `_search` in the field names prevents password managers from
+    offering to fill out the form.
+    """
+    paperid = StringField(label='paper id', id='paperid_search')
+    password = StringField(label='paper password', id='p_search')
+    author = SelectField('author', choices=['--choose--', 'Yes', 'No'])
+    agree = BooleanField('agree', default=False)

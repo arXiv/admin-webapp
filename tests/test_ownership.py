@@ -4,9 +4,8 @@ from sqlalchemy import insert, select
 from flask import url_for
 import pytest
 
-from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, Documents
-from arxiv_db.models.associative_tables import t_arXiv_ownership_requests_papers, \
-    t_arXiv_paper_owners
+from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, Documents, PaperOwners, TapirUsers
+from arxiv_db.models.associative_tables import t_arXiv_ownership_requests_papers
 
 @pytest.fixture(scope='session')
 def fake_ownerships(db):
@@ -77,7 +76,8 @@ def fake_ownerships(db):
          stmt = insert(t_arXiv_ownership_requests_papers).values(request_id=1, document_id=3333)
          session.execute(stmt)
 
-         stmt = insert(t_arXiv_paper_owners).values(document_id=3333, user_id=246231, valid=1)
+         stmt = session.add(PaperOwners(document_id=3333, user_id=246231, valid=1))
+
          # need: user/nick/etc request audit, documents, owned_papers,
          session.commit()
          return [1,2,3]
