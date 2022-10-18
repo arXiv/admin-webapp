@@ -49,6 +49,8 @@ pytest-flask = "*"
 [tool.poetry.group.dev.dependencies]
 pytest-flask = "^1.2.0"
 pylint = "^2.15.3"
+pytest-mock = "^3.10.0"
+Werkzeug = "^2.2.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

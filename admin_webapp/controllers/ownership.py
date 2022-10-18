@@ -15,11 +15,10 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import IntegrityError
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, BooleanField, SelectField
+from wtforms import StringField, BooleanField, SelectField, validators
 
 from arxiv.base import logging
 
-from arxiv_auth.auth.decorators import scoped
 
 from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, TapirUsers, Documents, EndorsementRequests, PaperOwners
 
@@ -154,47 +153,64 @@ def ownership_listing(workflow_status:str, per_page:int, page: int,
     return dict(pagination=pagination, count=count, ownership_requests=oreqs, worflow_status=workflow_status, days_back=days_back)
 
 
-@scoped()
-def paper_password() -> Response:
+def paper_password_post(form, request) -> dict:
     """Controller for need paper password route.
 
     Logged in users can claim ownership on a paper if they have the password for it.
     Usually the submitter emails the password to collaborators.
     """
-    form = PaperPasswordForm()
-    if request.method == 'POST' and form.validate_on_submit():
-        session = get_db(current_app).session
-        stmt=select(Documents)\
-            .filter(Documents.paper_id == form.paperid.data)\
-            .options([joinedload(Documents.password), joinedload(Documents.owners)])
-        doc = session.execute(stmt).scalar() or abort(404) # TODO Instead do a nice paper not found msg
+    if not form.validate():
+        return dict(success=False, error='FormInvalid', form=form)
 
-        if doc.password.password_storage != 0 :
-            abort(500, description='Paper password encoded must use arxiv pw encoding zero')
+    session = get_db(current_app).session
+    doc = _get_doc_and_pw(session, form.paperid.data)
+    if not doc:
+        return dict(success=False, error='paperNotFound', form=form)
 
-        if doc.password.password_end != form.password.data:
-            abort(401, description='bad password')  # Maybe an error message or page?
+    if doc.password.password_storage != 0 :
+        return dict(success=False, error='password encoding must be zero', form=form)
 
-        if request.auth.user.user_id in [po.user_id for po in doc.owners]:
-            abort(400, description='already an owner')
+    if doc.password.password_enc != form.password.data:
+        return dict(success=False, error='bad password', form=form)
 
-        doc.owners.append(
-            PaperOwners(user_id=request.auth.user.user_id,
-                        date=datetime.now(),
-                        added_by=request.auth.user.user_id,
-                        remote_addr=request.remote_addr,
-                        remote_host=request.auth.remote_host,  # TODO arxiv-auth needs to set this!
-                        tracking_cookie=request.cookies.get(current_app.config['CLASSIC_COOKIE_NAME'], ''),
-                        valid=1,
-                        author=form.author.data,
-                        flag_auto=0,))
-        session.commit()
+    try:
+        _add_paper_owner(session=session, doc=doc,
+                         user_id=request.auth.user.user_id,
+                         added_by=request.auth.user.user_id,
+                         remote_addr=request.remote_addr,
+                         remote_host=request.auth.remote_host,  # TODO arxiv-auth needs to set this!
+                         tracking_cookie=request.cookies.get(current_app.config['CLASSIC_COOKIE_NAME'], ''),
+                         author=form.author.data)
+    except IntegrityError:
+        return dict(success=False, error='already an owner', form=form)
 
-    return dict(form=form)
+    return dict(success=True, form=form)
 
 
+def _get_doc_and_pw(session, paperid):
+    stmt=select(Documents)\
+        .filter(Documents.paper_id == paperid)
+    return session.execute(stmt).scalar()
 
 
+def _add_paper_owner(*,
+                     session, doc: Documents,
+                     user_id=0,
+                     added_by='',
+                     remote_addr='',
+                     remote_host='',
+                     tracking_cookie='',
+                     author=''):
+    doc.owners.append(PaperOwners(user_id=user_id,
+                                  date=datetime.now(),
+                                  added_by=added_by,
+                                  remote_addr=remote_addr,
+                                  remote_host=remote_host,
+                                  tracking_cookie=tracking_cookie[:32],
+                                  valid=1,
+                                  flag_author= (author.lower() == 'yes'),
+                                  flag_auto=0,))
+    session.commit()
 
 class PaperPasswordForm(FlaskForm):
     """
@@ -203,7 +219,9 @@ class PaperPasswordForm(FlaskForm):
     The `_search` in the field names prevents password managers from
     offering to fill out the form.
     """
-    paperid = StringField(label='paper id', id='paperid_search')
-    password = StringField(label='paper password', id='p_search')
-    author = SelectField('author', choices=['--choose--', 'Yes', 'No'])
-    agree = BooleanField('agree', default=False)
+    paperid = StringField(label='paper id', id='paperid_search', validators=[validators.InputRequired()])
+    password = StringField(label='paper password', id='p_search', validators=[validators.InputRequired()])
+    author = SelectField('author', choices=['--choose--', 'Yes', 'No'],
+                         validators=[validators.InputRequired(), validators.AnyOf(['Yes','No'])])
+    agree = BooleanField('agree', default=False, validators=[validators.InputRequired(),
+                                                             validators.AnyOf([True])])
