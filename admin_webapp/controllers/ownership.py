@@ -184,7 +184,8 @@ def paper_password_post(form, request) -> dict:
     except IntegrityError:
         return dict(success=False, error='already an owner', form=form)
 
-    return dict(success=True, form=form)
+    paperid = form.paperid.data
+    return dict(success=True, form=PaperPasswordForm(formdata=None), paperid=paperid)
 
 
 def _get_doc_and_pw(session, paperid):
