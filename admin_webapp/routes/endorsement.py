@@ -9,7 +9,12 @@ from sqlalchemy.orm import joinedload
 
 from flask import Blueprint, render_template, Response, request, current_app, abort, redirect, url_for
 
+from wtforms import SelectField, BooleanField, StringField, validators
+from flask_wtf import FlaskForm
+
 from arxiv_db.models import EndorsementRequests, Endorsements, TapirUsers, Demographics
+
+from arxiv.base.alerts import flash_failure
 
 from admin_webapp.extensions import get_db
 
@@ -145,6 +150,7 @@ def negative() -> Response:
     return render_template('endorsement/list.html', **data)
 
 
+
 def _check_report_args(per_page, page, days_back, flagged):
     if per_page > 1000:
         abort(400)
@@ -154,3 +160,63 @@ def _check_report_args(per_page, page, days_back, flagged):
         abort(400)
     if flagged not in [1, 0]:
         abort(400)
+
+
+
+@blueprint.route('/endorse', methods=['GET', 'POST'])
+def endorse() -> Response:
+    """Endorse page."""
+
+    # TODO check veto_status == no-endorse and mesage similar to no-endorse-screen.php
+
+    if request.method == 'GET':
+        return render_template('endorsement/endorse.html')
+    # elif request.method == 'POST' and not request.form.get('x',None):
+    #     flash_failure("You must enger a non-blank endorsement code.")
+    #     return make_response(render_template('endorsement/endorse.html'), 400)
+
+    form = EndorseStage2Form()
+
+    session = get_db(current_app).session
+    endo_code = request.form.get('x')
+    stmt = (select(EndorsementRequests)
+            .limit(1)
+            #.filter(EndorsementRequests.secret == endo_code)
+            )
+    endoreq = session.scalar(stmt)
+
+    if not endoreq:
+        flash_failure("The endorsement codes is not valid. It has never been issued.")
+        return make_response(render_template('endorsement/endorse.html'), 400)
+
+    if not endoreq.flag_valid:
+        flash_failure("The endorsement code is not valid. It has either expired or been deactivated.")
+        return make_response(render_template('endorsement/endorse.html'), 400)
+
+    category = f"{endoreq.archive}.{endoreq.subject_class}" if endoreq.subject_class else endoreq.archive
+    category_display = get_category_display(category)
+
+    if endoreq.endorsee_id == reqeust.auth.user.user_id:
+        return make_response(render_template('endorsement/no-self-endorse.html'), 400)
+
+
+    if request.method == 'POST' and reqeust.form.get('choice', None):
+        form.validate()
+        # TODO Do save?
+
+
+    data=dict(endorsee=endoreq.endorsee,
+              endorsement=endoreq.endorsement,
+              form = form,
+              )
+
+    return render_template('endorsement/endorse-stage2.html', **data)
+
+class EndorseStage2Form(FlaskForm):
+    """Form for stage 2 of endorse."""
+    choice = SelectField('choice',
+                         [validators.InputRequired(), validators.AnyOf(['do','do not'])],
+                         choices=[(None,'-- choose --'),('do','do'),('do not','do not')])
+    knows_personally = BooleanField('knows_personally')
+    seen_paper = BooleanField('seen_paper')
+    comment = StringField('comment')
