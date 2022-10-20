@@ -214,12 +214,13 @@ def _add_paper_owner(*,
     session.commit()
 
 class PaperPasswordForm(FlaskForm):
-    """
-    Form for paper ownership.
+    """Form for paper ownership.
 
     The `_search` in the field names prevents password managers from
     offering to fill out the form.
+
     """
+
     paperid = StringField(label='paper id', id='paperid_search', validators=[validators.InputRequired()])
     password = StringField(label='paper password', id='p_search', validators=[validators.InputRequired()])
     author = SelectField('author', choices=['--choose--', 'Yes', 'No'],
