@@ -66,7 +66,6 @@ def need_papper_password() -> Response:
     """User claims ownership of a paper using submitter provided password."""
     form = PaperPasswordForm()
     if request.method == 'GET':
-        breakpoint()
         return render_template('ownership/need_paper_password.html', **dict(form=form))
     elif request.method == 'POST':
         data=paper_password_post(form, request)
