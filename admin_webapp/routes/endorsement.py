@@ -7,7 +7,7 @@ from flask_sqlalchemy import Pagination
 from sqlalchemy import select, func
 from sqlalchemy.orm import joinedload
 
-from flask import Blueprint, render_template, Response, request, current_app, abort, redirect, url_for
+from flask import Blueprint, render_template, Response, request, current_app, abort, redirect, url_for, make_response
 
 from wtforms import SelectField, BooleanField, StringField, validators
 from flask_wtf import FlaskForm
