@@ -21,7 +21,7 @@ from arxiv_auth.auth.sessions import SessionStore
 
 from wtforms import StringField, PasswordField, SelectField, \
     BooleanField, Form, HiddenField
-from wtforms.validators import DataRequired, Email, Length, URL, optional, \
+from wtforms.validators import DataRequired, Email, Length, URL, optional, EqualTo, \
     ValidationError
 from flask import url_for, Markup
 import pycountry
@@ -276,7 +276,7 @@ class RegistrationForm(Form):
 
     password = PasswordField(
         'Password',
-        validators=[Length(min=8, max=20), DataRequired()],
+        validators=[Length(min=8, max=20), DataRequired(), EqualTo('password2', message="Passwords must match.")],
         description="Please choose a password that is between 8 and 20"
                     " characters in length. Longer passwords are more secure."
                     " You may use alphanumeric characters, as well as"
@@ -341,10 +341,10 @@ class RegistrationForm(Form):
             self.captcha_value.data = ''    # Clear the field.
             raise ValidationError('Please try again') from e
 
-    def validate_password(self) -> None:
-        """Verify that the password is the same in both fields."""
-        if self.password.data != self.password2.data:
-            raise ValidationError('Passwords must match')
+    # def validate_password(self) -> None:
+    #     """Verify that the password is the same in both fields."""
+    #     if self.password.data != self.password2.data:
+    #         raise ValidationError('Passwords must match')
 
     @classmethod
     def from_domain(cls, user: domain.User) -> 'RegistrationForm':
