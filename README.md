@@ -31,7 +31,7 @@ create tables. Conventional read/write access should be sufficient.
 You should be able to go to a page like  http://localhost:5000/login  or  http://localhost:5000/register
 
 # Build Notes
-The `PyYAML` dependency may cause a build failure when using Python 3.10.x due to a breaking Cython change. For local development purposes, set `pyyaml = 5.3.x` in the `poetry.lock` file then run `poetry install`.
+The `PyYAML` dependency may cause a build failure when using Python 3.10.x due to a breaking Cython change. For local development purposes, set `pyyaml = 5.3.x` in the `pyproject.toml` file then run `poetry install`.
 
 # Running the tests
 
