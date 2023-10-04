@@ -30,6 +30,13 @@ create tables. Conventional read/write access should be sufficient.
 
 You should be able to go to a page like  http://localhost:5000/login  or  http://localhost:5000/register
 
+# Build Notes
+The `PyYAML` dependency may cause a build failure when using Python 3.10.x due to a breaking Cython change. 
+```
+Note: This error originates from the build backend, and is likely not a problem with poetry but with PyYAML (5.4.1) not supporting PEP 517 builds. You can verify this by running 'pip wheel --use-pep517 "pyyaml (==5.4.1)"'.
+```
+For local development purposes, set `pyyaml = 5.3.x` in the `pyproject.toml` file then run `poetry install`.
+
 # Running the tests
 
 After setting up you should be able to run the tests with
