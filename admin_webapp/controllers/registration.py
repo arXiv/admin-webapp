@@ -100,11 +100,14 @@ def register(method: str, params: MultiDict, captcha_secret: str, ip: str,
         password = form.password.data
 
         # Perform the actual registration.
-        try:
-            user, auth = accounts.register(form.to_domain(), password, ip, ip)
-        except RegistrationFailed as e:
-            msg = 'Registration failed'
-            raise InternalServerError(msg) from e  # type: ignore
+
+        user, auth = accounts.register(form.to_domain(), password, ip, ip)
+
+        # try:
+        #     user, auth = accounts.register(form.to_domain(), password, ip, ip)
+        # except RegistrationFailed as e:
+        #     msg = 'Registration failed'
+        #     raise InternalServerError(msg) from e  # type: ignore
 
         # Log the user in.
         session, cookie = _login(user, auth, ip)
@@ -119,7 +122,15 @@ def register(method: str, params: MultiDict, captcha_secret: str, ip: str,
         return data, status.HTTP_303_SEE_OTHER, {'Location': next_page}
     return data, status.HTTP_200_OK, {}
 
+def register2(method: str, params: MultiDict,
+             next_page: str) -> ResponseData:
+    """Handle requests for the registration view step 2."""
+    data: Dict[str, Any]
+    if method == 'GET':
+        form = ProfileForm(params)
+        data = {'form': form, 'next_page': next_page}
 
+    return data, status.HTTP_200_OK, {}
 
 
 def edit_profile(method: str, user_id: str, session: domain.Session,

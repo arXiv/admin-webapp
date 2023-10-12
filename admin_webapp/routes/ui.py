@@ -121,6 +121,26 @@ def register() -> Response:
     response = make_response(content, code, headers)
     return response
 
+@blueprint.route('/register2', methods=['GET', 'POST'])
+@anonymous_only
+def register2() -> Response:
+    """Interface for creating new accounts."""
+    captcha_secret = current_app.config['CAPTCHA_SECRET']
+    ip_address = request.remote_addr
+    next_page = request.args.get('next_page', url_for('account'))
+    data, code, headers = registration.register2(request.method, request.form,
+                                                next_page)
+
+    # Flask puts cookie-setting methods on the response, so we do that here
+    # instead of in the controller.
+    if code is status.HTTP_303_SEE_OTHER:
+        response = make_response(redirect(headers['Location'], code=code))
+        set_cookies(response, data)
+        return response
+    content = render_template("register2.html", **data)
+    response = make_response(content, code, headers)
+    return response
+
 
 @blueprint.route('/login', methods=['GET', 'POST'])
 @anonymous_only
