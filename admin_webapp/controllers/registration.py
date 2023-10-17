@@ -8,6 +8,7 @@ and password. Each user can create a personalized profile with contact and
 affiliation information, and links to external identities such as GitHub and
 ORCID.
 """
+from admin_webapp import config
 
 from typing import Dict, Tuple, Any, Optional
 from werkzeug.datastructures import MultiDict
@@ -32,7 +33,8 @@ from .util import MultiCheckboxField, OptGroupSelectField
 
 from .. import stateless_captcha
 
-from arxiv_auth import legacy
+from arxiv_auth.legacy import sessions as legacy_sessions
+
 from arxiv_auth.legacy import accounts
 from arxiv_auth.legacy.exceptions import RegistrationFailed, \
     SessionCreationFailed, SessionDeletionFailed
@@ -45,8 +47,11 @@ ResponseData = Tuple[dict, int, dict]
 def _login_classic(user: domain.User, auth: domain.Authorizations,
                    ip: Optional[str]) -> Tuple[domain.Session, str]:
     try:
-        c_session = legacy.create(auth, ip, ip, user=user)
-        c_cookie = legacy.generate_cookie(c_session)
+        # c_session = legacy.create(auth, ip, ip, user=user)
+        # c_cookie = legacy.generate_cookie(c_session)
+        # no tracking cookie used
+        c_session = legacy_sessions.create(auth, ip, ip, '', user=user)
+        c_cookie = legacy_sessions.generate_cookie(c_session)
         logger.debug('Created classic session: %s', c_session.session_id)
     except SessionCreationFailed as ee:
         logger.debug('Could not create classic session: %s', ee)
@@ -170,6 +175,9 @@ def register2(method: str, params: MultiDict, ip: str,
             },
             'user_id': user.user_id
         })
+
+        # next_page = next_page if good_next_page(next_page) else config.DEFAULT_LOGIN_REDIRECT_URL
+        return data, status.HTTP_303_SEE_OTHER, {'Location': next_page}
 
     return data, status.HTTP_200_OK, {}
 
