@@ -135,7 +135,7 @@ def register2() -> Response:
     ip_address = request.remote_addr
     next_page = request.args.get('next_page', url_for('account'))
 
-    data, code, headers = registration.register2(request.method, request.form,
+    data, code, headers = registration.register2(request.method, request.form, ip_address,
                                                 next_page)
 
     data['email'] = session['email']

@@ -127,7 +127,7 @@ def register(method: str, params: MultiDict, captcha_secret: str, ip: str,
         return data, status.HTTP_303_SEE_OTHER, {'Location': next_page}
     return data, status.HTTP_200_OK, {}
 
-def register2(method: str, params: MultiDict,
+def register2(method: str, params: MultiDict, ip: str,
              next_page: str) -> ResponseData:
     """Handle requests for the registration view step 2."""
     data: Dict[str, Any]
@@ -152,7 +152,7 @@ def register2(method: str, params: MultiDict,
 
         # Perform the actual registration.
         print(password, form.forename.data)
-        user, auth = accounts.register(form.to_domain(), password, ip, ip)
+        # user, auth = accounts.register(form.to_domain(), password, ip, ip)
 
         try:
             user, auth = accounts.register(form.to_domain(), password, ip, ip)
@@ -284,10 +284,14 @@ class ProfileForm(Form):
 
     def to_domain(self) -> domain.User:
         """Generate a :class:`.User` from this form's data."""
+        print(self.default_category.data.split('.'))
+        print(domain.Category('test'))
+        print(self.default_category.data)
         return domain.User(
             user_id=self.user_id.data if self.user_id.data else None,
-            username=self.username.data,
-            email=self.email.data,
+            # use flask session data for step 1 fields
+            username=flask_session['username'],
+            email=flask_session['email'],
             name=domain.UserFullName(
                 forename=self.forename.data,
                 surname=self.surname.data,
@@ -299,7 +303,7 @@ class ProfileForm(Form):
                 rank=int(self.status.data),     # WTF can't handle int values.
                 submission_groups=self.groups.data,
                 default_category=domain.Category(
-                    *self.default_category.data.split('.')
+                    self.default_category.data
                 ),
                 homepage_url=self.url.data,
                 remember_me=self.remember_me.data
