@@ -24,6 +24,7 @@ from wtforms import StringField, PasswordField, SelectField, \
 from wtforms.validators import DataRequired, Email, Length, URL, optional, EqualTo, \
     ValidationError
 from flask import url_for, Markup
+from flask import session as flask_session
 import pycountry
 
 from arxiv import taxonomy
@@ -87,8 +88,57 @@ def register(method: str, params: MultiDict, captcha_secret: str, ip: str,
         form.configure_captcha(captcha_secret, ip)
         data = {'form': form, 'next_page': next_page}
     elif method == 'POST':
-        logger.debug('Registration form submitted')
+        logger.debug('Registration form advancing to step 2')
         form = RegistrationForm(params, next_page=next_page)
+        data = {'form': form, 'next_page': next_page}
+        form.configure_captcha(captcha_secret, ip)
+
+        if not form.validate():
+            logger.debug('Registration form not valid')
+            return data, status.HTTP_400_BAD_REQUEST, {}
+
+        logger.debug('Registration form is valid')
+        # password = form.password.data
+
+        # Perform the actual registration.
+
+        # user, auth = accounts.register(form.to_domain(), password, ip, ip)
+
+        # try:
+        #     user, auth = accounts.register(form.to_domain(), password, ip, ip)
+        # except RegistrationFailed as e:
+        #     msg = 'Registration failed'
+        #     raise InternalServerError(msg) from e  # type: ignore
+
+        # Log the user in.
+        # session, cookie = _login(user, auth, ip)
+        # c_session, c_cookie = _login_classic(user, auth, ip)
+        # data.update({
+        #     'cookies': {
+        #         'session_cookie': (cookie, session.expires),
+        #         'classic_cookie': (c_cookie, c_session.expires)
+        #     },
+        #     'user_id': user.user_id
+        # })
+
+        
+        # print(session)
+
+        return data, status.HTTP_303_SEE_OTHER, {'Location': next_page}
+    return data, status.HTTP_200_OK, {}
+
+def register2(method: str, params: MultiDict,
+             next_page: str) -> ResponseData:
+    """Handle requests for the registration view step 2."""
+    data: Dict[str, Any]
+    print("session data", flask_session)
+    if method == 'GET':
+        form = ProfileForm(params)
+        data = {'form': form, 'next_page': next_page}
+    
+    elif method == 'POST':
+        logger.debug('Registration form submitted')
+        form = ProfileForm(params, next_page=next_page)
         data = {'form': form, 'next_page': next_page}
         form.configure_captcha(captcha_secret, ip)
 
@@ -103,11 +153,11 @@ def register(method: str, params: MultiDict, captcha_secret: str, ip: str,
 
         user, auth = accounts.register(form.to_domain(), password, ip, ip)
 
-        # try:
-        #     user, auth = accounts.register(form.to_domain(), password, ip, ip)
-        # except RegistrationFailed as e:
-        #     msg = 'Registration failed'
-        #     raise InternalServerError(msg) from e  # type: ignore
+        try:
+            user, auth = accounts.register(form.to_domain(), password, ip, ip)
+        except RegistrationFailed as e:
+            msg = 'Registration failed'
+            raise InternalServerError(msg) from e  # type: ignore
 
         # Log the user in.
         session, cookie = _login(user, auth, ip)
@@ -119,16 +169,6 @@ def register(method: str, params: MultiDict, captcha_secret: str, ip: str,
             },
             'user_id': user.user_id
         })
-        return data, status.HTTP_303_SEE_OTHER, {'Location': next_page}
-    return data, status.HTTP_200_OK, {}
-
-def register2(method: str, params: MultiDict,
-             next_page: str) -> ResponseData:
-    """Handle requests for the registration view step 2."""
-    data: Dict[str, Any]
-    if method == 'GET':
-        form = ProfileForm(params)
-        data = {'form': form, 'next_page': next_page}
 
     return data, status.HTTP_200_OK, {}
 

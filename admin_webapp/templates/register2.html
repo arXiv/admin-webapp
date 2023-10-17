@@ -5,12 +5,16 @@
 
     <h1>Register for the first time (Step 2 of 2)</h1>
       <div>
+        <p>Email: {{ email }}</p>
+        <p>Username: {{ username }}</p>
+
         <p>
           Please supply your correct name and affiliation.
         </p>
         <p>
           It is a violation of our policies to misrepresent your identity or institutional affiliation. Claimed affiliation should be current in the conventional sense: e.g., physical presence, funding, email address, mention on institutional web pages, etc. Misrepresentation of identity or affiliation, for any reason, is possible grounds for immediate and permanent suspension.
         </p>
+        <br/>
       </div>
       <form action="{{ url_for('ui.register') }}?next_page={{ next_page|urlencode }}" method="POST">
         {{ form.csrf_token }}

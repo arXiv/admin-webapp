@@ -3,6 +3,7 @@
 import logging
 
 from flask import Flask
+from flask_session import Session
 from flask_s3 import FlaskS3
 from flask_bootstrap import Bootstrap5
 
@@ -51,7 +52,9 @@ def create_web_app() -> Flask:
     """Initialize and configure the admin_webapp application."""
     app = Flask('admin_webapp')
     app.config.from_pyfile('config.py')
-
+    # Configure Flask session (use filesystem for dev purposes)
+    app.config['SESSION_TYPE'] = 'filesystem'
+    Session(app)
     Bootstrap5(app)
 
     # change_loglevel('arxiv_auth.legacy.authenticate', 'DEBUG')
