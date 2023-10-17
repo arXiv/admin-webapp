@@ -16,7 +16,7 @@
         </p>
         <br/>
       </div>
-      <form action="{{ url_for('ui.register') }}?next_page={{ next_page|urlencode }}" method="POST">
+      <form action="{{ url_for('ui.register2') }}?next_page={{ next_page|urlencode }}" method="POST">
         {{ form.csrf_token }}
 
         {% with field = form.forename %}

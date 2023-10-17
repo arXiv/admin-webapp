@@ -138,10 +138,10 @@ def register2() -> Response:
     data, code, headers = registration.register2(request.method, request.form,
                                                 next_page)
 
-    # data['email'] = session['email']
-    # data['username'] = session['username']
+    data['email'] = session['email']
+    data['username'] = session['username']
     # data['password'] = session['password']
-    
+
     # Flask puts cookie-setting methods on the response, so we do that here
     # instead of in the controller.
     if code is status.HTTP_303_SEE_OTHER:

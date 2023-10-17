@@ -131,26 +131,27 @@ def register2(method: str, params: MultiDict,
              next_page: str) -> ResponseData:
     """Handle requests for the registration view step 2."""
     data: Dict[str, Any]
+    
     print("session data", flask_session)
     if method == 'GET':
         form = ProfileForm(params)
         data = {'form': form, 'next_page': next_page}
-    
+        
     elif method == 'POST':
         logger.debug('Registration form submitted')
         form = ProfileForm(params, next_page=next_page)
         data = {'form': form, 'next_page': next_page}
-        form.configure_captcha(captcha_secret, ip)
+        # form.configure_captcha(captcha_secret, ip)
 
         if not form.validate():
             logger.debug('Registration form not valid')
             return data, status.HTTP_400_BAD_REQUEST, {}
 
         logger.debug('Registration form is valid')
-        password = form.password.data
+        password = flask_session['password']
 
         # Perform the actual registration.
-
+        print(password, form.forename.data)
         user, auth = accounts.register(form.to_domain(), password, ip, ip)
 
         try:
