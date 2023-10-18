@@ -1,0 +1,44 @@
+/* 
+Tapir base styles
+*/
+
+/* Set the background color to signature tapir color */
+body {
+    background-color: #FFF5E1;
+  }
+  
+  /* Set the font to Times New Roman for all text */
+  body, p, h1, h2, h3, h4, h5, h6 {
+    font-family: "Times New Roman", Times, serif;
+  }
+
+.navbar {
+    font-size: 9pt;
+    overflow: hidden;
+    border-bottom: 3px solid indigo;
+}
+
+/* Style for the left search bar */
+.search-bar-left {
+    float: left;
+    padding: 10px;
+}
+
+/* Style for the center search bar */
+.search-bar-center {
+    float: left;
+    padding: 10px;
+}
+
+/* Style for the right-justified links */
+.navbar-links {
+    float: right;
+    padding: 10px;
+}
+
+/* Style for the links within the right-justified section */
+.navbar-links a {
+    margin: 0 5px;
+}
+
+

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% block addl_head %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='tapir-style.css') }}">
+    {% endblock addl_head %}
+  </head>
+  <body>
+  {% import "base/macros.html" as macros %}
+  {% import "base/analytics_macros.html" as analytics_macros %}
+  <header>
+    <!-- <a href="#main-container" class="is-sr-only">Skip to main content</a> -->
+    {% block header %}
+    {% endblock header %}
+  </header>
+  {% block navbar %}
+  {% include "navbar.html" %}
+  {% endblock %}
+  <main class="container" id="main-container">
+    <!-- {% block alerts %}{{ macros.alerts(get_alerts()) }}{% endblock alerts %} -->
+    {% block content %}
+    {% endblock content %}
+  </main>
+  <footer>
+    {% block footer %}
+    {% endblock footer %}
+  </footer>
+  </body>
+</html>

@@ -234,7 +234,8 @@ def an_example() -> Response:
 
     see arxiv_auth.auth.decorators in arxiv-auth for more details.
     """
-    return make_response("This is an example of a protected page.")
+    return render_template('tapir-base.html')
+    # return make_response("This is an example of a protected page.")
 
 
 @blueprint.route('/auth/v2/dev')
