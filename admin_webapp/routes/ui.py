@@ -234,7 +234,7 @@ def an_example() -> Response:
 
     see arxiv_auth.auth.decorators in arxiv-auth for more details.
     """
-    return render_template('tapir-base.html')
+    return render_template('tapir-landing.html')
     # return make_response("This is an example of a protected page.")
 
 

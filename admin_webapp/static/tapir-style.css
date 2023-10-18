@@ -12,10 +12,14 @@ body {
     font-family: "Times New Roman", Times, serif;
   }
 
+.title {
+    text-align: center;
+}
+
 .navbar {
     font-size: 9pt;
     overflow: hidden;
-    border-bottom: 3px solid indigo;
+    border-bottom: 3px solid #8080FF;
 }
 
 /* Style for the left search bar */
@@ -38,7 +42,38 @@ body {
 
 /* Style for the links within the right-justified section */
 .navbar-links a {
-    margin: 0 5px;
+    margin: 0 1px;
 }
 
+.wrapper { 
+    display: flex;
+    justify-content: center;
+}
 
+.landing-container {
+    display: flex;
+    /* flex-direction: column; */
+}
+
+/* landing page style */
+.list-container {
+    display: inline-block;
+    border: 1px solid blue; /* Add a border for better visualization */
+    padding: 10px; /* Add padding for spacing */
+    margin: 3px;
+    flex-direction: column;
+    /* flex: 1; */
+}
+
+.list-item {
+    display: block;
+    margin-bottom: 2px; /* Add margin between items for spacing */
+}
+
+.indent {
+    padding-left: 8px;
+}
+
+.indent-twice {
+    padding-left: 16px;
+}
