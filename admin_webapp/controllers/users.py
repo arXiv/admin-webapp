@@ -215,6 +215,20 @@ def moderator_by_category_listing() -> dict:
 
     return dict(count=count, mods_map=mods_map)
 
+def add_to_blocked():
+    session = get_db(current_app).session
+    if request.method == 'POST': 
+        new_pattern = request.form.get('')
+        
+    return Response(status=204)
+
+def add_to_approved():
+    session = get_db(current_app).session
+    if request.method == 'POST': 
+        new_pattern = request.form.get('')
+    
+    return Response(status=204)
+
 def non_academic_email_listing():
     session = get_db(current_app).session
     blocked_users_all_sql = "create temporary table blocked_users select user_id,email,pattern as black_pattern,joined_date,first_name,last_name,suffix_name from tapir_users,arXiv_black_email where joined_date>UNIX_TIMESTAMP(DATE_SUB(CURDATE(),INTERVAL 30 MONTH)) and email like pattern"

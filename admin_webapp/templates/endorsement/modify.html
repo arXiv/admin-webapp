@@ -1,19 +1,19 @@
 {%- extends "base.html" -%}
 
 {%block content%}
-<h1>Modify lists form: not yet implemented</h1>
+<h1>Modify lists form: WIP</h1>
 <form id="emailForm">
-    <label for="whitelistInput">Whitelist:</label>
+    <label for="whitelistInput">Approved List:</label>
     <input type="text" id="whitelistInput" placeholder="Enter email">
-    <button type="button" onclick="addToWhitelist()">Add to Whitelist</button>
+    <button type="button" onclick="addToWhitelist()">Add to Approved List</button>
 
     <ul id="whitelist">
         <!-- Whitelist entries will be added dynamically here -->
     </ul>
 
-    <label for="blacklistInput">Blacklist:</label>
+    <label for="blacklistInput">Blocked List:</label>
     <input type="text" id="blacklistInput" placeholder="Enter email">
-    <button type="button" onclick="addToBlacklist()">Add to Blacklist</button>
+    <button type="button" onclick="addToBlacklist()">Add to Blocked List</button>
 
     <ul id="blacklist">
         <!-- Blacklist entries will be added dynamically here -->
