@@ -1,22 +1,49 @@
 {%- extends "base.html" -%}
+{% block addl_head %}
+<style>
+    .container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px; /* Gap between rows */
+    }
+
+    .row {
+        display: flex;
+        align-items: center; /* Align items vertically in the row */
+        gap: 10px; /* Gap between items */
+    }
+
+    label {
+        width: 120px; /* Adjust width of labels as needed */
+    }
+</style>
+
+{% endblock addl_head %}
 
 {%block content%}
 <h1>Modify lists form: WIP</h1>
+
+<p>
+    Use this form to add email patterns to arXiv's lists of presumptively approved and blocked patterns. When entering patterns 
+    use SQL email pattern matching syntax. If the email pattern already exists in the selected list, or is otherwise invalid, this
+    page will notify you.
+</p>
+
 <form id="emailForm">
-    <label for="whitelistInput">Approved List:</label>
-    <input type="text" id="whitelistInput" placeholder="Enter email">
-    <button type="button" onclick="addToWhitelist()">Add to Approved List</button>
+    <div class="container">
+        <div class="row">
+            <label for="whitelistInput">Approved List:</label>
+            <input type="text" id="whitelistInput" placeholder="Enter email pattern" title="e.g. %.biz, %.co., %.or.%">
+            <button type="button" onclick="addToWhitelist()">Add to Approved List</button>                
+        </div>
 
-    <ul id="whitelist">
-        <!-- Whitelist entries will be added dynamically here -->
-    </ul>
+        <div class="row">
+            <label for="blacklistInput">Blocked List:</label>
+            <input type="text" id="blacklistInput" placeholder="Enter email pattern" title="e.g. %@%.alum., %.us%">
+            <button type="button" onclick="addToBlacklist()">Add to Blocked List</button>      
+        </div>
 
-    <label for="blacklistInput">Blocked List:</label>
-    <input type="text" id="blacklistInput" placeholder="Enter email">
-    <button type="button" onclick="addToBlacklist()">Add to Blocked List</button>
+    </div>
 
-    <ul id="blacklist">
-        <!-- Blacklist entries will be added dynamically here -->
-    </ul>
 </form>
 {%endblock content%}
