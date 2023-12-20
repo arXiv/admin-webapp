@@ -56,3 +56,17 @@ def rejected() -> Response:
     data['title'] = f"Ownership Reqeusts: Rejected last {days_back} days"
     return render_template('ownership/list.html',
                            **data)
+
+# @scoped()
+@blueprint.route('/need-paper-password', methods=['GET','POST'])
+def need_papper_password() -> Response:
+    """User claims ownership of a paper using submitter provided password."""
+    form = PaperPasswordForm()
+    if request.method == 'GET':
+        return render_template('ownership/need_paper_password.html', **dict(form=form))
+    elif request.method == 'POST':
+        data=paper_password_post(form, request)
+        if data['success']:
+            return render_template('ownership/need_paper_password.html', **data)
+        else:
+            return make_response(render_template('ownership/need_paper_password.html', **data), 400)

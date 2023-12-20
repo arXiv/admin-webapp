@@ -173,11 +173,11 @@ def endorse() -> Response:
     category = f"{endoreq.archive}.{endoreq.subject_class}" if endoreq.subject_class else endoreq.archive
     category_display = get_category_display(category)
 
-    if endoreq.endorsee_id == reqeust.auth.user.user_id:
+    if endoreq.endorsee_id == request.auth.user.user_id:
         return make_response(render_template('endorsement/no-self-endorse.html'), 400)
 
 
-    if request.method == 'POST' and reqeust.form.get('choice', None):
+    if request.method == 'POST' and request.form.get('choice', None):
         form.validate()
         # TODO Do save?
 
