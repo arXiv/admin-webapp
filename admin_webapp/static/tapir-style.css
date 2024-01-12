@@ -58,7 +58,7 @@ body {
 /* landing page style */
 .list-container {
     display: inline-block;
-    border: 1px solid blue; /* Add a border for better visualization */
+    border: 1px solid #8080FF; /* Add a border for better visualization */
     padding: 10px; /* Add padding for spacing */
     margin: 3px;
     flex-direction: column;

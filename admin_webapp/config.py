@@ -119,8 +119,8 @@ if LOCALHOST_DEV:
     FLASK_DEBUG=True
     DEBUG=True
     if not SQLALCHEMY_DATABASE_URI:
-        SQLALCHEMY_DATABASE_URI = 'sqlite:///../locahost_dev.db'
-        # SQLALCHEMY_DATABASE_URI='mysql+mysqldb://root:root@localhost:3306/arXiv'
+        # SQLALCHEMY_DATABASE_URI = 'sqlite:///../locahost_dev.db'
+        SQLALCHEMY_DATABASE_URI='mysql+mysqldb://root:root@localhost:3306/arXiv'
         # SQLALCHEMY_DATABASE_URI = 'mysql:///../locahost_dev.db'
 
         # CLASSIC_DATABASE_URI = SQLALCHEMY_DATABASE_URI
