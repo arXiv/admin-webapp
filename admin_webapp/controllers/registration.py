@@ -8,6 +8,7 @@ and password. Each user can create a personalized profile with contact and
 affiliation information, and links to external identities such as GitHub and
 ORCID.
 """
+from admin_webapp import config
 
 from typing import Dict, Tuple, Any, Optional
 from werkzeug.datastructures import MultiDict
@@ -21,9 +22,10 @@ from arxiv_auth.auth.sessions import SessionStore
 
 from wtforms import StringField, PasswordField, SelectField, \
     BooleanField, Form, HiddenField
-from wtforms.validators import DataRequired, Email, Length, URL, optional, \
+from wtforms.validators import DataRequired, Email, Length, URL, optional, EqualTo, \
     ValidationError
 from flask import url_for, Markup
+from flask import session as flask_session
 import pycountry
 
 from arxiv import taxonomy
@@ -31,7 +33,8 @@ from .util import MultiCheckboxField, OptGroupSelectField
 
 from .. import stateless_captcha
 
-from arxiv_auth import legacy
+from arxiv_auth.legacy import sessions as legacy_sessions
+
 from arxiv_auth.legacy import accounts
 from arxiv_auth.legacy.exceptions import RegistrationFailed, \
     SessionCreationFailed, SessionDeletionFailed
@@ -44,8 +47,11 @@ ResponseData = Tuple[dict, int, dict]
 def _login_classic(user: domain.User, auth: domain.Authorizations,
                    ip: Optional[str]) -> Tuple[domain.Session, str]:
     try:
-        c_session = legacy.create(auth, ip, ip, user=user)
-        c_cookie = legacy.generate_cookie(c_session)
+        # c_session = legacy.create(auth, ip, ip, user=user)
+        # c_cookie = legacy.generate_cookie(c_session)
+        # no tracking cookie used
+        c_session = legacy_sessions.create(auth, ip, ip, '', user=user)
+        c_cookie = legacy_sessions.generate_cookie(c_session)
         logger.debug('Created classic session: %s', c_session.session_id)
     except SessionCreationFailed as ee:
         logger.debug('Could not create classic session: %s', ee)
@@ -87,7 +93,7 @@ def register(method: str, params: MultiDict, captcha_secret: str, ip: str,
         form.configure_captcha(captcha_secret, ip)
         data = {'form': form, 'next_page': next_page}
     elif method == 'POST':
-        logger.debug('Registration form submitted')
+        logger.debug('Registration form advancing to step 2')
         form = RegistrationForm(params, next_page=next_page)
         data = {'form': form, 'next_page': next_page}
         form.configure_captcha(captcha_secret, ip)
@@ -97,9 +103,62 @@ def register(method: str, params: MultiDict, captcha_secret: str, ip: str,
             return data, status.HTTP_400_BAD_REQUEST, {}
 
         logger.debug('Registration form is valid')
-        password = form.password.data
+        # password = form.password.data
 
         # Perform the actual registration.
+
+        # user, auth = accounts.register(form.to_domain(), password, ip, ip)
+
+        # try:
+        #     user, auth = accounts.register(form.to_domain(), password, ip, ip)
+        # except RegistrationFailed as e:
+        #     msg = 'Registration failed'
+        #     raise InternalServerError(msg) from e  # type: ignore
+
+        # Log the user in.
+        # session, cookie = _login(user, auth, ip)
+        # c_session, c_cookie = _login_classic(user, auth, ip)
+        # data.update({
+        #     'cookies': {
+        #         'session_cookie': (cookie, session.expires),
+        #         'classic_cookie': (c_cookie, c_session.expires)
+        #     },
+        #     'user_id': user.user_id
+        # })
+
+        
+        # print(session)
+
+        return data, status.HTTP_303_SEE_OTHER, {'Location': next_page}
+    return data, status.HTTP_200_OK, {}
+
+def register2(method: str, params: MultiDict, ip: str,
+             next_page: str) -> ResponseData:
+    """Handle requests for the registration view step 2."""
+    data: Dict[str, Any]
+    
+    print("session data", flask_session)
+    if method == 'GET':
+        form = ProfileForm(params)
+        data = {'form': form, 'next_page': next_page}
+        
+    elif method == 'POST':
+        logger.debug('Registration form submitted')
+        form = ProfileForm(params, next_page=next_page)
+        data = {'form': form, 'next_page': next_page}
+        # form.configure_captcha(captcha_secret, ip)
+
+        if not form.validate():
+            logger.debug('Registration form not valid')
+            return data, status.HTTP_400_BAD_REQUEST, {}
+
+        logger.debug('Registration form is valid')
+        password = flask_session['password']
+
+        # Perform the actual registration.
+        print(password, form.forename.data)
+        # user, auth = accounts.register(form.to_domain(), password, ip, ip)
+
         try:
             user, auth = accounts.register(form.to_domain(), password, ip, ip)
         except RegistrationFailed as e:
@@ -116,10 +175,11 @@ def register(method: str, params: MultiDict, captcha_secret: str, ip: str,
             },
             'user_id': user.user_id
         })
+
+        # next_page = next_page if good_next_page(next_page) else config.DEFAULT_LOGIN_REDIRECT_URL
         return data, status.HTTP_303_SEE_OTHER, {'Location': next_page}
+
     return data, status.HTTP_200_OK, {}
-
-
 
 
 def edit_profile(method: str, user_id: str, session: domain.Session,
@@ -232,10 +292,14 @@ class ProfileForm(Form):
 
     def to_domain(self) -> domain.User:
         """Generate a :class:`.User` from this form's data."""
+        print(self.default_category.data.split('.'))
+        print(domain.Category('test'))
+        print(self.default_category.data)
         return domain.User(
             user_id=self.user_id.data if self.user_id.data else None,
-            username=self.username.data,
-            email=self.email.data,
+            # use flask session data for step 1 fields
+            username=flask_session['username'],
+            email=flask_session['email'],
             name=domain.UserFullName(
                 forename=self.forename.data,
                 surname=self.surname.data,
@@ -247,7 +311,7 @@ class ProfileForm(Form):
                 rank=int(self.status.data),     # WTF can't handle int values.
                 submission_groups=self.groups.data,
                 default_category=domain.Category(
-                    *self.default_category.data.split('.')
+                    self.default_category.data
                 ),
                 homepage_url=self.url.data,
                 remember_me=self.remember_me.data
@@ -276,7 +340,7 @@ class RegistrationForm(Form):
 
     password = PasswordField(
         'Password',
-        validators=[Length(min=8, max=20), DataRequired()],
+        validators=[Length(min=8, max=20), DataRequired(), EqualTo('password2', message="Passwords must match.")],
         description="Please choose a password that is between 8 and 20"
                     " characters in length. Longer passwords are more secure."
                     " You may use alphanumeric characters, as well as"
@@ -341,10 +405,10 @@ class RegistrationForm(Form):
             self.captcha_value.data = ''    # Clear the field.
             raise ValidationError('Please try again') from e
 
-    def validate_password(self) -> None:
-        """Verify that the password is the same in both fields."""
-        if self.password.data != self.password2.data:
-            raise ValidationError('Passwords must match')
+    # def validate_password(self) -> None:
+    #     """Verify that the password is the same in both fields."""
+    #     if self.password.data != self.password2.data:
+    #         raise ValidationError('Passwords must match')
 
     @classmethod
     def from_domain(cls, user: domain.User) -> 'RegistrationForm':

@@ -4,7 +4,7 @@ from typing import Any, Callable
 from datetime import timedelta, datetime
 from functools import wraps
 from flask import Blueprint, render_template, url_for, request, \
-    make_response, redirect, current_app, send_file, Response
+    make_response, redirect, current_app, send_file, Response, session
 
 from arxiv import status
 from arxiv.base import logging
@@ -106,10 +106,41 @@ def register() -> Response:
     """Interface for creating new accounts."""
     captcha_secret = current_app.config['CAPTCHA_SECRET']
     ip_address = request.remote_addr
-    next_page = request.args.get('next_page', url_for('account'))
+    next_page = request.args.get('next_page', url_for('ui.register2'))
+    
     data, code, headers = registration.register(request.method, request.form,
                                                 captcha_secret, ip_address,
                                                 next_page)
+    
+    # flask session storage
+    session['email'] = data['form'].email.data
+    session['username'] = data['form'].username.data
+    session['password'] = data['form'].password.data
+
+    # Flask puts cookie-setting methods on the response, so we do that here
+    # instead of in the controller.
+    if code is status.HTTP_303_SEE_OTHER:
+        response = make_response(redirect(headers['Location'], code=code))
+        # set_cookies(response, data)
+        return response
+    content = render_template("register.html", **data)
+    response = make_response(content, code, headers)
+    return response
+
+@blueprint.route('/register/step2', methods=['GET', 'POST'])
+@anonymous_only
+def register2() -> Response:
+    """Interface for creating new accounts, step 2."""
+    captcha_secret = current_app.config['CAPTCHA_SECRET']
+    ip_address = request.remote_addr
+    next_page = request.args.get('next_page', url_for('account'))
+
+    data, code, headers = registration.register2(request.method, request.form, ip_address,
+                                                next_page)
+
+    data['email'] = session['email']
+    data['username'] = session['username']
+    # data['password'] = session['password']
 
     # Flask puts cookie-setting methods on the response, so we do that here
     # instead of in the controller.
@@ -117,7 +148,10 @@ def register() -> Response:
         response = make_response(redirect(headers['Location'], code=code))
         set_cookies(response, data)
         return response
-    content = render_template("register.html", **data)
+
+    session.pop('test', None)
+
+    content = render_template("register2.html", **data)
     response = make_response(content, code, headers)
     return response
 
@@ -194,13 +228,14 @@ def auth_status() -> Response:
 
 
 @blueprint.route('/protected')
-@scoped()
+# @scoped()
 def an_example() -> Response:
     """Example of a protected page.
 
     see arxiv_auth.auth.decorators in arxiv-auth for more details.
     """
-    return make_response("This is an example of a protected page.")
+    return render_template('tapir-landing.html')
+    # return make_response("This is an example of a protected page.")
 
 
 @blueprint.route('/auth/v2/dev')
