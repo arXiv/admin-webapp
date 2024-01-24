@@ -1,5 +1,23 @@
 {%- extends "base.html" -%}
 {%- block content -%}
 <h1>Moderators by username</h1>
-<div>See also moderators by category. There are {{count}} moderators (excluding test categories)</div>
-{%- endblock -%}
+<div>See also <a href="">moderators by category</a>. There are {{count}} moderators (excluding test categories)</div>
+
+<table class="table">
+    <tr>
+      <th>Username</th><th>Name</th><th>E-mail</th><th>Categories</th>
+    </tr>
+    {%for mod in mods%}
+    <tr>
+      <td><a href=''>{{mod.TapirUsers.tapir_nicknames[0].nickname}}</a></td>
+      <td>
+          {{mod.TapirUsers.first_name}} {{mod.TapirUsers.last_name}}</a>
+      </td>
+      <td>{{mod.TapirUsers.email}}</td>
+      <td>{{mod.archive_subject_list|replace(',', ',&nbsp;')|safe}}</td>
+    </tr>
+    {%endfor%}
+  </table>
+  
+
+{%- endblock content -%}

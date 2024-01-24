@@ -9,7 +9,7 @@ from flask import Blueprint, render_template, request, \
 
 from flask_sqlalchemy import Pagination
 
-from sqlalchemy import select, func, text, insert, update
+from sqlalchemy import select, func, case, text, insert, update
 from sqlalchemy.orm import joinedload, selectinload
 from arxiv.base import logging
 
@@ -112,7 +112,16 @@ def moderator_listing() -> dict:
 
     count_stmt = (select(func.count(Moderators.user_id)))
 
-    mods = session.scalars(report_stmt)
+    # mods = session.scalars(report_stmt)
+    mods = (
+    session.query(
+        Moderators.user_id,
+        func.group_concat(func.concat(Moderators.archive, case([(Moderators.subject_class != '', '.',)], else_=''), Moderators.subject_class), order_by=(Moderators.archive, Moderators.subject_class), separator=', ').label('archive_subject_list'),
+        TapirUsers
+    )
+    .join(TapirUsers, Moderators.user_id == TapirUsers.user_id)
+    .group_by(Moderators.user_id)
+    .all()
+    )
     count = session.execute(count_stmt).scalar_one()
-    print(count)
     return dict(count=count, mods=mods)
