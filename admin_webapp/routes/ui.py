@@ -228,7 +228,7 @@ def auth_status() -> Response:
 
 
 @blueprint.route('/protected')
-@scoped()
+# @scoped()
 def an_example() -> Response:
     """Example of a protected page.
 
@@ -237,13 +237,6 @@ def an_example() -> Response:
     return render_template('tapir-landing.html')
     # return make_response("This is an example of a protected page.")
 
-# @blueprint.route('/administrators')
-# @scoped
-# def administrators() -> Response:
-#     """
-#     Show administrators view
-#     """
-#     return render_template()
 
 @blueprint.route('/auth/v2/dev')
 def dev() -> Response:

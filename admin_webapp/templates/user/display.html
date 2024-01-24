@@ -58,21 +58,23 @@
       <td valign="top">
         <span class="label">Veto Status</span>: {{ demographics.veto_status }}  [<a href="[% c.uri_for('change_veto_status', user_id) %]">Change status</a>]<br />
         <span class="label">Proxy?</span>: {% if demographics.flag_proxy %}Y{% else %}N{% endif %}  [<a href="[% c.uri_for('flip', 'proxy', user_id) %]">flip</a>]
-        <span class="label">Flagged?</span>: [% IF user.ext.flag_suspect %]Y[% ELSE %]N[% END %]  [<a href="[% c.uri_for('flip', 'suspect', user_id) %]">flip</a>]<br />
-        <span class="label">Allow TeX Produced?</span>: [% IF user.flag_allow_tex_produced %]Y[% ELSE %]N[% END %]  [<a href="/admin/user/[% user.id %]/allow_tex_produced">flip</a>]<br />
+        <span class="label">Flagged?</span>: {% if demographics.flag_suspect %}Y{% else %}N{% endif %}  [<a href="[% c.uri_for('flip', 'suspect', user_id) %]">flip</a>]<br />
+        <span class="label">Allow TeX Produced?</span>: {% if user.flag_allow_tex_produced %}Y{% else %}N{% endif %}  [<a href="/admin/user/[% user.id %]/allow_tex_produced">flip</a>]<br />
     
         <span class="badColor"><span class="label">Test?</span>:
-             [% IF user.ext.flag_group_test %]Y[% ELSE %]N[% END %]</span>
+             {% if demographics.flag_group_test %}Y{% else %}N{% endif %}</span>
              [<a href="[% c.uri_for('flip', 'test', user_id) %]">flip</a>]<br />
-        <span class="label">Default Category</span>: [% user.ext.subject_class %]<br />
-        <span class="label">Groups</span>: cs,math,physics,q-bio,test<br />
-        <span class="label">Career Status</span>: [% user_status_type %]&nbsp;&nbsp;
+        <span class="label">Default Category</span>: {{ demographics.subject_class }}<br />
+        <!-- TODO: fix hardcoding Groups -->
+        <span class="label">Groups</span>: cs,math,physics,q-bio,test<br /> 
+        <!-- TODO: decide where to convert to rank name -->
+        <span class="label">Career Status</span>: {{ demographics.type }}&nbsp;&nbsp;
       </td>
       <td>&nbsp;</td>
       <td valign="top">
-        <span class="label">Affiliation</span>: [% user.ext.affiliation %]<br />
-        <span class="label">Country</span>: [% user.ext.country %]<br />
-        <span class="label">URL</span>: <i>[% user.ext.url %]</i><br />
+        <span class="label">Affiliation</span>: {{ demographics.affiliation }}<br />
+        <span class="label">Country</span>: {{ demographics.country }}<br />
+        <span class="label">URL</span>: <i>{{ demographics.url }}</i><br />
         Viewed Email addresses for <a href="">[% num_emails_requested %]</a> papers.<br /><br>
         <form action="/admin/user/[% user.id %]/update_mod_public" method="get">
            <input type="hidden" id="flip" name="flip" value="" />

@@ -15,12 +15,13 @@ from arxiv.base import logging
 
 from arxiv_auth.auth.decorators import scoped
 
+from admin_webapp.models import Moderators
+
 from arxiv_db.models import TapirUsers, Documents, EndorsementRequests, Demographics
 from arxiv_db.models.associative_tables import t_arXiv_paper_owners
 
 from admin_webapp.extensions import get_csrf, get_db
 from admin_webapp.admin_log import audit_admin
-
 logger = logging.getLogger(__file__)
 
 # blueprint = Blueprint('ownership', __name__, url_prefix='/ownership')
@@ -103,3 +104,15 @@ def suspect_listing(per_page:int, page: int) -> dict:
     count = session.execute(count_stmt).scalar_one()
     pagination = Pagination(query=None, page=page, per_page=per_page, total=count, items=None)
     return dict(pagination=pagination, count=count, users=users)
+
+
+def moderator_listing() -> dict:
+    session = get_db(current_app).session
+    report_stmt = (select(Moderators))
+
+    count_stmt = (select(func.count(Moderators.user_id)))
+
+    mods = session.scalars(report_stmt)
+    count = session.execute(count_stmt).scalar_one()
+    print(count)
+    return dict(count=count, mods=mods)

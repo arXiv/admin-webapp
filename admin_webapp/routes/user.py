@@ -2,7 +2,7 @@
 
 from flask import Blueprint, render_template, Response, request
 
-from admin_webapp.controllers.users import administrator_listing, administrator_edit_sys_listing, suspect_listing, user_profile
+from admin_webapp.controllers.users import administrator_listing, administrator_edit_sys_listing, suspect_listing, user_profile, moderator_listing
 
 blueprint = Blueprint('user', __name__, url_prefix='/user')
 
@@ -54,3 +54,14 @@ def suspects() -> Response:
     data = suspect_listing(per_page, page)
     data['title'] = "Suspects"
     return render_template('user/list.html', **data)
+
+@blueprint.route('/moderators', methods=['GET'])
+def moderators() -> Response:
+    """
+    Show moderators view
+    No pagination
+    """
+    args = request.args
+    data = moderator_listing()
+    data['title'] = "Moderators"
+    return render_template('user/moderators.html', **data)

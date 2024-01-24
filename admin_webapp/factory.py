@@ -52,6 +52,9 @@ def create_web_app() -> Flask:
     """Initialize and configure the admin_webapp application."""
     app = Flask('admin_webapp')
     app.config.from_pyfile('config.py')
+    session_lifetime = app.config['PERMANENT_SESSION_LIFETIME']
+
+    print(f"Session Lifetime: {session_lifetime} seconds")
     # Configure Flask session (use filesystem for dev purposes)
     app.config['SESSION_TYPE'] = 'filesystem'
     Session(app)
@@ -81,7 +84,6 @@ def create_web_app() -> Flask:
     legacy_init_app(app)
 
     SQLAlchemy(app, metadata=arxiv_db.Base.metadata)
-
     app.register_blueprint(ui.blueprint)
     app.register_blueprint(ownership.blueprint)
     app.register_blueprint(endorsement.blueprint)
