@@ -3,7 +3,6 @@
 {{ bootstrap.load_css() }}
 {% endblock addl_head %}
 {%block content%}
-<h1>Single User Display: not yet implemented</h1>
 <table width="100%" class="topbar">
     <tr>
     <td align="left" valign="top">
@@ -43,9 +42,9 @@
     <td valign="top">
      <span class="label">User Id</span>: {{ user.user_id }}  <br />
      [% USE date %]
-     <span class="label">Last login</span>: [% date.format(sessions.next.start_time) %]<br />
-     <span class="label">Penultimate login</span>: [% date.format(sessions.next.start_time) %]<br />
-     <span class="label"># Sessions</span>: <a href="[% c.uri_for('view_sessions', user_id) %]">[% num_sessions %]</a><br />
+     <span class="label">Last login</span>: {{ sessions[0].start_time | unix_to_datetime}}<br />
+     <span class="label">Penultimate login</span>: {{ sessions[1].start_time | unix_to_datetime }}<br />
+     <span class="label"># Sessions</span>: <a href="[% c.uri_for('view_sessions', user_id) %]">{{ sessions | length }}</a><br />
      <span class="label">Joined on</span>: [% date.format(user.joined_date) %]<br />
      <span class="label">Joined from</span>: {{ user.joined_ip_num }}<br />
     </td>
@@ -140,5 +139,48 @@
     [% END %]
     
     </table>
+
+    <div>
+      <textarea cols="50" placeholder="Write a comment here..."></textarea>
+      <button>Add comment</button>
+    </div>
+
+    <div class="activity-log">
+      {% for activity in logs%}
+        {% if loop.index is odd %}
+          <div style="background-color: lightgray;">
+        {% else %}
+          <div>
+        {% endif %}
+      <strong>{{activity.TapirAdminAudit.log_date | unix_to_datetime}}: </strong>
+        {% if activity.TapirAdminAudit.action == 'add-paper-owner' %}
+          <a href="{{url_for('user.display', user_id=activity.TapirAdminAudit.tapir_users.user_id)}}">{{activity.TapirAdminAudit.tapir_users.tapir_nicknames.nickname}}</a> made <a href="{{url_for('user.display', user_id=activity.TapirAdminAudit.tapir_users_.user_id)}}">{{activity.TapirAdminAudit.tapir_users_.tapir_nicknames.nickname}}</a> an owner of paper <a href="">{{activity.Documents.document_id}}</a>
+        
+        {% elif activity.TapirAdminAudit.action == 'add-paper-owner-2' %}
+          <a href="">{{activity.TapirAdminAudit.tapir_users.tapir_nicknames.nickname}}</a> made <a href="">{{activity.TapirAdminAudit.tapir_users_.tapir_nicknames.nickname}}</a> an owner of paper <a href="">{{activity.Documents.paper_id}}</a> through the process-ownership screen
+        
+        {% elif activity.TapirAdminAudit.action == 'become-user' %}
+          <a href="">{{activity.TapirAdminAudit.tapir_users.tapir_nicknames.nickname}}</a> became <a href="">{{activity.TapirAdminAudit.tapir_users_.tapir_nicknames.nickname}}</a> for session <a href="">{{activity.TapirSessions.session_id}}</a>
+
+        {% elif activity.TapirAdminAudit.action == 'make-moderator' %}
+          <a href="">{{activity.TapirAdminAudit.tapir_users.tapir_nicknames.nickname}}</a> made <a href="">{{activity.TapirAdminAudit.tapir_users_.tapir_nicknames.nickname}}</a> a moderator of {{activity.TapirAdminAudit.data}}
+          
+        {% elif activity.TapirAdminAudit.action == 'unmake-moderator' %}
+          <a href="">{{activity.TapirAdminAudit.tapir_users.tapir_nicknames.nickname}}</a> revoked <a href="">{{activity.TapirAdminAudit.tapir_users_.tapir_nicknames.nickname}}</a> being a moderator of {{activity.TapirAdminAudit.data}}
+        
+        {% elif activity.TapirAdminAudit.action == 'change-email' %}
+          <a href="">{{activity.TapirAdminAudit.tapir_users.tapir_nicknames.nickname}}</a> changed the email address for <a href="">{{activity.TapirAdminAudit.tapir_users_.tapir_nicknames.nickname}}</a> from {{activity.TapirAdminAudit.data}}
+          
+        {% else %}
+          <a href="">{{activity.TapirAdminAudit.tapir_users.tapir_nicknames.nickname}}</a> performed operation {{activity.TapirAdminAudit.action}} on <a href="">{{activity.TapirAdminAudit.tapir_users_.tapir_nicknames.nickname}}</a>
+
+        {% endif %}
+        {% if activity.TapirAdminAudit.comment %}
+          <div class="log-comment">{{activity.TapirAdminAudit.comment}}</div>
+        {% endif %}
+      </div>
+      {%endfor%}
+
+    </div>
 {%endblock content%}
 

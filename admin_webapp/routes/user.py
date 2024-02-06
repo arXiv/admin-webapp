@@ -2,7 +2,7 @@
 
 from flask import Blueprint, render_template, Response, request
 
-from admin_webapp.controllers.users import administrator_listing, administrator_edit_sys_listing, suspect_listing, user_profile, moderator_listing
+from admin_webapp.controllers.users import administrator_listing, administrator_edit_sys_listing, suspect_listing, user_profile, moderator_listing, moderator_by_category_listing
 
 blueprint = Blueprint('user', __name__, url_prefix='/user')
 
@@ -65,3 +65,14 @@ def moderators() -> Response:
     data = moderator_listing()
     data['title'] = "Moderators"
     return render_template('user/moderators.html', **data)
+
+@blueprint.route('/moderators_by_category', methods=['GET'])
+def moderators_by_category() -> Response:
+    """
+    Show moderators by category view
+    No pagination
+    """
+    args = request.args
+    data = moderator_by_category_listing()
+    data['title'] = "Moderators"
+    return render_template('user/moderators_by_category.html', **data)

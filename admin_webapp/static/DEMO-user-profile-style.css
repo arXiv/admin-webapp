@@ -387,3 +387,15 @@ span.boldblack {
 .prop-row input {
  display:inline-block;
 }
+
+.activity-log {
+ padding: 3%;
+}
+
+.activity-log > * {
+ padding: 4px;
+}
+
+.log-comment {
+ margin-left: 20px;
+}

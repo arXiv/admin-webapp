@@ -21,6 +21,7 @@ from arxiv_auth.legacy.util import create_all as legacy_create_all
 from flask_sqlalchemy import SQLAlchemy
 
 import arxiv_db
+from . import filters
 
 from .routes import ui, ownership, endorsement, user, paper
 
@@ -101,6 +102,8 @@ def create_web_app() -> Flask:
     wrap(app, [AuthMiddleware])
 
     settup_warnings(app)
+
+    app.jinja_env.filters['unix_to_datetime'] = filters.unix_to_datetime
 
     if app.config['CREATE_DB']:
         with app.app_context():
