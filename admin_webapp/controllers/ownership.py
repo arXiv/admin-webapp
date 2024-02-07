@@ -2,23 +2,27 @@
 
 from datetime import datetime, timedelta
 import logging
-from admin_webapp.routes import endorsement
 
-from flask import Blueprint, render_template, request, \
-    make_response, current_app, Response, abort
+from socket import gethostbyaddr
+
+from flask import Blueprint, request, \
+    current_app, Response, abort
 
 from flask_sqlalchemy import Pagination
 
-from sqlalchemy import select, func, text, insert, update
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy import Integer, String, select, func, text, insert, update
+from sqlalchemy.orm import joinedload
+from sqlalchemy.exc import IntegrityError
+
+from flask_wtf import FlaskForm
+from wtforms import StringField, BooleanField, SelectField, validators
+
 from arxiv.base import logging
 
-from arxiv_auth.auth.decorators import scoped
 
-from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, TapirUsers, Documents, EndorsementRequests
-from arxiv_db.models.associative_tables import t_arXiv_paper_owners
+from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, TapirUsers, Documents, EndorsementRequests, PaperOwners
 
-from admin_webapp.extensions import get_csrf, get_db
+from admin_webapp.extensions import get_db
 from admin_webapp.admin_log import audit_admin
 
 logger = logging.getLogger(__file__)
@@ -58,11 +62,11 @@ def ownership_post(data:dict) -> Response:
             now = int(datetime.now().astimezone(current_app.config['ARXIV_BUSINESS_TZ']).timestamp())
 
             for doc_id in to_add_ownership:
-                stmt = insert(t_arXiv_paper_owners).values(
+                session.add(
+                    PaperOwners(
                     document_id=doc_id, user_id=oreq.user.user_id, date=now,
                     added_by=admin_id, remote_addr=request.remote_addr, tracking_cookie=cookie,
-                    flag_auto=0, flag_author=is_author)
-                session.execute(stmt)
+                    flag_auto=0, flag_author=is_author))
                 #audit_admin(oreq.user_id, 'add-paper-owner-2', doc_id)
 
             oreq.workflow_status = 'accepted'
@@ -93,9 +97,7 @@ def ownership_post(data:dict) -> Response:
 
 @blueprint.route('/<int:ownership_id>', methods=['GET', 'POST'])
 def ownership_detail(ownership_id:int, postfn=None) -> dict:
-    """Display a ownership request.
-
-    """
+    """Display a ownership request."""
     session = get_db(current_app).session
     stmt = (select(OwnershipRequests)
             .options(
@@ -110,14 +112,14 @@ def ownership_detail(ownership_id:int, postfn=None) -> dict:
     if not oreq:
         abort(404)
 
-    already_owns =[paper.paper_id for paper in oreq.user.owned_papers]
-    for paper in oreq.documents:
-        setattr(paper, 'already_owns', paper.paper_id in already_owns)
+    already_owns =[own.document_id for own in oreq.user.owned_papers]
+    for doc in oreq.documents:
+        setattr(doc, 'already_owns', doc.document_id in already_owns)
 
     endorsement_req = oreq.endorsement_request if oreq.endorsement_request else None
     data = dict(ownership=oreq,
                 user=oreq.user,
-                nickname= oreq.user.tapir_nicknames[0].nickname,
+                nickname= oreq.user.nickname,
                 papers=oreq.documents,
                 audit=oreq.request_audit[0],
                 ownership_id=ownership_id,
@@ -131,6 +133,7 @@ def ownership_detail(ownership_id:int, postfn=None) -> dict:
 
 def ownership_listing(workflow_status:str, per_page:int, page: int,
                        days_back:int) -> dict:
+    """Gets the data for ownership reports."""
     session = get_db(current_app).session
     report_stmt = (select(OwnershipRequests)
                    .options(joinedload(OwnershipRequests.user))
@@ -148,3 +151,79 @@ def ownership_listing(workflow_status:str, per_page:int, page: int,
     count = session.execute(count_stmt).scalar_one()
     pagination = Pagination(query=None, page=page, per_page=per_page, total=count, items=None)
     return dict(pagination=pagination, count=count, ownership_requests=oreqs, worflow_status=workflow_status, days_back=days_back)
+
+
+def paper_password_post(form, request) -> dict:
+    """Controller for need paper password route.
+
+    Logged in users can claim ownership on a paper if they have the password for it.
+    Usually the submitter emails the password to collaborators.
+    """
+    if not form.validate():
+        return dict(success=False, error='FormInvalid', form=form)
+
+    session = get_db(current_app).session
+    doc = _get_doc_and_pw(session, form.paperid.data)
+    if not doc:
+        return dict(success=False, error='paperNotFound', form=form)
+
+    if doc.password.password_storage != 0 :
+        return dict(success=False, error='password encoding must be zero', form=form)
+
+    if doc.password.password_enc != form.password.data:
+        return dict(success=False, error='bad password', form=form)
+
+    try:
+        _add_paper_owner(session=session, doc=doc,
+                         user_id=request.auth.user.user_id,
+                         added_by=request.auth.user.user_id,
+                         remote_addr=request.remote_addr,
+                         remote_host=request.auth.remote_host,  # TODO arxiv-auth needs to set this!
+                         tracking_cookie=request.cookies.get(current_app.config['CLASSIC_COOKIE_NAME'], ''),
+                         author=form.author.data)
+    except IntegrityError:
+        return dict(success=False, error='already an owner', form=form)
+
+    paperid = form.paperid.data
+    return dict(success=True, form=PaperPasswordForm(formdata=None), paperid=paperid)
+
+
+def _get_doc_and_pw(session, paperid):
+    stmt=select(Documents)\
+        .filter(Documents.paper_id == paperid)
+    return session.execute(stmt).scalar()
+
+
+def _add_paper_owner(*,
+                     session, doc: Documents,
+                     user_id=0,
+                     added_by='',
+                     remote_addr='',
+                     remote_host='',
+                     tracking_cookie='',
+                     author=''):
+    doc.owners.append(PaperOwners(user_id=user_id,
+                                  date=datetime.now(),
+                                  added_by=added_by,
+                                  remote_addr=remote_addr,
+                                  remote_host=remote_host,
+                                  tracking_cookie=tracking_cookie[:32],
+                                  valid=1,
+                                  flag_author= (author.lower() == 'yes'),
+                                  flag_auto=0,))
+    session.commit()
+
+class PaperPasswordForm(FlaskForm):
+    """Form for paper ownership.
+
+    The `_search` in the field names prevents password managers from
+    offering to fill out the form.
+
+    """
+
+    paperid = StringField(label='paper id', id='paperid_search', validators=[validators.InputRequired()])
+    password = StringField(label='paper password', id='p_search', validators=[validators.InputRequired()])
+    author = SelectField('author', choices=['--choose--', 'Yes', 'No'],
+                         validators=[validators.InputRequired(), validators.AnyOf(['Yes','No'])])
+    agree = BooleanField('agree', default=False, validators=[validators.InputRequired(),
+                                                             validators.AnyOf([True])])

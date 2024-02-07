@@ -56,6 +56,7 @@ def parse_cookies(cookie_data):
 def engine():
     db_file = pathlib.Path(DB_FILE).resolve()
     try:
+        assert not db_file.exists()
         print(f"Created db at {db_file}")
         connect_args = {"check_same_thread": False}
         engine = create_engine(f"sqlite:///{db_file}",
@@ -174,4 +175,78 @@ def admin_client(app, admin_user):
     client.set_cookie('', ngcookie_name, cookies[ngcookie_name]['value'])
     client.set_cookie('', classic_cookie_name, cookies[classic_cookie_name]['value'])
     client.set_cookie('', app.config['CLASSIC_TRACKING_COOKIE'], 'fake_browser_tracking_cookie_value')
+    return client
+
+
+@pytest.fixture(scope='session')
+def reader_client(app, db):
+    """Non-admin non-mod authenteicated client.
+
+    A flask app client pre configured to send cookies"""
+    password = b'thepassword'
+    email='a_user@example.com'
+    user_id = 68888
+    with Session(db) as session:
+        salt = b'fdoo'
+        hashed = hashlib.sha1(salt + b'-' + password).digest()
+        encrypted_pw = b64encode(salt + hashed)
+
+        db_user = models.TapirUsersPassword(
+            user_id=user_id,
+            first_name='A',
+            last_name='Reader',
+            suffix_name='',
+            email=email,
+            policy_class=2,
+            flag_edit_users=0,
+            flag_email_verified=1,
+            flag_edit_system=0,
+            flag_approved=1,
+            flag_deleted=0,
+            flag_banned=0,
+            tracking_cookie='foocookie',
+            password_storage=2,
+            password_enc=encrypted_pw,
+        )
+
+        db_nick=models.TapirNicknames(
+            user_id = db_user.user_id,
+            nickname='a_user',
+            user_seq=1,
+            flag_valid=1,
+            role=0,
+            policy=0,
+            flag_primary=1
+        )
+        db_demo = models.Demographics(
+            user_id=db_user.user_id,
+            country='US',
+            affiliation='Cornell U.',
+            url='http://example.com/bogus',
+            original_subject_classes='cs.OH',
+            subject_class = 'OH',
+            archive ='cs',
+            type=5,
+        )
+        session.add(db_user)
+        session.add(db_nick)
+        session.add(db_demo)
+        session.commit()
+
+    client = app.test_client()
+    resp = client.post('/login', data=dict(username=email,
+                                           password=password))
+    assert resp.status_code == 303
+
+    cookies = parse_cookies(resp.headers.getlist('Set-Cookie'))
+    ngcookie_name = app.config['AUTH_SESSION_COOKIE_NAME']
+    assert ngcookie_name in cookies
+    classic_cookie_name = app.config['CLASSIC_COOKIE_NAME']
+    assert classic_cookie_name in cookies
+    client.set_cookie('', ngcookie_name, cookies[ngcookie_name]['value'])
+    client.set_cookie('', classic_cookie_name, cookies[classic_cookie_name]['value'])
+    client.set_cookie('', app.config['CLASSIC_TRACKING_COOKIE'], 'fake_browser_tracking_cookie_value')
+
+    setattr(client, 'user_id', user_id)
+    setattr(client, 'email', email)
     return client
