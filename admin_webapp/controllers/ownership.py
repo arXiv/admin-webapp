@@ -19,13 +19,7 @@ from wtforms import StringField, BooleanField, SelectField, validators
 
 from arxiv.base import logging
 
-
-<<<<<<< Updated upstream
 from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, TapirUsers, Documents, EndorsementRequests, PaperOwners
-=======
-from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, TapirUsers, Documents, EndorsementRequests
-#from arxiv_db.models.associative_tables import t_arXiv_paper_owners
->>>>>>> Stashed changes
 
 from admin_webapp.extensions import get_db
 from admin_webapp.admin_log import audit_admin

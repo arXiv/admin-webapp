@@ -3,7 +3,7 @@
 import logging
 
 from flask import Flask
-from flask_session import Session
+from flask_session import Session as FlaskSession
 from flask_s3 import FlaskS3
 from flask_bootstrap import Bootstrap5
 
@@ -57,7 +57,7 @@ def create_web_app() -> Flask:
     print(f"Session Lifetime: {session_lifetime} seconds")
     # Configure Flask session (use filesystem for dev purposes)
     app.config['SESSION_TYPE'] = 'filesystem'
-    Session(app)
+    FlaskSession(app)
     Bootstrap5(app)
 
     # change_loglevel('arxiv_auth.legacy.authenticate', 'DEBUG')
