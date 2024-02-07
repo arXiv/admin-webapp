@@ -17,8 +17,13 @@ from arxiv_auth.auth.decorators import scoped
 
 from admin_webapp.models import Moderators
 
+<<<<<<< Updated upstream
 from arxiv_db.models import TapirUsers, Documents, EndorsementRequests, Demographics
 from arxiv_db.models.associative_tables import t_arXiv_paper_owners
+=======
+from arxiv_db.models import TapirUsers, Documents, EndorsementRequests, Demographics, TapirNicknames, TapirAdminAudit, TapirSessions
+#from arxiv_db.models.associative_tables import t_arXiv_paper_owners
+>>>>>>> Stashed changes
 
 from admin_webapp.extensions import get_csrf, get_db
 from admin_webapp.admin_log import audit_admin

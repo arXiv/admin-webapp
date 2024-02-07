@@ -1,5 +1,6 @@
 """arXiv endorsement routes."""
 
+<<<<<<< Updated upstream
 from datetime import datetime, timedelta
 
 from flask_sqlalchemy import Pagination
@@ -12,6 +13,10 @@ from flask import Blueprint, render_template, Response, request, current_app, ab
 from arxiv_db.models import EndorsementRequests, Endorsements, TapirUsers, Demographics
 
 from admin_webapp.extensions import get_db
+=======
+from flask import Blueprint, render_template, Response, request
+from admin_webapp.controllers.endorsement import endorsement_listing
+>>>>>>> Stashed changes
 
 blueprint = Blueprint('endorsement', __name__, url_prefix='/endorsement')
 
