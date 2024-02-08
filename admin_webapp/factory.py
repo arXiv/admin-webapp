@@ -60,6 +60,10 @@ def create_web_app() -> Flask:
     FlaskSession(app)
     Bootstrap5(app)
 
+    if app.config['DEBUG']:
+        app.jinja_env.add_extension('jinja2.ext.debug')
+
+
     # change_loglevel('arxiv_auth.legacy.authenticate', 'DEBUG')
     # change_loglevel('arxiv_auth.auth', 'DEBUG')
     # change_loglevel('arxiv_auth.auth.decorator', 'DEBUG')

@@ -1,0 +1,16 @@
+{%- extends "base.html" -%}
+
+{%- block content -%}
+<h1>Enter Endorsement Code</h1>
+
+<div>When an arXiv user requests endorsement to submit to an archive or subject class, they receive an endorsement code. To endorse a user you must get the endorsement code for that user and enter the endorsement code into the form on this page. An endorsement code is a six character alphanumeric string (ex. H6ZX2L.)
+</div><div>
+  After entering the endorsement code, we will give you further instructions and ask if you wish to endorse the person who gave you the code. You'll also get the chance to make an optional comment about your endorsement or lack of endorsement -- your comment and your choice to endorse or not endorse this person will be kept private between yourself and the arXiv administration.</div>
+
+<form action="{{url_for(request.endpoint)}}" method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+  <b>Endorsement code:</b> <input name="x" value=""/>
+  <input type="submit" name="submit" value="Submit"/>
+</form>
+
+{%- endblock content -%}

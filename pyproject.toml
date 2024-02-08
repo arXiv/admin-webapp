@@ -24,12 +24,7 @@ requests = "^2.28.1"
 urllib3 = "^1.26.11"
 arxiv-auth = ">=1.0.0.rc3"
 Flask = "^2.2.2"
-<<<<<<< Updated upstream
-arxiv-db = ">=0.12.0"
-=======
-#arxiv-db = ">=0.7.0"
 arxiv-db = {git = "https://github.com/arXiv/arxiv-db.git", branch = "tapir-dev-models"}
->>>>>>> Stashed changes
 flask-sqlalchemy = "^2.0.0"
 Bootstrap-Flask = "^2.1.0"
 Flask-WTF = "^1.0.1"
