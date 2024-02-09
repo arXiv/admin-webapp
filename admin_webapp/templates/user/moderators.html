@@ -9,7 +9,7 @@
     </tr>
     {%for mod in mods%}
     <tr>
-      <td><a href="{{url_for('user.display', user_id=mod.user_id)}}">{{mod.TapirUsers.tapir_nicknames[0].nickname}}</a></td>
+      <td><a href="{{url_for('user.display', user_id=mod.user_id)}}">{{mod.TapirUsers.tapir_nicknames.nickname}}</a></td>
       <td>
           {{mod.TapirUsers.first_name}} {{mod.TapirUsers.last_name}}</a>
       </td>

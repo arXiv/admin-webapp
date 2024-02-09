@@ -16,7 +16,7 @@ from arxiv.base import logging
 
 from arxiv_auth.auth.decorators import scoped
 
-from arxiv_db.models import Endorsements, EndorsementsAudit
+from arxiv_db.models import Endorsements, EndorsementsAudit, TapirUsers
 from arxiv_db.models.associative_tables import t_arXiv_paper_owners
 
 from admin_webapp.extensions import get_csrf, get_db
@@ -32,8 +32,7 @@ def endorsement_listing(per_page:int, page: int) -> dict:
     report_stmt = (select(Endorsements)
                 #    TODO: do I need a joinedload to prevent N+1 queries
                 #    .options(joinedload(TapirUsers.tapir_nicknames))
-                   .join(EndorsementsAudit, Endorsements.endorsement_id, isouter=True)
-                   .limit(per_page).offset((page -1) * per_page))
+                   .limit(per_page).offset((page -1) * per_page)).join(EndorsementsAudit, isouter=True)
 
     count_stmt = (select(func.count(Endorsements.endorsement_id)))
 
@@ -41,7 +40,6 @@ def endorsement_listing(per_page:int, page: int) -> dict:
     count = session.execute(count_stmt).scalar_one()
     pagination = Pagination(query=None, page=page, per_page=per_page, total=count, items=None)
 
-    # for e in endorsements:
-    #     print(e)
+
     return dict(pagination=pagination, count=count, endorsements=endorsements)
 

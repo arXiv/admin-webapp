@@ -1,7 +1,7 @@
 """arXiv endorsement routes."""
 
 from flask import Blueprint, render_template, Response, request
-from admin_webapp.controllers. import endorsement_listing
+from admin_webapp.controllers.endorsement import endorsement_listing
 
 blueprint = Blueprint('endorsement', __name__, url_prefix='/endorsement')
 
@@ -15,7 +15,7 @@ def endorsements() -> Response:
     page = args.get('page', default=1, type=int)
     
     data = endorsement_listing(per_page, page)
-    data['title'] = "Administrators"
+    data['title'] = "Endorsements"
     return render_template('endorsement/list.html', **data)
 
 @blueprint.route('/request', methods=['GET'])

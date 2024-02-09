@@ -5,23 +5,30 @@
 <h1>{{title}}</h1>
 
 {%- if count > 0 -%}
-<div>Found {{count}} users. Page {{pagination.page}} of {{pagination.pages}}.</div>
+<div>Found {{count}} endorsements. Page {{pagination.page}} of {{pagination.pages}}.</div>
 {%- else -%}
 <!-- <div>None found in past {{days_back}} days, <a href='{{url_for(request.endpoint, days_back=days_back*10)}}'>see {{days_back*10}} days back</a></div> -->
 {% endif -%}
 
 <table class="table">
   <tr>
-    <th>Nickname</th><th>E-mail</th><th>Name</th><th>Joined on</th>
+    <th>Id</th><th>Endorser</th><th>Endorsee</th><th>Category</th><th>Issued When</th><th>Remote Hostname</th><th>Valid?</th><th>Type</th><th>Positive?</th>
   </tr>
-  {%for user in users%}
+  {%for endorsement in endorsements%}
   <tr>
-    <td><a href=''>{{user.tapir_nicknames.nickname}}</a></td>
+    <td><a href=''>{{endorsement.endorsement_id}}</a></td>
     <td><a href=''>
-        {{user.email}}</a>
+        {{endorsement.endorser.first_name}} {{endorsement.endorser.last_name}}</a>
     </td>
-    <td>{{user.last_name}}, {{user.first_name}}</td>
-    <td>{{user.joined_date}}</td>
+    <td>{{endorsement.endorsee.first_name}} {{endorsement.endorsee.last_name}}</td>
+    <td>{{endorsement}}</td>
+    <td>{{endorsement.issued_when | unix_to_datetime}}</td>
+    <td>{{endorsement.remote_host}}</td>
+    <td>{{endorsement.flag_valid}}</td>
+    <td>{{endorsement.type}}</td>
+
+
+
   </tr>
   {%endfor%}
 </table>

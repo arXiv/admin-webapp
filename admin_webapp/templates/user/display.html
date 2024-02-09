@@ -26,6 +26,10 @@
      <span class="label">Username</span>: [% user.username %]<br />
      <span class="label">Email Verified?</span>: {% if user.flag_email_verified %}Y{% else %}N{% endif %}
      [<a href="[% c.uri_for('flip', 'email_verified', user_id) %]">flip</a>]
+     <label class="switch">
+      <input type="checkbox">
+      <span class="slider"></span>
+    </label>
     
      (<span class="label">Bouncing?</span>: {% if user.email_bouncing %}Y{% else %}N{% endif %} [<a href="[% c.uri_for('flip', 'email_bouncing', user_id) %]">flip</a>]) <br />
     

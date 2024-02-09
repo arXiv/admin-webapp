@@ -141,13 +141,7 @@ def moderator_listing() -> dict:
     .all()
     )
     count = session.execute(count_stmt).scalar_one()
-    for mod in mods:
-        print(mod)
-    
-    tester = session.query(TapirNicknames).filter(TapirNicknames.nickname.like('%a%')).all()
-    print(len(tester))
-    # for t in tester:
-    #     print(t.user_id)
+
     return dict(count=count, mods=mods)
 
 # TODO: optimize this once a relationship between TapirUsers and Moderators model is established
