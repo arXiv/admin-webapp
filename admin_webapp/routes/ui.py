@@ -242,3 +242,8 @@ def an_example() -> Response:
 def dev() -> Response:
     """Dev landing page."""
     return render_template('dev.html')
+
+@blueprint.route('/email-template-menu')
+def email_template_mgmt() -> Response:
+    """Email template management"""
+    return render_template('manage_email_templates.html', )

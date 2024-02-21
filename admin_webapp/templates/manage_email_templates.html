@@ -1,0 +1,11 @@
+{%- extends "base.html" -%}
+{%- block content -%}
+<h1>Manage Email Templates</h1>
+<select>
+    
+</select>
+{%for template in email_templates%}
+    <div>{{template.template_id}}</div>
+{%endfor%}
+    <button>Create New</button>
+{%- endblock content -%}
