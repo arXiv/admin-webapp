@@ -1,11 +1,33 @@
 {%- extends "base.html" -%}
 {%- block content -%}
 <h1>Manage Email Templates</h1>
-<select>
-    
-</select>
-{%for template in email_templates%}
-    <div>{{template.template_id}}</div>
-{%endfor%}
-    <button>Create New</button>
+<form>
+    <select id="template-dropdown">
+        {%for template in email_templates%}
+            <option value="{{template.template_id}}">{{template.short_name}}: {{template.long_name}}</option>
+        {%endfor%}
+    </select>
+    <a href="/templates/1" id="view-link">View</a>
+    <a href="/templates/1/edit" id="edit-link">Edit</a>
+
+</form>
+<div>
+    <a href="{{ url_for('ui.create_email_template') }}">Create New</a>
+</div>
+
+<div id="selected-template-data"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var dropdown = document.getElementById('template-dropdown');
+        var viewLink = document.getElementById('view-link');
+
+        dropdown.addEventListener('change', function() {
+            var selectedTemplateId = dropdown.value;
+            
+            // Update the href attribute of the view link with the selected template_id
+            viewLink.href = "/templates/" + selectedTemplateId;
+        });
+    });
+</script>
 {%- endblock content -%}

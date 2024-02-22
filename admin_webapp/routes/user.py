@@ -1,8 +1,9 @@
 """arXiv user routes."""
 
-from flask import Blueprint, render_template, Response, request
+from flask import Blueprint, render_template, Response, request, redirect
 
 from admin_webapp.controllers.users import administrator_listing, administrator_edit_sys_listing, suspect_listing, user_profile, moderator_listing, moderator_by_category_listing
+from admin_webapp.controllers.search import general_search
 
 blueprint = Blueprint('user', __name__, url_prefix='/user')
 
@@ -76,3 +77,15 @@ def moderators_by_category() -> Response:
     data = moderator_by_category_listing()
     data['title'] = "Moderators"
     return render_template('user/moderators_by_category.html', **data)
+
+@blueprint.route('/search', methods=['GET', 'POST'])
+def search() -> Response:
+    args = request.args
+    term = args.get('search')
+    per_page = args.get('per_page', default=12, type=int)
+    page = args.get('page', default=1, type=int)    
+    
+    data = general_search(term, per_page, page)
+    if data['count'] == 1:
+        return redirect('/user/' + str(data['unique_id']))
+    return render_template('user/list.html', **data)

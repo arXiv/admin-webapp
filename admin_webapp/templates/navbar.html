@@ -4,8 +4,11 @@
         <input type="text">
     </div>
     <div class="search-bar-center">
-        <label><strong>New Search:</strong></label>
-        <input type="text">
+        <form action="{{ url_for('user.search') }}" method="GET">
+
+            <label><strong>New Search:</strong></label>
+            <input type="text" name="search">
+        </form>
     </div>
     <div class="navbar-links">
         <a href="#">[arXiv]</a>
