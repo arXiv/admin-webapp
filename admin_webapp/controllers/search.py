@@ -5,7 +5,7 @@ from sqlalchemy import select, or_, func
 from arxiv_db.models import TapirUsers, TapirNicknames
 
 """
-Searches logic:
+Basic search logic that does some loose similarity checking:
 
 """
 def general_search(search_string: str, per_page:int, page: int) -> Response:
@@ -45,3 +45,8 @@ def general_search(search_string: str, per_page:int, page: int) -> Response:
     pagination = Pagination(query=None, page=page, per_page=per_page, total=count, items=None)
 
     return dict(pagination=pagination, count=count, users=users)
+
+def advanced_search(options):
+    session = get_db(current_app).session
+
+    return

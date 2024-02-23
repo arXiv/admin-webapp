@@ -23,7 +23,7 @@
     
      <span class="label">E-mail</span>: {{ user.email }} [<a href="/user/change_email">Change</a>]<br />
      <span class="label">Name</span>: {{ user.last_name ~ ', ' ~ user.first_name }}<br />
-     <span class="label">Username</span>: [% user.username %]<br />
+     <span class="label">Username</span>: {{ user.tapir_nicknames.nickname }}<br />
      <span class="label">Email Verified?</span>: {% if user.flag_email_verified %}Y{% else %}N{% endif %}
      [<a href="[% c.uri_for('flip', 'email_verified', user_id) %]">flip</a>]
      <label class="switch">
@@ -49,7 +49,7 @@
      <span class="label">Last login</span>: {{ sessions[0].start_time | unix_to_datetime}}<br />
      <span class="label">Penultimate login</span>: {{ sessions[1].start_time | unix_to_datetime }}<br />
      <span class="label"># Sessions</span>: <a href="[% c.uri_for('view_sessions', user_id) %]">{{ sessions | length }}</a><br />
-     <span class="label">Joined on</span>: [% date.format(user.joined_date) %]<br />
+     <span class="label">Joined on</span>: {{ user.joined_date }}<br />
      <span class="label">Joined from</span>: {{ user.joined_ip_num }}<br />
     </td>
     </tr>

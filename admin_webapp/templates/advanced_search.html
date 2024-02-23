@@ -1,0 +1,14 @@
+{%- extends "base.html" -%}
+{%- block content -%}
+<h1>Find Users</h1>
+
+<div>Quick Search</div>
+<form>
+    {% for option in fields %}
+        <input type="text" name="{{ option }}">
+        <option></option>
+    {%endfor%}
+    <button>search</button>
+</form>
+
+{%- endblock content -%}
