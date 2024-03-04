@@ -24,18 +24,21 @@
      <span class="label">E-mail</span>: {{ user.email }} [<a href="/user/change_email">Change</a>]<br />
      <span class="label">Name</span>: {{ user.last_name ~ ', ' ~ user.first_name }}<br />
      <span class="label">Username</span>: {{ user.tapir_nicknames.nickname }}<br />
-     <span class="label">Email Verified?</span>: {% if user.flag_email_verified %}Y{% else %}N{% endif %}
-     [<a href="[% c.uri_for('flip', 'email_verified', user_id) %]">flip</a>]
-     <label class="switch">
-      <input type="checkbox">
-      <span class="slider"></span>
-    </label>
+     <div style="display: flex; align-items:center;">
+      <span class="label">Email Verified:</span>
+      <label class="switch" style="margin-left:5px;">
+        <input type="checkbox" {% if user.flag_email_verified %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+     (<span class="label">Bouncing?</span>[<a href="[% c.uri_for('flip', 'email_bouncing', user_id) %]">flip</a>]) <br />
+     </div>
+     <!-- [<a href="[% c.uri_for('flip', 'email_verified', user_id) %]">flip</a>] -->
+
     
-     (<span class="label">Bouncing?</span>: {% if user.email_bouncing %}Y{% else %}N{% endif %} [<a href="[% c.uri_for('flip', 'email_bouncing', user_id) %]">flip</a>]) <br />
     
      <span class="badColor"><span class="label">Edit Users?</span>: {% if user.flag_edit_users %}Y{% else %}N{% endif %}</span> [<a href="[% c.uri_for('flip', 'edit_users', user_id) %]">flip</a>]
      <span class="label">Edit System?</span>: {% if user.flag_edit_system %}Y{% else %}N{% endif %} [<a href="[% c.uri_for('flip', 'edit_system', user_id) %]">flip</a>] <br />
-    
+
      <span class="label">Suspended?</span>: {% if user.flag_banned %}Y{% else %}N{% endif %} [<a href="[% c.uri_for('suspend', user_id) %]">suspend</a>]<br />
     
      [<a href="[% c.uri_for('change_password', user_id) %]">Change Password</a>]
@@ -45,9 +48,8 @@
     
     <td valign="top">
      <span class="label">User Id</span>: {{ user.user_id }}  <br />
-     [% USE date %]
-     <span class="label">Last login</span>: {{ sessions[0].start_time | unix_to_datetime}}<br />
-     <span class="label">Penultimate login</span>: {{ sessions[1].start_time | unix_to_datetime }}<br />
+     <span class="label">Last login</span>: {% if sessions | length > 0 %}{{ sessions[0].start_time | unix_to_datetime }}{% else %}None{% endif %}<br />
+     <span class="label">Penultimate login</span>: {% if sessions | length > 1 %}{{ sessions[1].start_time | unix_to_datetime }}{% else %}None{% endif %}<br />
      <span class="label"># Sessions</span>: <a href="[% c.uri_for('view_sessions', user_id) %]">{{ sessions | length }}</a><br />
      <span class="label">Joined on</span>: {{ user.joined_date }}<br />
      <span class="label">Joined from</span>: {{ user.joined_ip_num }}<br />
@@ -78,7 +80,7 @@
         <span class="label">Affiliation</span>: {{ demographics.affiliation }}<br />
         <span class="label">Country</span>: {{ demographics.country }}<br />
         <span class="label">URL</span>: <i>{{ demographics.url }}</i><br />
-        Viewed Email addresses for <a href="">[% num_emails_requested %]</a> papers.<br /><br>
+        Viewed Email addresses for <a href="">{{ email_request_count }}</a> papers.<br /><br>
         <form action="/admin/user/[% user.id %]/update_mod_public" method="get">
            <input type="hidden" id="flip" name="flip" value="" />
         <!-- [% IF moderates %]

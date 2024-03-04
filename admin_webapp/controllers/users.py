@@ -18,7 +18,7 @@ from arxiv_auth.auth.decorators import scoped
 
 from admin_webapp.models import Moderators
 
-from arxiv_db.models import TapirUsers, Documents, EndorsementRequests, Demographics, TapirNicknames, TapirAdminAudit, TapirSessions
+from arxiv_db.models import TapirUsers, Documents, ShowEmailRequests, Demographics, TapirNicknames, TapirAdminAudit, TapirSessions
 from arxiv_db.models.associative_tables import t_arXiv_paper_owners
 
 from admin_webapp.extensions import get_csrf, get_db
@@ -56,7 +56,11 @@ def user_profile(user_id:int) -> Response:
     
     tapir_sessions = session.query(TapirSessions).filter(TapirSessions.user_id == user_id).order_by(desc(TapirSessions.start_time)).all()
 
-    data = dict(user=user, demographics=demographics, logs=logs, sessions = tapir_sessions)
+    email_request_count = session.query(func.count(func.distinct(ShowEmailRequests.document_id))).filter(ShowEmailRequests.user_id == 123).scalar()
+
+
+    data = dict(user=user, demographics=demographics, logs=logs, sessions=tapir_sessions, email_request_count=email_request_count)
+    
     return data
 
 

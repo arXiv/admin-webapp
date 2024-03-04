@@ -11,7 +11,9 @@ blueprint = Blueprint('user', __name__, url_prefix='/user')
 @blueprint.route('/<int:user_id>', methods=['GET'])
 def display(user_id:int) -> Response:
     """Display a user."""
-    return render_template('user/display.html', **user_profile(user_id))
+    if request.method == 'GET':
+        return render_template('user/display.html', **user_profile(user_id))
+
 
 # perhaps we need to scope this?
 @blueprint.route('/administrators', methods=['GET'])
@@ -89,3 +91,4 @@ def search() -> Response:
     if data['count'] == 1:
         return redirect('/user/' + str(data['unique_id']))
     return render_template('user/list.html', **data)
+
