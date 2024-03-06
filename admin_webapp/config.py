@@ -119,8 +119,8 @@ if LOCALHOST_DEV:
     FLASK_DEBUG=True
     DEBUG=True
     if not SQLALCHEMY_DATABASE_URI:
-        SQLALCHEMY_DATABASE_URI = 'sqlite:///../locahost_dev.db'
-        #SQLALCHEMY_DATABASE_URI='mysql+mysqldb://root:root@localhost:3306/arXiv'
+        # SQLALCHEMY_DATABASE_URI = 'sqlite:///../locahost_dev.db'
+        SQLALCHEMY_DATABASE_URI='mysql+mysqldb://root:root@localhost:3306/arXiv'
         CLASSIC_DATABASE_URI = SQLALCHEMY_DATABASE_URI
 
     DEFAULT_LOGIN_REDIRECT_URL='/protected'
