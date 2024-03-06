@@ -1,14 +1,37 @@
 {%- extends "base.html" -%}
 {%block content%}
-<h1>Administer paper {{}}</h1>
-<div class="">
-  
+<h1>Administer paper {{document.paper_id}} [<a href="">abs</a> | <a href="">PDF</a> | <a href="">edit</a>]</h1>
+<div style="background-color: lightyellow; padding: 10px; margin: 10px;" class="paper-header">
+  <h3>{{ document.title }}</h3>
+  <p>{{ document.authors }}</p>
+  <p>Categories: {{ document.arXiv_document_category[0].category }}</p>
 </div>
 
-<div>Paper password: {{}}</div>
-<div>Document ID: {{}}</div>
-<div>Shoe E-mail requests: {{}}</div>
-<div>Paper Owners:</div>
-<div>Submission history:</div>
-
+<div><strong>Paper password:</strong> {{ doc_pw.password_enc }} [<a href="">change</a>]</div>
+<div><strong>Document ID:</strong> {{ document.document_id }}</div>
+<div><strong>Show E-mail requests:</strong> <a href="">{{ document.arXiv_show_email_requests | length }}</a></div>
+<div><strong>Paper Owners:</strong>  {{ document.author }}</div>
+<h4>Submission history:</h4>
+<div style="margin: 10px;">
+    {% for sub in sub_history %}
+        <div><a href="">v{{ sub.version }}</a> &#x23F0;{{sub.created}} &#x1F464;{%if sub.submitter %} <a href=""> {{sub.submitter.tapir_nicknames.nickname}} {%else%} submitter ID not recorded {%endif%}</a> &#x2709;{{sub.submitter.email}} ({{sub.submitter.first_name}} {{sub.submitter.last_name}})</div>
+    {%endfor%} 
+</div>
+{% if admin_log_len > 0 %}
+<h4>Activity</h4>
+<table class="table">
+    <tr>
+        <th>Time</th><th>Username</th><th>Program/Command</th><th>Sub ID</th><th>Log text</th>
+        {%for log in admin_log %}
+        <tr>
+            <td>{{log.created}}</td>
+            <td>{{log.username}}</td>
+            <td>{{log.program}}</td>
+            <td><a href="">{{log.submission_id}}</a></td>
+            <td>{{log.logtext | safe}}</td>
+        </tr>
+        {%endfor%}
+    </tr>
+</table>
+{%endif%}
 {% endblock %}
