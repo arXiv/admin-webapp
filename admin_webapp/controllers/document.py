@@ -25,12 +25,10 @@ def paper_detail(doc_id:int) -> Response:
     doc_stmt = (select(Documents).where(Documents.document_id == doc_id))
     sub_history_stmt = (select(Metadata).where(Metadata.document_id==doc_id).order_by(desc(Metadata.version)))
     doc_pw_stmt = (select(PaperPw).where(PaperPw.document_id == doc_id))
-    admin_log_stmt = (select(AdminLog).where(AdminLog.document_id == doc_id))
 
     document = session.scalar(doc_stmt)
     doc_pw = session.scalar(doc_pw_stmt)
     sub_history = session.scalars(sub_history_stmt)
-    # admin_log = session.scalars(admin_log_stmt)
     
     
     admin_log_sql = "SELECT created,submission_id,paper_id,username,program,command,logtext FROM arXiv_admin_log WHERE paper_id=:paper_id UNION DISTINCT SELECT arXiv_admin_log.created AS created,arXiv_admin_log.submission_id AS submission_id,paper_id,username,program,command,logtext FROM arXiv_admin_log,arXiv_submissions WHERE arXiv_submissions.submission_id=arXiv_admin_log.submission_id AND doc_paper_id=:paper_id ORDER BY created DESC"

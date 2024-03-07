@@ -1,8 +1,11 @@
 {% block addl_head %}
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='DEMO-user-profile-style.css') }}">
 {{ bootstrap.load_css() }}
+
 {% endblock addl_head %}
 {%block content%}
+<div class="user-profile">
+
 <table width="100%" class="topbar">
     <tr>
     <td align="left" valign="top">
@@ -107,48 +110,58 @@
     </table>
     
     <div class="endorsement_info">
-    <b><a href="[% c.uri_for('endorsements', user_id) %]">Endorsed For</a>:</b>
-    <!-- [% WHILE (endorsed = user.endorsed_for.next) %]
-    <a href="[% c.uri_for('endorsement_detail', endorsed.id) %]">[% endorsed.archive _ " " _ endorsed.subject_class %]</a>
-    (auto)
-    [% END %] -->
-    
-    <b><a href="[% c.uri_for('endorsements', user_id) %]">Has Endorsed</a>:</b>
-    <!-- [% WHILE (endorsed = user.has_endorsed.next) %]
-    <a href="[% c.uri_for('endorsement_detail', endorsed.id) %]">[% endorsed.archive _ " " _ endorsed.subject_class %]</a>
-    (auto)
-    [% END %] -->
+      <b><a href="[% c.uri_for('endorsements', user_id) %]">Endorsed For</a>:</b>
+      {% for endorsement in endorsements %}
+        {{endorsement.archive}}{%if endorsement.subject_class %}.{{endorsement.subject_class}} {%endif%}
+      {% endfor %}
+      <!-- [% WHILE (endorsed = user.endorsed_for.next) %]
+      <a href="[% c.uri_for('endorsement_detail', endorsed.id) %]">[% endorsed.archive _ " " _ endorsed.subject_class %]</a>
+      (auto)
+      [% END %] -->
+      <br/>
+      <b><a href="[% c.uri_for('endorsements', user_id) %]">Has Endorsed</a>:</b>
+      {% for endorsed in has_endorsed %}
+        {{endorsed.archive}}{%if endorsed.subject_class %}.{{endorsed.subject_class}} {%endif%}
+      {%endfor%}
+      <!-- [% WHILE (endorsed = user.has_endorsed.next) %]
+      <a href="[% c.uri_for('endorsement_detail', endorsed.id) %]">[% endorsed.archive _ " " _ endorsed.subject_class %]</a>
+      (auto)
+      [% END %] -->
     </div>
     
     <table cellpadding="0" cellspacing="0">
     <tr>
-      <td colspan="6"><b>Owns [% user.documents.count %] papers:</b> (A=author/N=not author [toggle], S=submitter, p=pending, R=revoked)</td>
+      <td colspan="6"><b>Owns {{ papers_len }} papers:</b> (&#128221;=author/&#128683;=not author [toggle], &#128233;=submitter, &#9203;=pending, &#10060;=revoked)</td>
     </tr>
     
-    [% WHILE (document = user.documents.next) %]
+    {% for paper in papers %}
     <tr>
-      <td align="right"><span style="white-space: nowrap"><a href="[% c.uri_for('doc_detail', document.document_id) %]">[% document.paper_id %]</a>:&nbsp;</span></td>
-      <td>A&nbsp;[<a href="">flip</a>]&nbsp;</td>
-      <td>S&nbsp;</td><td>p&nbsp;</td><td>&nbsp;&nbsp;</td>
-      <td><a href="abs/[% document.paper_id %]">[% document.title %]</a></td>
+      <td align="right"><span style="white-space: nowrap"><a href="[% c.uri_for('doc_detail', document.document_id) %]">{{ paper.paper_id }}</a>:&nbsp;</span></td>
+      <td>A&nbsp;      <label class="switch">
+        <input type="checkbox" {% if user.flag_email_verified %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>&nbsp;</td>
+      
+      <td><a href="abs/[% document.paper_id %]">{{ paper.metadata_title }}</a></td>
+      <td>{%if paper.flag_author%}&#128221;{%else%}&#128683;{%endif%}</td>
+      <td>{%if paper.valid%}&nbsp;{%else%}&#10060;{%endif%}</td>
+      <td>{%if paper.submitter_id==user.user_id%}&#128233;{%else%}&nbsp;{%endif%}</td>
+      <td></td>
     </tr>
-    [% END %]
+    {% endfor %}
     
     <!--local_insert() end-->
     
-    [% WHILE (entry = user.admin_actions.next) %]
-    <tr>
-    
-    
-    </tr>
-    
-    [% END %]
     
     </table>
 
-    <div>
-      <textarea cols="50" placeholder="Write a comment here..."></textarea>
-      <button>Add comment</button>
+    <div class="comment-area">
+      <div>
+        <textarea cols="50" placeholder="Write a comment here..."></textarea>
+      </div>
+      <div>
+        <button>Add comment</button>
+      </div>
     </div>
 
     <div class="activity-log">
@@ -188,5 +201,8 @@
       {%endfor%}
 
     </div>
+
+  
+</div>
 {%endblock content%}
 

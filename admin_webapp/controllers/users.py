@@ -18,7 +18,7 @@ from arxiv_auth.auth.decorators import scoped
 
 from admin_webapp.models import Moderators
 
-from arxiv_db.models import TapirUsers, Documents, ShowEmailRequests, Demographics, TapirNicknames, TapirAdminAudit, TapirSessions
+from arxiv_db.models import TapirUsers, Documents, ShowEmailRequests, Demographics, TapirNicknames, TapirAdminAudit, TapirSessions, Endorsements
 from arxiv_db.models.associative_tables import t_arXiv_paper_owners
 
 from admin_webapp.extensions import get_csrf, get_db
@@ -58,8 +58,26 @@ def user_profile(user_id:int) -> Response:
 
     email_request_count = session.query(func.count(func.distinct(ShowEmailRequests.document_id))).filter(ShowEmailRequests.user_id == 123).scalar()
 
+    endorsement_stmt = (select(Endorsements).where(Endorsements.endorsee_id==user_id))
+    endorsements = session.scalars(endorsement_stmt)
 
-    data = dict(user=user, demographics=demographics, logs=logs, sessions=tapir_sessions, email_request_count=email_request_count)
+    has_endorsed_sql = "select endorsement_id,archive,endorsee_id,nickname,archive,subject_class,arXiv_endorsements.flag_valid,type,point_value from arXiv_endorsements left join tapir_nicknames on (endorsee_id=user_id AND flag_primary=1) where endorser_id=:user_id order by archive,subject_class"
+    has_endorsed = session.execute(has_endorsed_sql, {"user_id": user_id})
+
+    papers_sql = "SELECT d.document_id,d.paper_id,m.title AS metadata_title,d.authors,d.submitter_id,flag_author,valid FROM arXiv_documents d JOIN arXiv_paper_owners po ON po.document_id=d.document_id JOIN arXiv_metadata m ON m.document_id=d.document_id WHERE po.user_id=:user_id AND m.is_current=1 ORDER BY dated DESC"
+    papers_sql_len = f"SELECT COUNT(*) FROM ({papers_sql}) as subquery"
+    papers = session.execute(papers_sql, {"user_id": user_id})
+    papers_len = session.execute(papers_sql_len, {"user_id": user_id})
+
+    data = dict(user=user, 
+                demographics=demographics, 
+                logs=logs, 
+                sessions=tapir_sessions, 
+                email_request_count=email_request_count, 
+                endorsements=endorsements,
+                has_endorsed=has_endorsed, 
+                papers=papers, 
+                papers_len=papers_len.fetchone()[0])
     
     return data
 
