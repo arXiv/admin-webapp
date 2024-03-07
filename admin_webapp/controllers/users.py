@@ -128,16 +128,19 @@ def administrator_edit_sys_listing(per_page:int, page: int) -> dict:
 # TODO: this is broken because of a faulty TapirUser-Demographic relationship
 def suspect_listing(per_page:int, page: int) -> dict:
     session = get_db(current_app).session
-    report_stmt = (select(TapirUsers)
-                   .options(joinedload(TapirUsers.demographics))
+
+    report_stmt = (select(TapirUsers, Demographics.user_id)
+                   .join(Demographics, Demographics.user_id==TapirUsers.user_id)
                    .filter(Demographics.flag_suspect == "1")
                    .limit(per_page).offset((page -1) * per_page))
-
-    count_stmt = (select(func.count(TapirUsers.user_id))
-                  .where(Demographics.flag_suspect == "1"))
-
+    
+    suspects = select(TapirUsers) \
+                .join(Demographics) \
+                .filter(Demographics.flag_suspect == "1") \
+                .subquery()
+    count = select(func.count()).select_from(suspects)
+    count = session.scalar(count)
     users = session.scalars(report_stmt)
-    count = session.execute(count_stmt).scalar_one()
     pagination = Pagination(query=None, page=page, per_page=per_page, total=count, items=None)
     return dict(pagination=pagination, count=count, users=users)
 
