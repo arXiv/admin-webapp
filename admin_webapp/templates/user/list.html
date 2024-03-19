@@ -12,16 +12,18 @@
 
 <table class="table">
   <tr>
-    <th>Nickname</th><th>E-mail</th><th>Name</th><th>Joined on</th>
+    <th>Nickname</th><th>E-mail</th><th>Name</th><th>Joined on</th><th># Sessions</th><th>Email Verified?</th>
   </tr>
   {%for user in users%}
   <tr>
-    <td><a href=''>{{user.tapir_nicknames.nickname}}</a></td>
+    <td><a href="{{url_for('user.display', user_id=user.user_id)}}">{{user.nickname}}</a></td>
     <td><a href=''>
         {{user.email}}</a>
     </td>
     <td>{{user.last_name}}, {{user.first_name}}</td>
-    <td>{{user.joined_date}}</td>
+    <td>{{user.joined_date | unix_to_datetime}}</td>
+    <td>{{user.session_count}}</td>
+    <td>{% if user.flag_email_verified%}Y{%else%}N{%endif%}</td>
   </tr>
   {%endfor%}
 </table>

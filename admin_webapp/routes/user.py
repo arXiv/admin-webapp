@@ -2,7 +2,7 @@
 
 from flask import Blueprint, render_template, Response, request, redirect
 
-from admin_webapp.controllers.users import administrator_listing, administrator_edit_sys_listing, suspect_listing, user_profile, moderator_listing, moderator_by_category_listing
+from admin_webapp.controllers.users import administrator_listing, administrator_edit_sys_listing, suspect_listing, user_profile, moderator_listing, moderator_by_category_listing, flip_email_verified_flag
 from admin_webapp.controllers.search import general_search
 
 blueprint = Blueprint('user', __name__, url_prefix='/user')
@@ -92,3 +92,11 @@ def search() -> Response:
         return redirect('/user/' + str(data['unique_id']))
     return render_template('user/list.html', **data)
 
+@blueprint.route('/flip/email_verified', methods=['POST'])
+def flip_email_verified() -> Response:
+    # return "Y"
+    return flip_email_verified_flag()
+
+@blueprint.route('/flip/bouncing')
+def flip_bouncing() -> Response:
+    return

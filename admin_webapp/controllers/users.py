@@ -35,6 +35,7 @@ def user_profile(user_id:int) -> Response:
             .where(
                 TapirUsers.user_id == user_id
             ))
+    print(stmt)
     user = session.scalar(stmt)
     # TODO: optimize this so we can join with the Tapir Users rather than separate query?
     demographics_stmt = (select(Demographics)
@@ -68,15 +69,14 @@ def user_profile(user_id:int) -> Response:
     papers_sql_len = f"SELECT COUNT(*) FROM ({papers_sql}) as subquery"
     papers = session.execute(papers_sql, {"user_id": user_id})
     papers_len = session.execute(papers_sql_len, {"user_id": user_id})
-
     data = dict(user=user, 
                 demographics=demographics, 
-                logs=logs, 
-                sessions=tapir_sessions, 
-                email_request_count=email_request_count, 
+                logs=logs,
+                sessions=tapir_sessions,
+                email_request_count=email_request_count,
                 endorsements=endorsements,
-                has_endorsed=has_endorsed, 
-                papers=papers, 
+                has_endorsed=has_endorsed,
+                papers=papers,
                 papers_len=papers_len.fetchone()[0])
     
     return data
@@ -124,25 +124,41 @@ def administrator_edit_sys_listing(per_page:int, page: int) -> dict:
     pagination = Pagination(query=None, page=page, per_page=per_page, total=count, items=None)
     return dict(pagination=pagination, count=count, users=users)
 
-
-# TODO: this is broken because of a faulty TapirUser-Demographic relationship
 def suspect_listing(per_page:int, page: int) -> dict:
     session = get_db(current_app).session
 
-    report_stmt = (select(TapirUsers, Demographics.user_id)
-                   .join(Demographics, Demographics.user_id==TapirUsers.user_id)
-                   .filter(Demographics.flag_suspect == "1")
-                   .limit(per_page).offset((page -1) * per_page))
+    report_stmt = select(TapirUsers, func.count(TapirSessions.session_id).label('session_count'))\
+                    .join(Demographics, Demographics.user_id==TapirUsers.user_id)\
+                    .filter(Demographics.flag_suspect == "1")\
+                    .join(TapirSessions, TapirUsers.user_id==TapirSessions.user_id)\
+                    .group_by(TapirUsers.user_id)\
+                    .limit(per_page).offset((page -1) * per_page)
+                    # .subquery()
     
+    # report_stmt = select(report_stmt.c.user_id, report_stmt.c.email, func.count())\
+    #                .join(TapirSessions, report_stmt.c.user_id==TapirSessions.user_id)\
+    #                .group_by(report_stmt.c.user_id)\
+    #                .limit(per_page).offset((page -1) * per_page)
+    test_stmt = (select(TapirUsers).limit(10))
+
+    report_stmt_sql = "SELECT u.user_id, u.first_name, n.nickname, u.last_name, u.joined_date, u.email, u.flag_email_verified, s.session_count FROM tapir_users u JOIN tapir_nicknames n ON n.user_id = u.user_id  JOIN arXiv_demographics d ON d.user_id = u.user_id  JOIN ( SELECT user_id, COUNT(session_id) AS session_count FROM tapir_sessions GROUP BY user_id ) s ON s.user_id = u.user_id WHERE d.flag_suspect = 1  LIMIT :per_page OFFSET :offset"
+    users = session.execute(report_stmt_sql, {"per_page": per_page, "offset": (page -1) * per_page})
+
+    test=session.scalars(test_stmt)
     suspects = select(TapirUsers) \
                 .join(Demographics) \
                 .filter(Demographics.flag_suspect == "1") \
                 .subquery()
+    
     count = select(func.count()).select_from(suspects)
     count = session.scalar(count)
-    users = session.scalars(report_stmt)
+
+    # users = session.scalars(report_stmt)
+    # users = session.scalars(report_stmt)
+    # print(users[0].session_count)
     pagination = Pagination(query=None, page=page, per_page=per_page, total=count, items=None)
-    return dict(pagination=pagination, count=count, users=users)
+    
+    return dict(pagination=pagination, count=count, users=users, test=test)
 
 
 def moderator_listing() -> dict:
@@ -199,3 +215,33 @@ def moderator_by_category_listing() -> dict:
 
     return dict(count=count, mods_map=mods_map)
 
+def flip_email_verified_flag():
+    session = get_db(current_app).session
+    
+    if request.method == 'POST':
+        # do the SQL update here
+        verified = request.form.get('emailVerified')
+        user_id = request.form.get('user_id')
+        if verified == 'on':
+            # update the object
+            session.execute(update(TapirUsers).where(
+                TapirUsers.user_id==user_id
+            ).values(flag_email_verified = 1))
+            # update the activity log
+        else: 
+             session.execute(update(TapirUsers).where(
+                TapirUsers.user_id==user_id
+            ).values(flag_email_verified = 0))
+    session.commit()
+    return Response(status=204)
+
+def flip_bouncing():
+    session = get_db(current_app).session
+    if request.method == 'POST':
+        bouncing = request.form.get('bouncing')
+    return Response(status=204)
+
+def flip_edit_users():
+    session = get_db(current_app).session
+    if request.method == 'POST':
+        return

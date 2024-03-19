@@ -1,6 +1,7 @@
 {% block addl_head %}
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='DEMO-user-profile-style.css') }}">
 {{ bootstrap.load_css() }}
+<script src="https://unpkg.com/htmx.org@1.9.11" integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0" crossorigin="anonymous"></script>
 
 {% endblock addl_head %}
 {%block content%}
@@ -30,7 +31,7 @@
      <div style="display: flex; align-items:center;">
       <span class="label">Email Verified:</span>
       <label class="switch" style="margin-left:5px;">
-        <input type="checkbox" {% if user.flag_email_verified %}checked{% endif %}>
+        <input name="emailVerified" hx-vals='{"user_id": {{user.user_id}}}' hx-post="{{url_for('user.flip_email_verified')}}" type="checkbox" {% if user.flag_email_verified %}checked{% endif %}>
         <span class="slider"></span>
       </label>
      (<span class="label">Bouncing?</span>[<a href="[% c.uri_for('flip', 'email_bouncing', user_id) %]">flip</a>]) <br />
@@ -38,9 +39,14 @@
      <!-- [<a href="[% c.uri_for('flip', 'email_verified', user_id) %]">flip</a>] -->
 
     
-    
-     <span class="badColor"><span class="label">Edit Users?</span>: {% if user.flag_edit_users %}Y{% else %}N{% endif %}</span> [<a href="[% c.uri_for('flip', 'edit_users', user_id) %]">flip</a>]
+     <div style="display: flex; align-items:center;">
+     <span class="badColor"><span class="label">Edit Users:</span></span>
+     <label class="switch" style="margin-left:5px;">
+      <input name="editUsers" hx-vals='{"user_id": {{user.user_id}}}' hx-post="{{url_for('user.flip_edit_users')}}" type="checkbox" {% if user.flag_edit_users %}checked{% endif %}>
+      <span class="slider"></span>
+    </label>
      <span class="label">Edit System?</span>: {% if user.flag_edit_system %}Y{% else %}N{% endif %} [<a href="[% c.uri_for('flip', 'edit_system', user_id) %]">flip</a>] <br />
+    </div>
 
      <span class="label">Suspended?</span>: {% if user.flag_banned %}Y{% else %}N{% endif %} [<a href="[% c.uri_for('suspend', user_id) %]">suspend</a>]<br />
     
