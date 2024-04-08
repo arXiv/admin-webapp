@@ -346,6 +346,10 @@ label {
     font-weight: bold;
 }
 
+.warning {
+        color: red;
+}
+
 td.editbar { background-color:rgb(128,128,255);
              color: white;
              font-size: 80%;

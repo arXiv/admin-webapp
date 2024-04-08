@@ -215,6 +215,17 @@ def moderator_by_category_listing() -> dict:
 
     return dict(count=count, mods_map=mods_map)
 
+def non_academic_email_listing():
+    session = get_db(current_app).session
+    blocked_users_all_sql = "create temporary table blocked_users select user_id,email,pattern as black_pattern,joined_date,first_name,last_name,suffix_name from tapir_users,arXiv_black_email where joined_date>UNIX_TIMESTAMP(DATE_SUB(CURDATE(),INTERVAL 30 MONTH)) and email like pattern"
+    session.execute(blocked_users_all_sql)
+    blocked_users_sql = "select user_id,email,joined_date,black_pattern,first_name,last_name,suffix_name from blocked_users left join arXiv_white_email on email like pattern where pattern is null group by user_id, email, joined_date, black_pattern, first_name, last_name, suffix_name order by joined_date desc"
+    blocked_users_sql_len = f"SELECT COUNT(*) FROM ({blocked_users_sql}) as subquery"
+   
+    blocked_users = session.execute(blocked_users_sql)
+    count = session.execute(blocked_users_sql_len)
+    return dict(users=blocked_users, count=count)
+
 def flip_email_verified_flag():
     session = get_db(current_app).session
     
@@ -228,20 +239,54 @@ def flip_email_verified_flag():
                 TapirUsers.user_id==user_id
             ).values(flag_email_verified = 1))
             # update the activity log
-        else: 
+        elif not verified:
              session.execute(update(TapirUsers).where(
                 TapirUsers.user_id==user_id
             ).values(flag_email_verified = 0))
     session.commit()
     return Response(status=204)
 
-def flip_bouncing():
+def flip_bouncing_flag():
     session = get_db(current_app).session
     if request.method == 'POST':
         bouncing = request.form.get('bouncing')
+        user_id = request.form.get('user_id')
+        if bouncing == 'on':
+            session.execute(update(TapirUsers).where(TapirUsers.user_id==user_id).values(email_bouncing = 1))
+    
+        elif not bouncing: 
+            session.execute(update(TapirUsers).where(TapirUsers.user_id==user_id).values(email_bouncing = 0))
+    session.commit()
     return Response(status=204)
 
-def flip_edit_users():
+def flip_edit_users_flag():
     session = get_db(current_app).session
     if request.method == 'POST':
-        return
+        edit_users = request.form.get('editUsers')
+        user_id = request.form.get('user_id')
+        if edit_users == 'on':
+            session.execute(update(TapirUsers).where(TapirUsers.user_id==user_id).values(flag_edit_users = 1))
+    
+        elif not edit_users:
+            session.execute(update(TapirUsers).where(TapirUsers.user_id==user_id).values(flag_edit_users = 0))
+    session.commit()
+    return Response(status=204)
+    
+def flip_edit_system_flag():
+    session = get_db(current_app).session
+    if request.method == 'POST':
+        edit_system = request.form.get('editSystem')
+        user_id = request.form.get('user_id')
+        if edit_system == 'on':
+            session.execute(update(TapirUsers).where(TapirUsers.user_id==user_id).values(flag_edit_system = 1))
+        elif not edit_system:
+            session.execute(update(TapirUsers).where(TapirUsers.user_id==user_id).values(flag_edit_system = 0))
+    session.commit()
+    return Response(status=204)
+
+def flip_proxy_flag():
+    session = get_db(current_app).session
+    if request.method == 'POST': 
+        print('post')
+    
+    return Response(status=204)

@@ -178,6 +178,7 @@ def login() -> Response:
         unset_submission_cookie(response)    # Fix for ARXIVNG-1149.
         return response
 
+    print("attempted login?")
     # Form is invalid, or login failed.
     response = Response(
         render_template("login.html", **data),

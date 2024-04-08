@@ -2,7 +2,7 @@
 
 from flask import Blueprint, render_template, Response, request, redirect
 
-from admin_webapp.controllers.users import administrator_listing, administrator_edit_sys_listing, suspect_listing, user_profile, moderator_listing, moderator_by_category_listing, flip_email_verified_flag
+from admin_webapp.controllers.users import administrator_listing, administrator_edit_sys_listing, suspect_listing, user_profile, moderator_listing, moderator_by_category_listing, flip_email_verified_flag, flip_bouncing_flag, flip_edit_users_flag, flip_edit_system_flag, non_academic_email_listing
 from admin_webapp.controllers.search import general_search
 
 blueprint = Blueprint('user', __name__, url_prefix='/user')
@@ -80,6 +80,16 @@ def moderators_by_category() -> Response:
     data['title'] = "Moderators"
     return render_template('user/moderators_by_category.html', **data)
 
+@blueprint.route('/non_academic_emails', methods=['GET'])
+def non_academic_emails() -> Response:
+    """
+    Show users with non-academic emails
+    """
+    args = request.args
+    data = non_academic_email_listing()
+    data['title'] = "Non-academic Emails"
+    return render_template('user/non_academic_emails.html', **data)
+
 @blueprint.route('/search', methods=['GET', 'POST'])
 def search() -> Response:
     args = request.args
@@ -94,9 +104,16 @@ def search() -> Response:
 
 @blueprint.route('/flip/email_verified', methods=['POST'])
 def flip_email_verified() -> Response:
-    # return "Y"
     return flip_email_verified_flag()
 
-@blueprint.route('/flip/bouncing')
+@blueprint.route('/flip/bouncing', methods=['POST'])
 def flip_bouncing() -> Response:
-    return
+    return flip_bouncing_flag()
+
+@blueprint.route('flip/edit_users', methods=['POST'])
+def flip_edit_users() -> Response: 
+    return flip_edit_users_flag()
+
+@blueprint.route('flip/edit_system', methods=['POST'])
+def flip_edit_system() -> Response:
+    return flip_edit_system_flag()

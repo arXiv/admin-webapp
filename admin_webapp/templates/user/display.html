@@ -34,7 +34,10 @@
         <input name="emailVerified" hx-vals='{"user_id": {{user.user_id}}}' hx-post="{{url_for('user.flip_email_verified')}}" type="checkbox" {% if user.flag_email_verified %}checked{% endif %}>
         <span class="slider"></span>
       </label>
-     (<span class="label">Bouncing?</span>[<a href="[% c.uri_for('flip', 'email_bouncing', user_id) %]">flip</a>]) <br />
+     (<span class="label">Bouncing: </span><label class="switch" style="margin-left:5px;">
+      <input name="bouncing" hx-vals='{"user_id": {{user.user_id}}}' hx-post="{{url_for('user.flip_bouncing')}}" type="checkbox" {% if user.email_bouncing %}checked{% endif %}>
+      <span class="slider"></span>
+    </label>) <br />
      </div>
      <!-- [<a href="[% c.uri_for('flip', 'email_verified', user_id) %]">flip</a>] -->
 
@@ -45,13 +48,17 @@
       <input name="editUsers" hx-vals='{"user_id": {{user.user_id}}}' hx-post="{{url_for('user.flip_edit_users')}}" type="checkbox" {% if user.flag_edit_users %}checked{% endif %}>
       <span class="slider"></span>
     </label>
-     <span class="label">Edit System?</span>: {% if user.flag_edit_system %}Y{% else %}N{% endif %} [<a href="[% c.uri_for('flip', 'edit_system', user_id) %]">flip</a>] <br />
+     <span class="label">Edit System?</span>: <br />
+     <label class="switch" style="margin-left:5px;">
+      <input name="editSystem" hx-vals='{"user_id": {{user.user_id}}}' hx-post="{{url_for('user.flip_edit_system')}}" type="checkbox" {% if user.flag_edit_system %}checked{% endif %}>
+      <span class="slider"></span>
+    </label>
     </div>
 
      <span class="label">Suspended?</span>: {% if user.flag_banned %}Y{% else %}N{% endif %} [<a href="[% c.uri_for('suspend', user_id) %]">suspend</a>]<br />
     
      [<a href="[% c.uri_for('change_password', user_id) %]">Change Password</a>]
-     [<a href="mailto:[% user.email %]">Send Email</a>]
+     [<a href="mailto:{{user.email}}">Send Email</a>]
      [<a href="[% c.uri_for('become_user', user_id) %]">Become this user</a>]
     </td><td>&nbsp;</td>
     
@@ -71,9 +78,9 @@
       <td valign="top">&nbsp;</td>
       <td valign="top">
         <span class="label">Veto Status</span>: {{ demographics.veto_status }}  [<a href="[% c.uri_for('change_veto_status', user_id) %]">Change status</a>]<br />
-        <span class="label">Proxy?</span>: {% if demographics.flag_proxy %}Y{% else %}N{% endif %}  [<a href="[% c.uri_for('flip', 'proxy', user_id) %]">flip</a>]
-        <span class="label">Flagged?</span>: {% if demographics.flag_suspect %}Y{% else %}N{% endif %}  [<a href="[% c.uri_for('flip', 'suspect', user_id) %]">flip</a>]<br />
-        <span class="label">Allow TeX Produced?</span>: {% if user.flag_allow_tex_produced %}Y{% else %}N{% endif %}  [<a href="/admin/user/[% user.id %]/allow_tex_produced">flip</a>]<br />
+        <span class="label">Proxy?</span>: {% if demographics.flag_proxy %}Y{% else %}N{% endif %}  [<a href="[% c.uri_for('flip', 'proxy', user_id) %]">change</a>]
+        <span class="label">Flagged?</span>: {% if demographics.flag_suspect %}Y{% else %}N{% endif %}  [<a href="[% c.uri_for('flip', 'suspect', user_id) %]">change</a>]<br />
+        <span class="label">Allow TeX Produced?</span>: {% if user.flag_allow_tex_produced %}Y{% else %}N{% endif %}  [<a href="/admin/user/[% user.id %]/allow_tex_produced">change</a>]<br />
     
         <span class="badColor"><span class="label">Test?</span>:
              {% if demographics.flag_group_test %}Y{% else %}N{% endif %}</span>
@@ -142,7 +149,7 @@
     
     {% for paper in papers %}
     <tr>
-      <td align="right"><span style="white-space: nowrap"><a href="[% c.uri_for('doc_detail', document.document_id) %]">{{ paper.paper_id }}</a>:&nbsp;</span></td>
+      <td align="right"><span style="white-space: nowrap"><a href="{{url_for('paper.detail', paper_id=paper.document_id)}}">{{ paper.paper_id }}</a>:&nbsp;</span></td>
       <td>A&nbsp;      <label class="switch">
         <input type="checkbox" {% if user.flag_email_verified %}checked{% endif %}>
         <span class="slider"></span>
