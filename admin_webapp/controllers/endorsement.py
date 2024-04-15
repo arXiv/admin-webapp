@@ -16,7 +16,7 @@ from arxiv.base import logging
 
 from arxiv_auth.auth.decorators import scoped
 
-from arxiv_db.models import Endorsements, EndorsementsAudit, TapirUsers
+from arxiv_db.models import Endorsements, EndorsementsAudit
 from arxiv_db.models.associative_tables import t_arXiv_paper_owners
 
 from admin_webapp.extensions import get_csrf, get_db
