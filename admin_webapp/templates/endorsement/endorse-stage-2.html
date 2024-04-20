@@ -1,0 +1,97 @@
+{%- extends "base.html" -%}
+
+{%- block content -%}
+<h1>Do you endorse {{endorsee.nickname}}?</h1>
+
+<p>The following has requested your endorsement to submit papers to the
+ $category $category_type ( $category_name .)  Your
+publication history is sufficient to endorse this user.
+<p>
+<b>Username: </b>  {{endorsee.nickname}} <br />
+<b>Name:</b>{{endorsee.first_name}} {{endorsee.last_name}} {{endorsee.sufix_name}}<br />
+<b>E-mail address:</b> {{ endorsee.email }}<br />
+<b>Affiliation:</b> {{ endorsee.demographics.affiliation }}<br />
+<b>Country:</b> {{ endorsee.demographics.country }}<br />
+TODO should be country name <br />
+
+GOT RID OF URL: it is a security problem since it is unescaped.  <br/>
+
+<b>Registration Date:</b> {{ endorsee.joined_date }} TODO just yyyy-mm-dd<br />
+
+<h2>Who should I endorse?</h2>
+
+<p>Your endorsement will enable {{ endorsee.nickname }} to upload articles to
+<?= $category ?>. <b>This is not peer-review:</b> we don't expect you
+to take more than ten minutes to make your decision. Instead, we want you
+to verify that {{ endorsee.nickname }} is part of the scientific community and
+will submit work that is relevant to <?= $category ?>.</p>
+
+<ul>
+ <li>If you don't know {{ endorsee.nickname }} you <b>must</b> see the paper that
+   {{ endorsee.nickname }} intends to submit.</li>
+ <li><b>You are not being ask to confirm that the analysis or conclusions of
+   this paper are correct, or that the results are novel.</b> </b>Do not</b>
+   advise {{ endorsee.nickname }} to make changes in their paper.</li>
+ <li><b>Do</b> endorse {{ endorsee.nickname }} if their work is at all relevant
+   to current research in <?= $category ?>.</li>
+ <li><b>Do not</b> endorse {{ endorsee.nickname }} if they appear ignorant of
+   the basic facts of the <?= $category ?> subject area, if their work is
+   blatantly incompatible with the basic facts of the <?= $category ?> subject
+   area.</li>
+ <li><b>Do not</b> endorse {{ endorsee.nickname }} if you are not sure that you want
+   to do so; if {{ endorsee.nickname }} makes an inappropriate submission, your
+   ability to endorse other users may be suspended.</li>
+</ul>
+
+<h2>Your choices</h2>
+
+<p>You have three choices:</p>
+<ul type="a">
+ <li>you can endorse {{ endorsee.nickname }},</li>
+ <li>you can tell us that you don't want to endorse {{ endorsee.nickname }}, or</li>
+ <li>do nothing.</li>
+</ul>
+
+<p><b>Do nothing if you don't know what to do.</b>
+We will not take automatic action against {{ endorsee.nickname }} if
+you choose (b)
+(if you choose (b) and another person endorses {{ endorsee.nickname }},  {{ endorsee.nickname }} will be
+allowed to upload.)  However,  votes of no confidence will help us detect cases of massive
+abuse (petitioners who contact a large number of people they don't know) and will call our
+attention to possible problem submissions.  In no case will we inform {{ endorsee.nickname }}
+or other arXiv users of your choice.</p>
+
+<p>You can leave an optional comment about your endorsement (or non-endorsement) of
+{{ endorsee.nickname }}. This comment will be visible to arXiv administrators but not to
+{{ endorsee.nickname }} or the general public.  We appreciate short comments like &quot;She's my
+student&quot; or &quot;He's sent me threatening messages for weeks.&quot;</p>
+
+{% if form.errors %}
+<div class="alert alert-danger" role="alert">
+<ul class="errors">
+  {% for field_name, field_errors in form.errors|dictsort if field_errors %}
+  {% for error in field_errors %}
+  <li>{{ form[field_name].label }}: {{ error }}</li>
+  {% endfor %}
+  {% endfor %}
+</ul>
+</div>
+{% endif %}
+
+<form action="{{url_for(request.endpoint)}}" method="post">
+  <input type="hidden" name="x" value="<?= $x ?>" \>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+  <b>I {{form.choice()}} want to endorse {{endorsee.nickname}} to submit papers to
+    arXiv <?= $category_type ?> <?=$category ?> (<?= $category_name ?>.)TODO category</b>
+  <br />
+  <div>{{form.knows_personally()}} <b>I know {{ endorsee.nickname }} personally.</b></div>
+  <div>{{form.seen_paper()}} <b>I have read the paper that {{ endorsee.nickname }} intends to submit.</b></div>
+  <div><b>(Optional) Enter any comments on why you would or would not endorse {{ endorsee.nickname }}.</b></div>
+  <div>{{form.comment(size=70)}}</div>
+  <input type="submit" name="submit" value="Submit" />
+</form>
+
+<pre>
+  {% debug %}
+  </pre>
+{%- endblock content -%}
