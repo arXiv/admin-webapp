@@ -33,11 +33,11 @@
             <div class="list-item"><strong>Find Users:</strong></div>
             <div>Quick Search</div>
             <input type="text">
-            <div class="list-item"><a href="">[Administrators]</a></div>
+            <div class="list-item"><a href="{{url_for('user.administrators')}}">[Administrators]</a></div>
             <div class="list-item indent"><a href="">[with Edit System]</a></div>
             <br>
-            <div class="list-item"><a href="">[Moderators]</a></div>
-            <div class="list-item indent"><a href="">[...by category]</a></div>
+            <div class="list-item"><a href="{{url_for('user.moderators')}}">[Moderators]</a></div>
+            <div class="list-item indent"><a href="{{url_for('user.moderators_by_category')}}">[...by category]</a></div>
             <br>
             <div class="list-item"><a href="">[Suspects]</a></div>
 
