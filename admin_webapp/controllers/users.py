@@ -290,3 +290,18 @@ def flip_proxy_flag():
         print('post')
     
     return Response(status=204)
+
+# wip flags
+def flip_suspect_flag():
+    session = get_db(current_app).session
+    if request.method == 'POST': 
+        print('post')
+    
+    return Response(status=204)
+
+def flip_next_flag():
+    session = get_db(current_app).session
+    if request.method == 'POST': 
+        print('post')
+    
+    return Response(status=204)
