@@ -86,7 +86,7 @@ def detail(endorsement_id: int) -> Response:
 
 @blueprint.route('/requests/today', methods=['GET'])
 def today() -> Response:
-    """Reports todays endorsement requests."""
+    """Reports today's endorsement requests."""
     args = request.args
     per_page = args.get('per_page', default=12, type=int)
     page = args.get('page', default=1, type=int)
@@ -101,6 +101,7 @@ def _check_report_args(per_page, page, days_back, flagged):
         abort(400)
     if page > 10000:
         abort(400)
+    # will not show data older than 10 years
     if days_back > 365 * 10:
         abort(400)
     if flagged not in [1, 0]:

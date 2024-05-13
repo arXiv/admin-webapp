@@ -13,6 +13,7 @@ from arxiv_auth.auth.decorators import scoped
 
 from ..controllers import captcha_image, registration, authentication
 from admin_webapp.controllers.tapir_functions import manage_email_templates, email_template
+from admin_webapp.controllers.endorsement import endorsement_listing_counts_only
 
 logger = logging.getLogger(__name__)
 blueprint = Blueprint('ui', __name__, url_prefix='')
@@ -231,11 +232,15 @@ def auth_status() -> Response:
 @blueprint.route('/protected')
 # @scoped()
 def an_example() -> Response:
-    """Example of a protected page.
+    """Example of protected landing page.
 
     see arxiv_auth.auth.decorators in arxiv-auth for more details.
     """
-    return render_template('tapir-landing.html')
+    counts = dict()
+    counts['today'] = endorsement_listing_counts_only('today')
+    counts['last_week'] = endorsement_listing_counts_only('last_week')
+    counts['open'] = endorsement_listing_counts_only('open')
+    return render_template('tapir-landing.html', **counts)
     # return make_response("This is an example of a protected page.")
 
 

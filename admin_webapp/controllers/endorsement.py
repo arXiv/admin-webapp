@@ -2,7 +2,6 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
-from admin_webapp.routes import endorsement
 
 from flask import Blueprint, render_template, request, \
     make_response, current_app, Response, abort
@@ -80,3 +79,27 @@ def endorsement_listing(report_type:str, per_page:int, page: int, days_back:int,
     pagination = Pagination(query=None, page=page, per_page=per_page, total=count, items=None)
     return dict(pagination=pagination, count=count, endorsements=endorsements,
                 report_type=report_type, days_back=days_back, not_positive=not_positive)
+
+"""
+Get count information for landing page.
+"""
+def endorsement_listing_counts_only(report_type:str, flagged:bool=False, not_positive:bool=False):
+    session = get_db(current_app).session
+    count_stmt = (select(func.count(EndorsementRequests.request_id)))
+    if flagged:
+        count_stmt = count_stmt.join(Demographics, EndorsementRequests.endorsee_id == Demographics.user_id)
+        count_stmt = count_stmt.filter(Demographics.flag_suspect == 1)
+
+    if not_positive:
+        count_stmt = count_stmt.join(Endorsements, EndorsementRequests.request_id == Endorsements.request_id)
+        count_stmt = count_stmt.filter(Endorsements.point_value <= 0)
+  
+    if report_type == 'today':
+        days_back = 1
+    else:
+        days_back = 7
+    window = datetime.now() - timedelta(days=days_back)
+    count_stmt = count_stmt.filter(EndorsementRequests.issued_when > window)
+    count = session.execute(count_stmt).scalar_one()
+
+    return count
