@@ -9,8 +9,8 @@
             <div class="list-item"><a href="">Submissions</a></div>
             <br>
             <div class="list-item">Endorsement requests:</div>
-            <div class="list-item indent">Today: <a href="">{{today}}</a></div>
-            <div class="list-item indent">Last week: <a href="">{{last_week}}</a></div>
+            <div class="list-item indent">Today: <a href="{{url_for('endorsement.today')}}">{{today}}</a></div>
+            <div class="list-item indent">Last week: <a href="{{url_for('endorsement.last_week')}}">{{last_week}}</a></div>
             <div class="list-item indent">Open: <a href="">{{open}}</a></div>
             <br>
             <div class="list-item">Endorsements: </div>
