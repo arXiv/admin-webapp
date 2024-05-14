@@ -1,6 +1,10 @@
 {%- extends "base.html" -%}
 {%- block content -%}
-<div>
+<h1>
     Edit email template 
+</h1>
+<div>
+    <textarea style="width: 400px; height: 400px;">{{ template.data | safe }}</textarea>
 </div>
+<button>Change</button>
 {%- endblock content -%}

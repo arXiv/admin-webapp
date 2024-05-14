@@ -9,7 +9,7 @@
     </select>
     <a href="/templates/1" id="view-link">View</a>
     <a href="/templates/1/edit" id="edit-link">Edit</a>
-
+    <a href="">Delete</a>
 </form>
 <div>
     <a href="{{ url_for('ui.create_email_template') }}">Create New</a>
@@ -21,12 +21,14 @@
     document.addEventListener('DOMContentLoaded', function() {
         var dropdown = document.getElementById('template-dropdown');
         var viewLink = document.getElementById('view-link');
+        var editLink = document.getElementById('edit-link');
 
         dropdown.addEventListener('change', function() {
             var selectedTemplateId = dropdown.value;
             
             // Update the href attribute of the view link with the selected template_id
             viewLink.href = "/templates/" + selectedTemplateId;
+            editLink.href = "/templates/" + selectedTemplateId + "/edit";
         });
     });
 </script>

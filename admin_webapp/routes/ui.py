@@ -12,7 +12,7 @@ from arxiv.base import logging
 from arxiv_auth.auth.decorators import scoped
 
 from ..controllers import captcha_image, registration, authentication
-from admin_webapp.controllers.tapir_functions import manage_email_templates, email_template
+from admin_webapp.controllers.tapir_functions import manage_email_templates, email_template, create_email_template
 from admin_webapp.controllers.endorsement import endorsement_listing_counts_only
 
 logger = logging.getLogger(__name__)
@@ -261,8 +261,12 @@ def template_data(template_id: int):
 
 @blueprint.route('templates/<int:template_id>/edit')
 def template_data_edit(template_id: int):
-    return render_template('email_template_edit.html')
+    return render_template('email_template_edit.html', **email_template(template_id))
 
 @blueprint.route('/templates/create')
 def create_email_template() -> Response:
     return render_template('email_template_create.html')
+
+@blueprint.route('/templates/submit_new_template', methods=['POST'])
+def flip_edit_system() -> Response:
+    return create_email_template()
