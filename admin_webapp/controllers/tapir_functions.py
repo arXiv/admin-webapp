@@ -50,5 +50,6 @@ def create_email_template() -> Response:
             workflow_status=2,
             data=template_data   
         )
+        session.execute(stmt)
     session.commit()
     return
