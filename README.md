@@ -30,7 +30,7 @@ create tables. Conventional read/write access should be sufficient.
 
 You should be able to go to a page like  http://localhost:5000/login  or  http://localhost:5000/register
 
-While developing, it's best to open up dev.arxiv.org/admin for legacy Tapir so you can make changes freely. In some cases it can be helpful to open up product Tapir at arxiv.org/admin, but tread carefully so you don't unintentionally modify a user profile.
+While developing, it's best to open up dev.arxiv.org/admin for legacy Tapir so you can make changes freely. In some cases it can be helpful to open up production Tapir at arxiv.org/admin, but tread carefully so you don't unintentionally modify a user profile.
 
 # Running the tests
 
