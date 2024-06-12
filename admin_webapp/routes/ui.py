@@ -269,4 +269,6 @@ def create_email_template() -> Response:
 
 @blueprint.route('/templates/submit_new_template', methods=['POST'])
 def flip_edit_system() -> Response:
-    return create_email_template()
+    data = create_email_template()
+    
+    return render_template()
