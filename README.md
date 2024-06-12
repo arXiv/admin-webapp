@@ -14,7 +14,7 @@ LOCALHOST_DEV=1 \
  FLASK_APP=admin_webapp/app.py \
  flask run
 ```
-Then go to http://localhost.arxiv.org:5000/login and log in with the user and pw you just created.
+You can go to http://localhost.arxiv.org:5000/login and log in with the user and pw you just created.
 
 To use with MySQL:
 
@@ -30,7 +30,7 @@ create tables. Conventional read/write access should be sufficient.
 
 You should be able to go to a page like  http://localhost:5000/login  or  http://localhost:5000/register
 
-While developing, it's best to open up dev.arxiv.org/admin for legacy Tapir so you can make changes freely. In some cases it can be helpful to open up production Tapir at arxiv.org/admin, but tread carefully so you don't unintentionally modify a user profile.
+While developing, it's best to open up dev.arxiv.org/admin for legacy Tapir so you can make changes freely. In some cases it can be helpful to open up production Tapir at arxiv.org/admin, but tread carefully so you don't unintentionally modify a user profile. In most cases, however, there isn't too much to worry about.
 
 # Running the tests
 
