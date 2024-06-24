@@ -4,23 +4,20 @@ import logging
 
 from flask import Flask
 from flask_session import Session
-from flask_s3 import FlaskS3
 from flask_bootstrap import Bootstrap5
 
 from flask_wtf.csrf import CSRFProtect
 
 from arxiv.base import Base
 from arxiv.base.middleware import wrap
-
+from arxiv.db.models import configure_db
 from arxiv.auth import auth
 from arxiv.auth.auth.middleware import AuthMiddleware
 from arxiv.auth.legacy.util import create_all as legacy_create_all
 
 from . import filters
-
+from .config import Settings
 from .routes import ui, ownership, endorsement, user, paper
-
-s3 = FlaskS3()
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +41,12 @@ def change_loglevel(pkg:str, level):
     for handler in logger_x.handlers:
         handler.setLevel(level)
 
-def create_web_app() -> Flask:
+def create_web_app(**kwargs) -> Flask:
     """Initialize and configure the admin_webapp application."""
     app = Flask('admin_webapp')
-    app.config.from_pyfile('config.py')
+    settings = Settings(**kwargs)
+    app.config.from_object(settings)
+    engine, _  = configure_db(settings)
     session_lifetime = app.config['PERMANENT_SESSION_LIFETIME']
 
     print(f"Session Lifetime: {session_lifetime} seconds")
@@ -84,7 +83,6 @@ def create_web_app() -> Flask:
 
     Base(app)
     auth.Auth(app)
-    s3.init_app(app)
 
     csrf.init_app(app)
     [csrf.exempt(view.strip())
@@ -96,14 +94,12 @@ def create_web_app() -> Flask:
 
     app.jinja_env.filters['unix_to_datetime'] = filters.unix_to_datetime
 
-    # if app.config['CREATE_DB']:
-    #     with app.app_context():
-    #         print("About to create the legacy DB")
-    #         legacy_create_all()
+    if app.config['CREATE_DB']:
+        legacy_create_all(engine)
 
     return app
 
 
 def setup_warnings(app):
-    if not app.config['WTF_CSRF_ENABLED'] and not(app.config['FLASK_DEBUG'] or app.config['DEBUG']):
+    if not app.config.get('WTF_CSRF_ENABLED'):
         logger.warning("CSRF protection is DISABLED, Do not disable CSRF in production")

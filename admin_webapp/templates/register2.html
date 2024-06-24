@@ -245,7 +245,7 @@
 
               <div class="control">
                 <div class="{{ ul_class }}">
-                  {% for value, label, checked in field.iter_choices() %}
+                  {% for value, label, checked, other in field.iter_choices() %}
                     <div class="{{ li_class }}">
                       <input type="checkbox" name="{{ field.name }}" value="{{ value }}" id="{{ field.id }}-{{ value }}" {% if checked %}checked{% endif %}>
                       <label for="{{ field.id }}-{{ value }}">{{ label }}</label>

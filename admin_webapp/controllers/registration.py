@@ -294,7 +294,6 @@ class ProfileForm(Form):
     def to_domain(self) -> domain.User:
         """Generate a :class:`.User` from this form's data."""
         print(self.default_category.data.split('.'))
-        print(domain.Category('test'))
         print(self.default_category.data)
         return domain.User(
             user_id=self.user_id.data if self.user_id.data else None,
@@ -311,9 +310,7 @@ class ProfileForm(Form):
                 country=self.country.data,
                 rank=int(self.status.data),     # WTF can't handle int values.
                 submission_groups=self.groups.data,
-                default_category=domain.Category(
-                    self.default_category.data
-                ),
+                default_category=definitions.CATEGORIES[self.default_category.data],
                 homepage_url=self.url.data,
                 remember_me=self.remember_me.data
             )

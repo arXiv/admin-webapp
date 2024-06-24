@@ -55,8 +55,8 @@ sphinx = ["sphinx", "sphinx-autodoc-typehints", "sphinxcontrib-websupport"]
 [package.source]
 type = "git"
 url = "https://github.com/arXiv/arxiv-base.git"
-reference = "491b8e24cd9d03814f3012d0ab2394ff7dec4b92"
-resolved_reference = "491b8e24cd9d03814f3012d0ab2394ff7dec4b92"
+reference = "7c22141fa03cc352dbb635b6cd062014cfe797ca"
+resolved_reference = "7c22141fa03cc352dbb635b6cd062014cfe797ca"
 
 [[package]]
 name = "astroid"
@@ -207,13 +207,13 @@ files = [
 
 [[package]]
 name = "captcha"
-version = "0.4"
+version = "0.5.0"
 description = "A captcha library that generates audio and image CAPTCHAs."
 optional = false
-python-versions = "*"
+python-versions = ">=3.8"
 files = [
-    {file = "captcha-0.4-py3-none-any.whl", hash = "sha256:529941705c01c20143d030805f82a362ba5a2af898e59426acc2c8d649ba034c"},
-    {file = "captcha-0.4.tar.gz", hash = "sha256:2ae5e8daac4f1649b57b34328bcc45ba691b5c707fc6fbdd016e213aece9a8b8"},
+    {file = "captcha-0.5.0-py3-none-any.whl", hash = "sha256:9c86fdc6d453e1b41c330d07c1600e07217557a3e64f8307efe20ef4766eb46a"},
+    {file = "captcha-0.5.0.tar.gz", hash = "sha256:132cb5b9aafd1586bfa421c19f994f7b482873e7f981f80fff888954e02c35c8"},
 ]
 
 [package.dependencies]
@@ -2813,4 +2813,4 @@ email = ["email-validator"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "acfd4b3f1f611bf0f9e7e0f3273926d01fff5ed78520ec61ce1bba4824fef102"
+content-hash = "b12ba76a7ddd8eb750ed2628c6d19995a65a6e32357c6e7445cb8930ea3d528e"
