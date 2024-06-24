@@ -11,8 +11,8 @@ from werkzeug.datastructures import MultiDict
 from flask import Flask
 
 from arxiv import status
-
-from arxiv_auth.legacy import util, models
+from arxiv.db import models
+from arxiv.auth.legacy import util
 
 from admin_webapp.factory import create_web_app
 

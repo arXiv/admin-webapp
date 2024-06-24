@@ -4,14 +4,13 @@ from sqlalchemy import insert, select
 from flask import url_for
 import pytest
 
-from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, Documents
-from arxiv_db.models.associative_tables import t_arXiv_ownership_requests_papers, \
-    t_arXiv_paper_owners
+from arxiv.db.models import OwnershipRequest, OwnershipRequestsAudit, Document, \
+    t_arXiv_ownership_requests_papers, t_arXiv_paper_owners
 
 @pytest.fixture(scope='session')
 def fake_ownerships(db):
      with Session(db) as session:
-         oreq = OwnershipRequests(
+         oreq = OwnershipRequest(
              request_id=1,
              user_id=246231,
              workflow_status='pending')
@@ -25,7 +24,7 @@ def fake_ownerships(db):
              )
          session.add(raudit)
 
-         doc = Documents(document_id = 1111, paper_id='2010.01111', title="bogus title",
+         doc = Document(document_id = 1111, paper_id='2010.01111', title="bogus title",
                          submitter_email="bob@cornell.edu", authors="Smith, Bob",
                          submitter_id=246231, primary_subject_class='cs.IR')
          session.add(doc)
@@ -33,7 +32,7 @@ def fake_ownerships(db):
          stmt = insert(t_arXiv_ownership_requests_papers).values(request_id=1, document_id=1111)
          session.execute(stmt)
 
-         oreq = OwnershipRequests(
+         oreq = OwnershipRequest(
              request_id=2,
              user_id=246231,
              workflow_status='rejected')
@@ -47,7 +46,7 @@ def fake_ownerships(db):
              )
          session.add(raudit)
 
-         doc = Documents(document_id = 2222 , paper_id='2010.02222', title="bogus title",
+         doc = Document(document_id = 2222 , paper_id='2010.02222', title="bogus title",
                          submitter_email="bob@cornell.edu", authors="Smith, Bob",
                          submitter_id=246231, primary_subject_class='cs.IR')
          session.add(doc)
@@ -55,7 +54,7 @@ def fake_ownerships(db):
          stmt = insert(t_arXiv_ownership_requests_papers).values(request_id=1, document_id=2222)
          session.execute(stmt)
 
-         oreq = OwnershipRequests(
+         oreq = OwnershipRequest(
              request_id=3,
              user_id=246231,
              workflow_status='accepted')
@@ -69,7 +68,7 @@ def fake_ownerships(db):
              )
          session.add(raudit)
 
-         doc = Documents(document_id = 3333, paper_id='2010.03333', title="bogus title",
+         doc = Document(document_id = 3333, paper_id='2010.03333', title="bogus title",
                          submitter_email="bob@cornell.edu", authors="Smith, Bob",
                          submitter_id=246231, primary_subject_class='cs.IR')
          session.add(doc)
@@ -107,7 +106,7 @@ def test_get_detailed_report(admin_client, fake_ownerships):
 
 def test_edits(admin_client, fake_ownerships, db):
     with Session(db) as session:
-        oreq = session.execute(select(OwnershipRequests).where(OwnershipRequests.user_id==246231,OwnershipRequests.workflow_status=='pending')).scalar()
+        oreq = session.execute(select(OwnershipRequest).where(OwnershipRequest.user_id==246231,OwnershipRequest.workflow_status=='pending')).scalar()
         request_id = oreq.request_id
         assert oreq
         resp = admin_client.post(url_for('ownership.display', ownership_id=oreq.request_id),

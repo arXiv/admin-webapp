@@ -11,18 +11,14 @@ from sqlalchemy.dialects.mysql import JSON
 from sqlalchemy.orm import joinedload, selectinload, aliased
 from arxiv.base import logging
 
-from arxiv_auth.auth.decorators import scoped
+from arxiv.auth.auth.decorators import scoped
+from arxiv.db import session
+from arxiv.db.models import Document, Metadata, PaperPw
 
-from arxiv_db.models import Documents, Metadata, PaperPw, AdminLog
-from arxiv_db.models.associative_tables import t_arXiv_paper_owners
-
-from admin_webapp.extensions import get_csrf, get_db
-from admin_webapp.admin_log import audit_admin
 logger = logging.getLogger(__file__)
 
 def paper_detail(doc_id:int) -> Response:
-    session = get_db(current_app).session
-    doc_stmt = (select(Documents).where(Documents.document_id == doc_id))
+    doc_stmt = (select(Document).where(Document.document_id == doc_id))
     sub_history_stmt = (select(Metadata).where(Metadata.document_id==doc_id).order_by(desc(Metadata.version)))
     doc_pw_stmt = (select(PaperPw).where(PaperPw.document_id == doc_id))
 

@@ -12,15 +12,10 @@ from flask_wtf.csrf import CSRFProtect
 from arxiv.base import Base
 from arxiv.base.middleware import wrap
 
-from arxiv_auth import auth
-from arxiv_auth.auth.middleware import AuthMiddleware
-from arxiv_auth.auth.sessions import SessionStore
-from arxiv_auth.legacy.util import init_app as legacy_init_app
-from arxiv_auth.legacy.util import create_all as legacy_create_all
+from arxiv.auth import auth
+from arxiv.auth.auth.middleware import AuthMiddleware
+from arxiv.auth.legacy.util import create_all as legacy_create_all
 
-from flask_sqlalchemy import SQLAlchemy
-
-import arxiv_db
 from . import filters
 
 from .routes import ui, ownership, endorsement, user, paper
@@ -81,10 +76,6 @@ def create_web_app() -> Flask:
     # SERVER_NAME.
     app.config['SERVER_NAME'] = None
 
-    SessionStore.init_app(app)
-    legacy_init_app(app)
-
-    SQLAlchemy(app, metadata=arxiv_db.Base.metadata)
     app.register_blueprint(ui.blueprint)
     app.register_blueprint(ownership.blueprint)
     app.register_blueprint(endorsement.blueprint)
@@ -101,21 +92,18 @@ def create_web_app() -> Flask:
 
     wrap(app, [AuthMiddleware])
 
-    settup_warnings(app)
+    setup_warnings(app)
 
     app.jinja_env.filters['unix_to_datetime'] = filters.unix_to_datetime
 
-    if app.config['CREATE_DB']:
-        with app.app_context():
-            print("About to create the legacy DB")
-            legacy_create_all()
+    # if app.config['CREATE_DB']:
+    #     with app.app_context():
+    #         print("About to create the legacy DB")
+    #         legacy_create_all()
 
     return app
 
 
-def settup_warnings(app):
-    if not app.config['SQLALCHEMY_DATABASE_URI'] and not app.config['DEBUG']:
-        logger.error("SQLALCHEMY_DATABASE_URI is not set!")
-
+def setup_warnings(app):
     if not app.config['WTF_CSRF_ENABLED'] and not(app.config['FLASK_DEBUG'] or app.config['DEBUG']):
         logger.warning("CSRF protection is DISABLED, Do not disable CSRF in production")

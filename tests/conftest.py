@@ -22,10 +22,10 @@ import hashlib
 from base64 import b64encode
 import pathlib
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, text
 from sqlalchemy.orm import Session
 
-from arxiv_db import test_load_db_file, models
+from arxiv.db import models
 
 from admin_webapp.factory import create_web_app
 
@@ -36,6 +36,50 @@ SQL_DATA_FILE = './tests/data/data.sql'
 
 DELETE_DB_FILE_ON_EXIT = True
 
+def test_load_db_file(engine, test_data: str):
+    """Loads the SQL from the `test_data` file into the `engine`"""
+
+    def escape_bind(stmt):
+        return stmt.replace(':0', '\\:0')
+
+    with engine.connect() as db:
+        cmd_count = 0
+        badcmd = False
+        print(f"Loading test data from file '{test_data}'...")
+        with open(test_data) as sql:
+            cmd = ""
+            for ln, line in enumerate(map(escape_bind, sql)):
+                try:
+                    if line.startswith("--"):
+                        continue
+                    elif line and line.rstrip().endswith(";"):
+                        cmd = cmd + line
+                        if cmd:
+                            #print(f"About to run '{cmd}'")
+                            db.execute(text(cmd))
+                            cmd_count = cmd_count + 1
+                            cmd = ""
+                        else:
+                            #print("empty command")
+                            cmd = ""
+                    elif not line and cmd:
+                        #print(f"About to run '{cmd}'")
+                        db.execute(text(cmd))
+                        cmd_count = cmd_count + 1
+                        cmd = ""
+                    elif not line:
+                        continue
+                    else:
+                        cmd = cmd + line
+                except Exception as err:
+                    badcmd = f"At line {ln} Running command #{cmd_count}. {err}"
+                    break
+
+        if badcmd:
+            # moved this out of the except to avoid pytest printing huge stack traces
+            raise Exception(badcmd)
+        else:
+            print(f"Done loading test data. Ran {cmd_count} commands.")
 
 def parse_cookies(cookie_data):
     """This should be moved to a library function in arxiv-auth for reuse in tests."""
@@ -71,8 +115,8 @@ def engine():
 def db(engine):
     """Create and load db tables."""
     print("Making tables...")
-    from arxiv_db.tables import arxiv_tables
-    arxiv_tables.metadata.create_all(bind=engine)
+    from arxiv.db import Base
+    Base.metadata.create_all(bind=engine)
     print("Done making tables.")
     test_load_db_file(engine, SQL_DATA_FILE)
     yield engine
@@ -80,7 +124,7 @@ def db(engine):
 @pytest.fixture(scope='session')
 def admin_user(db):
     with Session(db) as session:
-        admin_exits = select(models.TapirUsers).where(models.TapirUsers.email == 'testadmin@example.con')
+        admin_exits = select(models.TapirUser).where(models.TapirUser.email == 'testadmin@example.con')
         admin = session.scalar(admin_exits)
         if admin:
             return admin
@@ -109,7 +153,7 @@ def admin_user(db):
             password_enc=encrypted
         )
 
-        db_nick=models.TapirNicknames(
+        db_nick=models.TapirNickname(
             user_id = db_user.user_id,
             nickname='foouser',
             user_seq=1,
@@ -118,7 +162,7 @@ def admin_user(db):
             policy=0,
             flag_primary=1
         )
-        db_demo = models.Demographics(
+        db_demo = models.Demographic(
             user_id=db_user.user_id,
             country='US',
             affiliation='Cornell U.',

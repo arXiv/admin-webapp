@@ -1,7 +1,6 @@
 """arXiv endorsement routes."""
 
 from datetime import datetime, timedelta
-from flask_sqlalchemy import Pagination
 from sqlalchemy import select, func
 from sqlalchemy.orm import joinedload
 
@@ -11,11 +10,9 @@ from wtforms import SelectField, BooleanField, StringField, validators
 from flask_wtf import FlaskForm
 
 # need to refactor this back into a controller
-from arxiv_db.models import EndorsementRequests, Endorsements, TapirUsers, Demographics
-
+from arxiv.db.models import EndorsementRequest, Endorsement, TapirUser
+from arxiv.db import session
 from arxiv.base.alerts import flash_failure
-
-from admin_webapp.extensions import get_db
 
 from admin_webapp.controllers.endorsement import endorsement_listing # multiple implementations of listing here
 
@@ -31,18 +28,17 @@ def endorsements() -> Response:
     page = args.get('page', default=1, type=int)
     
     data = endorsement_listing(per_page, page)
-    data['title'] = "Endorsements"
+    data['title'] = "Endorsement"
     return render_template('endorsement/list.html', **data)
 
 @blueprint.route('/request/<int:endorsement_req_id>', methods=['GET'])
 def request_detail(endorsement_req_id:int) -> Response:
     """Display a single request for endorsement."""
-    session = get_db(current_app).session
-    stmt = (select(EndorsementRequests)
-            .options(joinedload(EndorsementRequests.endorsee).joinedload(TapirUsers.tapir_nicknames),
-                     joinedload(EndorsementRequests.endorsement).joinedload(Endorsements.endorser).joinedload(TapirUsers.tapir_nicknames),
-                     joinedload(EndorsementRequests.audit))
-            .filter(EndorsementRequests.request_id == endorsement_req_id)
+    stmt = (select(EndorsementRequest)
+            .options(joinedload(EndorsementRequest.endorsee).joinedload(TapirUser.tapir_nicknames),
+                     joinedload(EndorsementRequest.endorsement).joinedload(Endorsement.endorser).joinedload(TapirUser.tapir_nicknames),
+                     joinedload(EndorsementRequest.audit))
+            .filter(EndorsementRequest.request_id == endorsement_req_id)
             )
     endo_req = session.execute(stmt).scalar() or abort(404)
     return render_template('endorsement/request_detail.html',
@@ -54,10 +50,9 @@ def request_detail(endorsement_req_id:int) -> Response:
 @blueprint.route('/request/<int:endorsement_req_id>/flip_valid', methods=['POST'])
 def flip_valid(endorsement_req_id:int) -> Response:
     """Flip an endorsement_req valid column."""
-    session = get_db(current_app).session
-    stmt = (select(EndorsementRequests)
-            .options(joinedload(EndorsementRequests.endorsement))
-            .filter(EndorsementRequests.request_id == endorsement_req_id))
+    stmt = (select(EndorsementRequest)
+            .options(joinedload(EndorsementRequest.endorsement))
+            .filter(EndorsementRequest.request_id == endorsement_req_id))
     endo_req = session.execute(stmt).scalar() or abort(404)
     endo_req.endorsement.flag_valid = not bool(endo_req.endorsement.flag_valid)
     session.commit()
@@ -66,10 +61,9 @@ def flip_valid(endorsement_req_id:int) -> Response:
 @blueprint.route('/request/<int:endorsement_req_id>/flip_score', methods=['POST'])
 def flip_score(endorsement_req_id:int) -> Response:
     """Flip an endorsement_req score."""
-    session = get_db(current_app).session
-    stmt = (select(EndorsementRequests)
-            .options(joinedload(EndorsementRequests.endorsement))
-            .filter(EndorsementRequests.request_id == endorsement_req_id))
+    stmt = (select(EndorsementRequest)
+            .options(joinedload(EndorsementRequest.endorsement))
+            .filter(EndorsementRequest.request_id == endorsement_req_id))
     endo_req = session.execute(stmt).scalar() or abort(404)
     if endo_req.endorsement.point_value > 0:
         endo_req.endorsement.point_value = 0
@@ -155,11 +149,10 @@ def endorse() -> Response:
 
     form = EndorseStage2Form()
 
-    session = get_db(current_app).session
     endo_code = request.form.get('x')
-    stmt = (select(EndorsementRequests)
+    stmt = (select(EndorsementRequest)
             .limit(1)
-            #.filter(EndorsementRequests.secret == endo_code)
+            #.filter(EndorsementRequest.secret == endo_code)
             )
     endoreq = session.scalar(stmt)
 
@@ -172,7 +165,6 @@ def endorse() -> Response:
         return make_response(render_template('endorsement/endorse.html'), 400)
 
     category = f"{endoreq.archive}.{endoreq.subject_class}" if endoreq.subject_class else endoreq.archive
-    category_display = get_category_display(category)
 
     if endoreq.endorsee_id == request.auth.user.user_id:
         return make_response(render_template('endorsement/no-self-endorse.html'), 400)

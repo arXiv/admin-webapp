@@ -14,16 +14,17 @@ import random
 from datetime import datetime
 import click
 
-from arxiv import taxonomy
-from arxiv_auth.legacy import models, util, passwords
+from arxiv.taxonomy import definitions
+from arxiv.db import models
+from arxiv.auth.legacy import util, passwords
 
 from admin_webapp.factory import create_web_app
 
 EASTERN = ZoneInfo('US/Eastern')
 
 def _random_category() -> Tuple[str, str]:
-    category = random.choice(list(taxonomy.CATEGORIES.items()))
-    archive = category[1]['in_archive']
+    category = random.choice(list(definitions.CATEGORIES.items()))
+    archive = category[1].in_archive
     subject_class = category[0].split('.')[-1] if '.' in category[0] else ''
     return archive, subject_class
 

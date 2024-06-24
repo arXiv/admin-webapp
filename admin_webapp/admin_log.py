@@ -6,7 +6,7 @@ from admin_webapp.extensions import get_db
 from flask import current_app, request
 
 
-from arxiv_db.models import TapirAdminAudit
+from arxiv.db.models import TapirAdminAudit
 
 
 Actions = Literal['new-user',

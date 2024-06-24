@@ -15,28 +15,29 @@ from werkzeug.datastructures import MultiDict
 from werkzeug.exceptions import BadRequest, InternalServerError
 
 from arxiv import status
-from arxiv_auth import domain
+from arxiv.auth import domain
 from arxiv.base import logging
 
-from arxiv_auth.auth.sessions import SessionStore
+from arxiv.auth.auth.sessions import SessionStore
 
 from wtforms import StringField, PasswordField, SelectField, \
     BooleanField, Form, HiddenField
 from wtforms.validators import DataRequired, Email, Length, URL, optional, EqualTo, \
     ValidationError
-from flask import url_for, Markup
+from markupsafe import Markup
+from flask import url_for
 from flask import session as flask_session
 import pycountry
 
-from arxiv import taxonomy
+from arxiv.taxonomy import definitions
 from .util import MultiCheckboxField, OptGroupSelectField
 
 from .. import stateless_captcha
 
-from arxiv_auth.legacy import sessions as legacy_sessions
+from arxiv.auth.legacy import sessions as legacy_sessions
 
-from arxiv_auth.legacy import accounts
-from arxiv_auth.legacy.exceptions import RegistrationFailed, \
+from arxiv.auth.legacy import accounts
+from arxiv.auth.legacy.exceptions import RegistrationFailed, \
     SessionCreationFailed, SessionDeletionFailed
 
 logger = logging.getLogger(__name__)
@@ -229,17 +230,17 @@ class ProfileForm(Form):
         [(country.alpha_2, country.name) for country in pycountry.countries]
     RANKS = [('', '')] + domain.RANKS
     GROUPS = [
-        (key, group['name'])
-        for key, group in taxonomy.definitions.GROUPS.items()
-        if not group.get('is_test', False)
+        (key, group.full_name)
+        for key, group in definitions.GROUPS.items()
+        if not group.is_test
     ]
     CATEGORIES = [
-        (archive['name'], [
-            (category_id, category['name'])
-            for category_id, category in taxonomy.CATEGORIES_ACTIVE.items()
-            if category['in_archive'] == archive_id
+        (archive.full_name, [
+            (category_id, category.full_name)
+            for category_id, category in definitions.CATEGORIES_ACTIVE.items()
+            if category.in_archive == archive_id
         ])
-        for archive_id, archive in taxonomy.ARCHIVES_ACTIVE.items()
+        for archive_id, archive in definitions.ARCHIVES_ACTIVE.items()
     ]
     """Categories grouped by archive."""
 

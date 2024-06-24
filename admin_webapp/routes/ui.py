@@ -9,7 +9,7 @@ from flask import Blueprint, render_template, url_for, request, \
 from arxiv import status
 from arxiv.base import logging
 
-from arxiv_auth.auth.decorators import scoped
+from arxiv.auth.auth.decorators import scoped
 
 from ..controllers import captcha_image, registration, authentication
 from admin_webapp.controllers.tapir_functions import manage_email_templates, email_template, create_email_template
@@ -234,7 +234,7 @@ def auth_status() -> Response:
 def an_example() -> Response:
     """Example of protected landing page.
 
-    see arxiv_auth.auth.decorators in arxiv-auth for more details.
+    see arxiv.auth.auth.decorators in arxiv-auth for more details.
     """
     counts = dict()
     counts['today'] = endorsement_listing_counts_only('today')

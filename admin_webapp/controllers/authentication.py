@@ -15,7 +15,7 @@ import re
 
 from werkzeug.datastructures import MultiDict
 from werkzeug.exceptions import InternalServerError
-from flask import Markup
+from markupsafe import Markup
 
 from wtforms import StringField, PasswordField, Form
 from wtforms.validators import DataRequired
@@ -24,14 +24,14 @@ from retry import retry
 
 from arxiv import status
 from arxiv.base import logging
+from arxiv.db import transaction
 
-from arxiv_auth.domain import User, Authorizations, Session
+from arxiv.auth.domain import User, Authorizations, Session
 
-from arxiv_auth.auth.sessions import SessionStore
+from arxiv.auth.auth.sessions import SessionStore
 
-from arxiv_auth.legacy import exceptions, sessions as legacy_sessions
-from arxiv_auth.legacy.authenticate import authenticate
-from arxiv_auth.legacy.util import transaction
+from arxiv.auth.legacy import exceptions, sessions as legacy_sessions
+from arxiv.auth.legacy.authenticate import authenticate
 
 from admin_webapp import config
 

@@ -12,9 +12,9 @@ from werkzeug.datastructures import MultiDict
 from werkzeug.exceptions import BadRequest
 
 from arxiv import status
-
-from arxiv_auth import domain
-from arxiv_auth.legacy import exceptions, util, models
+from arxiv.db import models
+from arxiv.auth import domain
+from arxiv.auth.legacy import exceptions, util
 
 from ...factory import create_web_app
 from ...controllers.authentication import login, logout, LoginForm

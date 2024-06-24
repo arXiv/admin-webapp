@@ -5,20 +5,16 @@ import logging
 
 from flask import Blueprint, request, current_app, Response, abort
 
-from flask_sqlalchemy import Pagination
-
 from sqlalchemy import Integer, String, select, func, text, insert, update
 from sqlalchemy.orm import joinedload
 from arxiv.base import logging
 from sqlalchemy.exc import IntegrityError
 
-from arxiv_auth.auth.decorators import scoped
+from arxiv.auth.auth.decorators import scoped
+from arxiv.db import session
+from arxiv.db.models import OwnershipRequest, OwnershipRequestsAudit, TapirUser, EndorsementRequest, t_arXiv_paper_owners
 
-from arxiv_db.models import OwnershipRequests, OwnershipRequestsAudit, TapirUsers, Documents, EndorsementRequests
-from arxiv_db.models.associative_tables import t_arXiv_paper_owners
-
-from admin_webapp.extensions import get_csrf, get_db
-from admin_webapp.admin_log import audit_admin
+from .util import Pagination
 
 logger = logging.getLogger(__file__)
 
@@ -42,7 +38,6 @@ def ownership_post(data:dict) -> Response:
 
     Note: This doesn't do "bulk" mode
     """
-    session = get_db(current_app).session
     oreq = data['ownership']
     if request.method == 'POST':
         admin_id = 1234 #request.auth.user.user_id
@@ -65,8 +60,8 @@ def ownership_post(data:dict) -> Response:
                 #audit_admin(oreq.user_id, 'add-paper-owner-2', doc_id)
 
             oreq.workflow_status = 'accepted'
-            session.execute(update(OwnershipRequests)
-                            .where(OwnershipRequests.request_id == oreq.request_id)
+            session.execute(update(OwnershipRequest)
+                            .where(OwnershipRequest.request_id == oreq.request_id)
                             .values(workflow_status = 'accepted'))
 
             data['success']='accepted'
@@ -95,16 +90,15 @@ def ownership_detail(ownership_id:int, postfn=None) -> dict:
     """Display a ownership request.
 
     """
-    session = get_db(current_app).session
-    stmt = (select(OwnershipRequests)
+    stmt = (select(OwnershipRequest)
             .options(
-                joinedload(OwnershipRequests.user).joinedload(TapirUsers.tapir_nicknames),
-                joinedload(OwnershipRequests.user).joinedload(TapirUsers.owned_papers),
-                joinedload(OwnershipRequests.request_audit),
-                joinedload(OwnershipRequests.documents),
-                joinedload(OwnershipRequests.endorsement_request).joinedload(EndorsementRequests.audit)
+                joinedload(OwnershipRequest.user).joinedload(TapirUser.tapir_nicknames),
+                joinedload(OwnershipRequest.user).joinedload(TapirUser.owned_papers),
+                joinedload(OwnershipRequest.request_audit),
+                joinedload(OwnershipRequest.documents),
+                joinedload(OwnershipRequest.endorsement_request).joinedload(EndorsementRequest.audit)
             )
-            .where( OwnershipRequests.request_id == ownership_id))
+            .where( OwnershipRequest.request_id == ownership_id))
     oreq = session.scalar(stmt)
     if not oreq:
         abort(404)
@@ -130,13 +124,12 @@ def ownership_detail(ownership_id:int, postfn=None) -> dict:
 
 def ownership_listing(workflow_status:str, per_page:int, page: int,
                        days_back:int) -> dict:
-    session = get_db(current_app).session
-    report_stmt = (select(OwnershipRequests)
-                   .options(joinedload(OwnershipRequests.user))
-                   .filter(OwnershipRequests.workflow_status == workflow_status)
+    report_stmt = (select(OwnershipRequest)
+                   .options(joinedload(OwnershipRequest.user))
+                   .filter(OwnershipRequest.workflow_status == workflow_status)
                    .limit(per_page).offset((page -1) * per_page))
-    count_stmt = (select(func.count(OwnershipRequests.request_id))
-                  .where(OwnershipRequests.workflow_status == workflow_status))
+    count_stmt = (select(func.count(OwnershipRequest.request_id))
+                  .where(OwnershipRequest.workflow_status == workflow_status))
 
     if workflow_status in ('accepted', 'rejected'):
         window = datetime.now() - timedelta(days=days_back)

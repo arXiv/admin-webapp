@@ -11,7 +11,7 @@ from base64 import b64encode
 from urllib.parse  import quote_plus
 
 from arxiv import status
-from arxiv_auth.legacy import util, models
+from arxiv.auth.legacy import util, models
 
 from admin_webapp.factory import create_web_app
 

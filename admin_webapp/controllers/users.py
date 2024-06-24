@@ -7,22 +7,21 @@ from admin_webapp.routes import endorsement
 from flask import Blueprint, render_template, request, \
     make_response, current_app, Response, abort
 
-from flask_sqlalchemy import Pagination
-
 from sqlalchemy import select, func, case, text, insert, update, desc
 from sqlalchemy.dialects.mysql import JSON
 from sqlalchemy.orm import joinedload, selectinload, aliased
 from arxiv.base import logging
 
-from arxiv_auth.auth.decorators import scoped
+from arxiv.auth.auth.decorators import scoped
+from arxiv.db import session
+from arxiv.db.models import (
+    TapirUser, Document, ShowEmailRequest, Demographic,
+    TapirNickname, TapirAdminAudit, TapirSession, Endorsement, 
+    t_arXiv_moderators, t_arXiv_paper_owners)
 
-from admin_webapp.models import Moderators
 
-from arxiv_db.models import TapirUsers, Documents, ShowEmailRequests, Demographics, TapirNicknames, TapirAdminAudit, TapirSessions, Endorsements
-from arxiv_db.models.associative_tables import t_arXiv_paper_owners
+from .util import Pagination
 
-from admin_webapp.extensions import get_csrf, get_db
-from admin_webapp.admin_log import audit_admin
 logger = logging.getLogger(__file__)
 
 # blueprint = Blueprint('ownership', __name__, url_prefix='/ownership')
@@ -30,17 +29,16 @@ logger = logging.getLogger(__file__)
 Get user profile
 """
 def user_profile(user_id:int) -> Response:
-    session = get_db(current_app).session
-    stmt = (select(TapirUsers)
+    stmt = (select(TapirUser)
             .where(
-                TapirUsers.user_id == user_id
+                TapirUser.user_id == user_id
             ))
     print(stmt)
     user = session.scalar(stmt)
     # TODO: optimize this so we can join with the Tapir Users rather than separate query?
-    demographics_stmt = (select(Demographics)
+    demographics_stmt = (select(Demographic)
                          .where(
-                             Demographics.user_id == user_id
+                             Demographic.user_id == user_id
                          ))
     demographics = session.scalar(demographics_stmt)
 
@@ -51,15 +49,15 @@ def user_profile(user_id:int) -> Response:
     # do a join here with documents
     
     # maybe do a join with sessions too?
-    logs = session.query(TapirAdminAudit, Documents, TapirSessions).filter(TapirAdminAudit.affected_user == user_id).order_by(desc(TapirAdminAudit.log_date))        
-    logs = logs.outerjoin(Documents, (TapirAdminAudit.data == Documents.document_id) & (TapirAdminAudit.action.in_(['add-paper-owner','add-paper-owner-2'])))
-    logs = logs.outerjoin(TapirSessions, (TapirAdminAudit.data == TapirSessions.session_id) & (TapirAdminAudit.action.in_(['become-user',]))).all()
+    logs = session.query(TapirAdminAudit, Document, TapirSession).filter(TapirAdminAudit.affected_user == user_id).order_by(desc(TapirAdminAudit.log_date))        
+    logs = logs.outerjoin(Document, (TapirAdminAudit.data == Document.document_id) & (TapirAdminAudit.action.in_(['add-paper-owner','add-paper-owner-2'])))
+    logs = logs.outerjoin(TapirSession, (TapirAdminAudit.data == TapirSession.session_id) & (TapirAdminAudit.action.in_(['become-user',]))).all()
     
-    tapir_sessions = session.query(TapirSessions).filter(TapirSessions.user_id == user_id).order_by(desc(TapirSessions.start_time)).all()
+    tapir_sessions = session.query(TapirSession).filter(TapirSession.user_id == user_id).order_by(desc(TapirSession.start_time)).all()
 
-    email_request_count = session.query(func.count(func.distinct(ShowEmailRequests.document_id))).filter(ShowEmailRequests.user_id == 123).scalar()
+    email_request_count = session.query(func.count(func.distinct(ShowEmailRequest.document_id))).filter(ShowEmailRequest.user_id == 123).scalar()
 
-    endorsement_stmt = (select(Endorsements).where(Endorsements.endorsee_id==user_id))
+    endorsement_stmt = (select(Endorsement).where(Endorsement.endorsee_id==user_id))
     endorsements = session.scalars(endorsement_stmt)
 
     has_endorsed_sql = "select endorsement_id,archive,endorsee_id,nickname,archive,subject_class,arXiv_endorsements.flag_valid,type,point_value from arXiv_endorsements left join tapir_nicknames on (endorsee_id=user_id AND flag_primary=1) where endorser_id=:user_id order by archive,subject_class"
@@ -83,16 +81,15 @@ def user_profile(user_id:int) -> Response:
 
 
 def administrator_listing(per_page:int, page: int) -> dict:
-    session = get_db(current_app).session
-    report_stmt = (select(TapirUsers)
+    report_stmt = (select(TapirUser)
                 #    TODO: do I need a joinedload to prevent N+1 queries
-                #    .options(joinedload(TapirUsers.tapir_nicknames))
-                #    .join(TapirNicknames, TapirUsers.tapir_nicknames, isouter=True)
-                   .filter(TapirUsers.policy_class == 1) # admin policy class
+                #    .options(joinedload(TapirUser.tapir_nicknames))
+                #    .join(TapirNickname, TapirUser.tapir_nicknames, isouter=True)
+                   .filter(TapirUser.policy_class == 1) # admin policy class
                    .limit(per_page).offset((page -1) * per_page))
 
-    count_stmt = (select(func.count(TapirUsers.user_id))
-                  .where(TapirUsers.policy_class == 1))
+    count_stmt = (select(func.count(TapirUser.user_id))
+                  .where(TapirUser.policy_class == 1))
 
     # if workflow_status in ('accepted', 'rejected'):
     #     window = datetime.now() - timedelta(days=days_back)
@@ -107,17 +104,16 @@ def administrator_listing(per_page:int, page: int) -> dict:
     return dict(pagination=pagination, count=count, users=users)
 
 def administrator_edit_sys_listing(per_page:int, page: int) -> dict:
-    session = get_db(current_app).session
-    report_stmt = (select(TapirUsers)
+    report_stmt = (select(TapirUser)
                 #    TODO: do I need a joinedload to prevent N+1 queries
-                #    .options(joinedload(TapirUsers.tapir_nicknames))
-                   .filter(TapirUsers.policy_class == 1) # admin policy class
-                   .filter(TapirUsers.flag_edit_system == 1)
+                #    .options(joinedload(TapirUser.tapir_nicknames))
+                   .filter(TapirUser.policy_class == 1) # admin policy class
+                   .filter(TapirUser.flag_edit_system == 1)
                    .limit(per_page).offset((page -1) * per_page))
 
-    count_stmt = (select(func.count(TapirUsers.user_id))
-                  .where(TapirUsers.flag_edit_system == 1)
-                  .where(TapirUsers.policy_class == 1))
+    count_stmt = (select(func.count(TapirUser.user_id))
+                  .where(TapirUser.flag_edit_system == 1)
+                  .where(TapirUser.policy_class == 1))
 
     users = session.scalars(report_stmt)
     count = session.execute(count_stmt).scalar_one()
@@ -125,29 +121,27 @@ def administrator_edit_sys_listing(per_page:int, page: int) -> dict:
     return dict(pagination=pagination, count=count, users=users)
 
 def suspect_listing(per_page:int, page: int) -> dict:
-    session = get_db(current_app).session
-
-    report_stmt = select(TapirUsers, func.count(TapirSessions.session_id).label('session_count'))\
-                    .join(Demographics, Demographics.user_id==TapirUsers.user_id)\
-                    .filter(Demographics.flag_suspect == "1")\
-                    .join(TapirSessions, TapirUsers.user_id==TapirSessions.user_id)\
-                    .group_by(TapirUsers.user_id)\
+    report_stmt = select(TapirUser, func.count(TapirSession.session_id).label('session_count'))\
+                    .join(Demographic, Demographic.user_id==TapirUser.user_id)\
+                    .filter(Demographic.flag_suspect == "1")\
+                    .join(TapirSession, TapirUser.user_id==TapirSession.user_id)\
+                    .group_by(TapirUser.user_id)\
                     .limit(per_page).offset((page -1) * per_page)
                     # .subquery()
     
     # report_stmt = select(report_stmt.c.user_id, report_stmt.c.email, func.count())\
-    #                .join(TapirSessions, report_stmt.c.user_id==TapirSessions.user_id)\
+    #                .join(TapirSession, report_stmt.c.user_id==TapirSession.user_id)\
     #                .group_by(report_stmt.c.user_id)\
     #                .limit(per_page).offset((page -1) * per_page)
-    test_stmt = (select(TapirUsers).limit(10))
+    test_stmt = (select(TapirUser).limit(10))
 
     report_stmt_sql = "SELECT u.user_id, u.first_name, n.nickname, u.last_name, u.joined_date, u.email, u.flag_email_verified, s.session_count FROM tapir_users u JOIN tapir_nicknames n ON n.user_id = u.user_id  JOIN arXiv_demographics d ON d.user_id = u.user_id  JOIN ( SELECT user_id, COUNT(session_id) AS session_count FROM tapir_sessions GROUP BY user_id ) s ON s.user_id = u.user_id WHERE d.flag_suspect = 1  LIMIT :per_page OFFSET :offset"
     users = session.execute(report_stmt_sql, {"per_page": per_page, "offset": (page -1) * per_page})
 
     test=session.scalars(test_stmt)
-    suspects = select(TapirUsers) \
-                .join(Demographics) \
-                .filter(Demographics.flag_suspect == "1") \
+    suspects = select(TapirUser) \
+                .join(Demographic) \
+                .filter(Demographic.flag_suspect == "1") \
                 .subquery()
     
     count = select(func.count()).select_from(suspects)
@@ -162,44 +156,40 @@ def suspect_listing(per_page:int, page: int) -> dict:
 
 
 def moderator_listing() -> dict:
-    session = get_db(current_app).session
-
-    count_stmt = select(func.count(func.distinct(Moderators.user_id)))
+    count_stmt = select(func.count(func.distinct(t_arXiv_moderators.c.user_id)))
 
     # mods = session.scalars(report_stmt)
     mods = (
     session.query(
-        Moderators.user_id,
+        t_arXiv_moderators.c.user_id,
         # TODO: Note, is checking for empty string in subject_class enough?
-        func.group_concat(func.concat(Moderators.archive, case([(Moderators.subject_class != '', '.',)], else_=''), Moderators.subject_class), order_by=(Moderators.archive, Moderators.subject_class), separator=', ').label('archive_subject_list'),
-        TapirUsers,
+        func.group_concat(func.concat(t_arXiv_moderators.c.archive, case([(t_arXiv_moderators.c.subject_class != '', '.',)], else_=''), t_arXiv_moderators.c.subject_class), order_by=(t_arXiv_moderators.c.archive, t_arXiv_moderators.c.subject_class), separator=', ').label('archive_subject_list'),
+        TapirUser,
     )
-    .join(TapirUsers, Moderators.user_id == TapirUsers.user_id)
-    # .join(TapirNicknames, Moderators.user_id == TapirNicknames.user_id)
+    .join(TapirUser, t_arXiv_moderators.c.user_id == TapirUser.user_id)
+    # .join(TapirNickname, Moderators.user_id == TapirNickname.user_id)
 
-    .group_by(Moderators.user_id)
-    .order_by(TapirUsers.last_name) # order by nickname?
+    .group_by(t_arXiv_moderators.c.user_id)
+    .order_by(TapirUser.last_name) # order by nickname?
     .all()
     )
     count = session.execute(count_stmt).scalar_one()
 
     return dict(count=count, mods=mods)
 
-# TODO: optimize this once a relationship between TapirUsers and Moderators model is established
+# TODO: optimize this once a relationship between TapirUser and Moderators model is established
 def moderator_by_category_listing() -> dict:
-    session = get_db(current_app).session
-
-    count_stmt = select(func.count(func.distinct(Moderators.user_id)))
+    count_stmt = select(func.count(func.distinct(t_arXiv_moderators.c.user_id)))
 
     mods = (
     session.query(
-        Moderators.user_id,
+        t_arXiv_moderators.c.user_id,
         # TODO: Note, is checking for empty string in subject_class enough?
-        func.group_concat(func.concat(Moderators.archive, case([(Moderators.subject_class != '', '.',)], else_=''), Moderators.subject_class), order_by=(Moderators.archive, Moderators.subject_class), separator=', ').label('archive_subject_list'),
-        TapirUsers
+        func.group_concat(func.concat(t_arXiv_moderators.c.archive, case([(t_arXiv_moderators.c.subject_class != '', '.',)], else_=''), t_arXiv_moderators.c.subject_class), order_by=(t_arXiv_moderators.c.archive, t_arXiv_moderators.c.subject_class), separator=', ').label('archive_subject_list'),
+        TapirUser
     )
-    .join(TapirUsers, Moderators.user_id == TapirUsers.user_id)
-    .group_by(Moderators.user_id)
+    .join(TapirUser, t_arXiv_moderators.c.user_id == TapirUser.user_id)
+    .group_by(t_arXiv_moderators.c.user_id)
     .all()
     )
     count = session.execute(count_stmt).scalar_one()
@@ -207,30 +197,27 @@ def moderator_by_category_listing() -> dict:
     mods = sorted(mods, key=lambda x: x[1])
     for mod in mods:
         for pair in mod.archive_subject_list.split(','):
-            user = session.scalar((select(TapirUsers)
+            user = session.scalar((select(TapirUser)
             .where(
-                TapirUsers.user_id == mod.user_id
+                TapirUser.user_id == mod.user_id
             )))
             mods_map[pair].append(user)
 
     return dict(count=count, mods_map=mods_map)
 
 def add_to_blocked():
-    session = get_db(current_app).session
     if request.method == 'POST': 
         new_pattern = request.form.get('')
         
     return Response(status=204)
 
 def add_to_approved():
-    session = get_db(current_app).session
     if request.method == 'POST': 
         new_pattern = request.form.get('')
     
     return Response(status=204)
 
 def non_academic_email_listing():
-    session = get_db(current_app).session
     blocked_users_all_sql = "create temporary table blocked_users select user_id,email,pattern as black_pattern,joined_date,first_name,last_name,suffix_name from tapir_users,arXiv_black_email where joined_date>UNIX_TIMESTAMP(DATE_SUB(CURDATE(),INTERVAL 30 MONTH)) and email like pattern"
     session.execute(blocked_users_all_sql)
     blocked_users_sql = "select user_id,email,joined_date,black_pattern,first_name,last_name,suffix_name from blocked_users left join arXiv_white_email on email like pattern where pattern is null group by user_id, email, joined_date, black_pattern, first_name, last_name, suffix_name order by joined_date desc"
@@ -240,66 +227,60 @@ def non_academic_email_listing():
     count = session.execute(blocked_users_sql_len)
     return dict(users=blocked_users, count=count)
 
-def flip_email_verified_flag():
-    session = get_db(current_app).session
-    
+def flip_email_verified_flag():    
     if request.method == 'POST':
         # do the SQL update here
         verified = request.form.get('emailVerified')
         user_id = request.form.get('user_id')
         if verified == 'on':
             # update the object
-            session.execute(update(TapirUsers).where(
-                TapirUsers.user_id==user_id
+            session.execute(update(TapirUser).where(
+                TapirUser.user_id==user_id
             ).values(flag_email_verified = 1))
             # update the activity log
         elif not verified:
-             session.execute(update(TapirUsers).where(
-                TapirUsers.user_id==user_id
+             session.execute(update(TapirUser).where(
+                TapirUser.user_id==user_id
             ).values(flag_email_verified = 0))
     session.commit()
     return Response(status=204)
 
 def flip_bouncing_flag():
-    session = get_db(current_app).session
     if request.method == 'POST':
         bouncing = request.form.get('bouncing')
         user_id = request.form.get('user_id')
         if bouncing == 'on':
-            session.execute(update(TapirUsers).where(TapirUsers.user_id==user_id).values(email_bouncing = 1))
+            session.execute(update(TapirUser).where(TapirUser.user_id==user_id).values(email_bouncing = 1))
     
         elif not bouncing: 
-            session.execute(update(TapirUsers).where(TapirUsers.user_id==user_id).values(email_bouncing = 0))
+            session.execute(update(TapirUser).where(TapirUser.user_id==user_id).values(email_bouncing = 0))
     session.commit()
     return Response(status=204)
 
 def flip_edit_users_flag():
-    session = get_db(current_app).session
     if request.method == 'POST':
         edit_users = request.form.get('editUsers')
         user_id = request.form.get('user_id')
         if edit_users == 'on':
-            session.execute(update(TapirUsers).where(TapirUsers.user_id==user_id).values(flag_edit_users = 1))
+            session.execute(update(TapirUser).where(TapirUser.user_id==user_id).values(flag_edit_users = 1))
     
         elif not edit_users:
-            session.execute(update(TapirUsers).where(TapirUsers.user_id==user_id).values(flag_edit_users = 0))
+            session.execute(update(TapirUser).where(TapirUser.user_id==user_id).values(flag_edit_users = 0))
     session.commit()
     return Response(status=204)
     
 def flip_edit_system_flag():
-    session = get_db(current_app).session
     if request.method == 'POST':
         edit_system = request.form.get('editSystem')
         user_id = request.form.get('user_id')
         if edit_system == 'on':
-            session.execute(update(TapirUsers).where(TapirUsers.user_id==user_id).values(flag_edit_system = 1))
+            session.execute(update(TapirUser).where(TapirUser.user_id==user_id).values(flag_edit_system = 1))
         elif not edit_system:
-            session.execute(update(TapirUsers).where(TapirUsers.user_id==user_id).values(flag_edit_system = 0))
+            session.execute(update(TapirUser).where(TapirUser.user_id==user_id).values(flag_edit_system = 0))
     session.commit()
     return Response(status=204)
 
 def flip_proxy_flag():
-    session = get_db(current_app).session
     if request.method == 'POST': 
         print('post')
     
@@ -307,14 +288,12 @@ def flip_proxy_flag():
 
 # wip flags
 def flip_suspect_flag():
-    session = get_db(current_app).session
     if request.method == 'POST': 
         print('post')
     
     return Response(status=204)
 
 def flip_next_flag():
-    session = get_db(current_app).session
     if request.method == 'POST': 
         print('post')
     
