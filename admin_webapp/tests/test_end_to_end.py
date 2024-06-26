@@ -12,7 +12,7 @@ from urllib.parse  import quote_plus
 
 from arxiv import status
 from arxiv.auth.legacy import util
-from arxiv.db import models
+from arxiv.db import models, transaction
 from admin_webapp.factory import create_web_app
 
 
@@ -58,23 +58,25 @@ class TestLoginLogoutRoutes(TestCase):
     def setUp(self):
         self.ip_address = '10.1.2.3'
         self.environ_base = {'REMOTE_ADDR': self.ip_address}
-        self.app = create_web_app()
+        settings = {
+            'CLASSIC_COOKIE_NAME':'foo_tapir_session',
+            'AUTH_SESSION_COOKIE_NAME':'baz_session',
+            'AUTH_SESSION_COOKIE_SECURE':False,
+            'SESSION_DURATION':self.expiry,
+            'JWT_SECRET':self.secret,
+            'CLASSIC_DB_URI':f'sqlite:///{self.db}',
+            'CLASSIC_SESSION_HASH':'xyz1234',
+            'REDIS_FAKE':True,
+            'SERVER_NAME':'example.com'
+        }
+        self.app = create_web_app(**settings)
         self.app.register_blueprint(blueprint)
-        self.app.config['CLASSIC_COOKIE_NAME'] = 'foo_tapir_session'
-        self.app.config['AUTH_SESSION_COOKIE_NAME'] = 'baz_session'
-        self.app.config['AUTH_SESSION_COOKIE_SECURE'] = '0'
-        self.app.config['SESSION_DURATION'] = self.expiry
-        self.app.config['JWT_SECRET'] = self.secret
-        self.app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{self.db}'
-        self.app.config['CLASSIC_SESSION_HASH'] = 'xyz1234'
-        self.app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{self.db}'
-        self.app.config['REDIS_FAKE'] = True
 
         with self.app.app_context():
-            util.drop_all()
-            util.create_all()
+            util.drop_all(self.app.engine)
+            util.create_all(self.app.engine)
 
-            with util.transaction() as session:
+            with transaction() as session:
                 # We have a good old-fashioned user.
                 db_user = models.TapirUser(
                     user_id=1,
@@ -106,7 +108,7 @@ class TestLoginLogoutRoutes(TestCase):
                     country='US',
                     affiliation='Cornell U.',
                     url='http://example.com/bogus',
-                    rank=2,
+                    type=2,
                     original_subject_classes='cs.OH',
                     )
                 salt = b'fdoo'
@@ -125,7 +127,7 @@ class TestLoginLogoutRoutes(TestCase):
 
     def tearDown(self):
         with self.app.app_context():
-            util.drop_all()
+            util.drop_all(self.app.engine)
         try:
             os.remove(self.db)
         except FileNotFoundError:
@@ -177,7 +179,7 @@ class TestLoginLogoutRoutes(TestCase):
         # Verify that the expiry is not set in the database. This is kind of
         # a weird "feature" of the classic auth system.
         with self.app.app_context():
-            with util.transaction() as session:
+            with transaction() as session:
                 db_session = session.query(models.TapirSession) \
                     .filter(models.TapirSession.user_id == 1) \
                     .order_by(models.TapirSession.session_id.desc()) \
@@ -221,11 +223,11 @@ class TestLoginLogoutRoutes(TestCase):
         # localhost so we have to work around like this.
         auth_cookie_name = self.app.config['AUTH_SESSION_COOKIE_NAME']
         cookie = _parse_cookies(response.headers.getlist('Set-Cookie'))[auth_cookie_name]
-        client.set_cookie('localhost', auth_cookie_name, cookie['value'])
+        client.set_cookie(auth_cookie_name, cookie['value'])
 
         legacy_cookie_name = self.app.config['CLASSIC_COOKIE_NAME']
         cookie = _parse_cookies(response.headers.getlist('Set-Cookie'))[legacy_cookie_name]
-        client.set_cookie('localhost', legacy_cookie_name, cookie['value'])
+        client.set_cookie(legacy_cookie_name, cookie['value'])
 
         next_page = 'https://arxiv.org/some_sort_of_next_page?cheeseburger=yes%20please'
         response = client.get('/login?next_page=' + quote_plus(next_page))
@@ -247,11 +249,11 @@ class TestLoginLogoutRoutes(TestCase):
         # localhost so we have to work around like this.
         auth_cookie_name = self.app.config['AUTH_SESSION_COOKIE_NAME']
         cookie = _parse_cookies(response.headers.getlist('Set-Cookie'))[auth_cookie_name]
-        client.set_cookie('localhost', auth_cookie_name, cookie['value'])
+        client.set_cookie(auth_cookie_name, cookie['value'])
 
         legacy_cookie_name = self.app.config['CLASSIC_COOKIE_NAME']
         cookie = _parse_cookies(response.headers.getlist('Set-Cookie'))[legacy_cookie_name]
-        client.set_cookie('localhost', legacy_cookie_name, cookie['value'])
+        client.set_cookie(legacy_cookie_name, cookie['value'])
 
         next_page = 'https://arxiv.org/some_sort_of_next_page?cheeseburger=yes%20please'
         response = client.get('/login?next_page=' + quote_plus(next_page))
@@ -302,7 +304,7 @@ class TestLoginLogoutRoutes(TestCase):
         # Verify that the expiry is not set in the database. This is kind of
         # a weird "feature" of the classic auth system.
         with self.app.app_context():
-            with util.transaction() as session:
+            with transaction() as session:
                 db_session = session.query(models.TapirSession) \
                     .filter(models.TapirSession.user_id == 1) \
                     .order_by(models.TapirSession.session_id.desc()) \
@@ -333,7 +335,7 @@ class TestLoginLogoutRoutes(TestCase):
 
         # Verify that the expiry is set in the database.
         with self.app.app_context():
-            with util.transaction() as session:
+            with transaction() as session:
                 db_session = session.query(models.TapirSession) \
                     .filter(models.TapirSession.user_id == 1) \
                     .order_by(models.TapirSession.session_id.desc()) \
@@ -356,7 +358,7 @@ class TestLoginLogoutRoutes(TestCase):
         cookie_name = self.app.config['AUTH_SESSION_COOKIE_NAME']
         classic_cookie_name = self.app.config['CLASSIC_COOKIE_NAME']
 
-        client.set_cookie('', 'submit_session', '12345678')
+        client.set_cookie('submit_session', '12345678')
         self.assertIn(cookie_name, cookies, "Sets cookie for authn session.")
         self.assertIn(classic_cookie_name, cookies,
                       "Sets cookie for classic sessions.")

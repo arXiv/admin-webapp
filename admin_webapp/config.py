@@ -6,6 +6,7 @@ from arxiv.config import Settings as BaseSettings
 class Settings (BaseSettings):
 
     BASE_SERVER: str = "arxiv.org"
+    SERVER_NAME: str = BASE_SERVER
 
     REDIS_HOST: str = 'localhost'
     REDIS_PORT: int = 7000
@@ -36,8 +37,6 @@ class Settings (BaseSettings):
         ("lost_password", "/user/lost_password", BASE_SERVER),
         ("account", "/user", BASE_SERVER)
     ]      
-
-    login_redirect_pattern: re.Pattern = re.compile(LOGIN_REDIRECT_REGEX)
 
     AUTH_SESSION_COOKIE_NAME: str = 'ARXIVNG_SESSION_ID'
     AUTH_SESSION_COOKIE_DOMAIN: str = '.arxiv.org'

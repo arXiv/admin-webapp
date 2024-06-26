@@ -16,8 +16,7 @@ from arxiv.auth.auth.decorators import scoped
 from arxiv.db import session
 from arxiv.db.models import (
     TapirUser, Document, ShowEmailRequest, Demographic,
-    TapirNickname, TapirAdminAudit, TapirSession, Endorsement, 
-    t_arXiv_moderators, t_arXiv_paper_owners)
+    TapirAdminAudit, TapirSession, Endorsement, t_arXiv_moderators)
 
 
 from .util import Pagination

@@ -15,6 +15,7 @@ import re
 
 from werkzeug.datastructures import MultiDict
 from werkzeug.exceptions import InternalServerError
+from flask import current_app
 from markupsafe import Markup
 
 from wtforms import StringField, PasswordField, Form
@@ -130,7 +131,7 @@ def login(method: str, form_data: MultiDict, ip: str,
             'classic_cookie': (c_cookie, c_session.expires)
         }
     })
-    next_page = next_page if good_next_page(next_page) else config.DEFAULT_LOGIN_REDIRECT_URL
+    next_page = next_page if good_next_page(next_page) else current_app.config['DEFAULT_LOGIN_REDIRECT_URL']
     return data, status.HTTP_303_SEE_OTHER, {'Location': next_page}
 
 
@@ -218,5 +219,5 @@ def _do_logout(classic_session_cookie: str) -> None:
 
 def good_next_page(next_page: str) -> bool:
     """True if next_page is a valid query parameter for use with the login page."""
-    return next_page == config.Settings().DEFAULT_LOGIN_REDIRECT_URL \
-        or re.search(config.login_redirect_pattern, next_page)
+    return next_page == current_app.config['DEFAULT_LOGIN_REDIRECT_URL'] \
+        or re.search(re.compile(current_app.config['LOGIN_REDIRECT_REGEX']), next_page)

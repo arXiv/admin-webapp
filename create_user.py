@@ -15,7 +15,7 @@ from datetime import datetime
 import click
 
 from arxiv.taxonomy import definitions
-from arxiv.db import models
+from arxiv.db import models, transaction
 from arxiv.auth.legacy import util, passwords
 
 from admin_webapp.factory import create_web_app
@@ -51,7 +51,7 @@ def create_user(username: str, email: str, password: str,
     with app.app_context():
         util.create_all()
 
-        with util.transaction() as session:
+        with transaction() as session:
             ip_addr = '127.0.0.1'
             joined_date = util.epoch(datetime.now().replace(tzinfo=EASTERN))
             db_user = models.DBUser(

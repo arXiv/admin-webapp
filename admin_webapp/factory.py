@@ -21,7 +21,6 @@ from .routes import ui, ownership, endorsement, user, paper
 
 logger = logging.getLogger(__name__)
 
-
 csrf = CSRFProtect()
 
 def change_loglevel(pkg:str, level):
@@ -46,7 +45,7 @@ def create_web_app(**kwargs) -> Flask:
     app = Flask('admin_webapp')
     settings = Settings(**kwargs)
     app.config.from_object(settings)
-    engine, _  = configure_db(settings)
+    app.engine, _  = configure_db(settings)
     session_lifetime = app.config['PERMANENT_SESSION_LIFETIME']
 
     print(f"Session Lifetime: {session_lifetime} seconds")
@@ -95,7 +94,8 @@ def create_web_app(**kwargs) -> Flask:
     app.jinja_env.filters['unix_to_datetime'] = filters.unix_to_datetime
 
     if app.config['CREATE_DB']:
-        legacy_create_all(engine)
+        print ("CREATED DB")
+        legacy_create_all(app.engine)
 
     return app
 

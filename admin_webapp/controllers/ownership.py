@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 
 from arxiv.auth.auth.decorators import scoped
 from arxiv.db import session
-from arxiv.db.models import OwnershipRequest, OwnershipRequestsAudit, TapirUser, EndorsementRequest, t_arXiv_paper_owners
+from arxiv.db.models import OwnershipRequest, OwnershipRequestsAudit, TapirUser, EndorsementRequest, PaperOwner
 
 from .util import Pagination
 
@@ -52,11 +52,10 @@ def ownership_post(data:dict) -> Response:
             now = int(datetime.now().astimezone(current_app.config['ARXIV_BUSINESS_TZ']).timestamp())
 
             for doc_id in to_add_ownership:
-                stmt = insert(t_arXiv_paper_owners).values(
+                session.add(PaperOwner(
                     document_id=doc_id, user_id=oreq.user.user_id, date=now,
                     added_by=admin_id, remote_addr=request.remote_addr, tracking_cookie=cookie,
-                    flag_auto=0, flag_author=is_author)
-                session.execute(stmt)
+                    flag_auto=0, flag_author=is_author))
                 #audit_admin(oreq.user_id, 'add-paper-owner-2', doc_id)
 
             oreq.workflow_status = 'accepted'

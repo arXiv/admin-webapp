@@ -44,6 +44,7 @@ def set_cookies(response: Response, data: dict) -> None:
         return None
     for cookie_key, (cookie_value, expires) in cookies.items():
         cookie_name = current_app.config[f'{cookie_key.upper()}_NAME']
+        print (f'COOKIE: {cookie_key}: {cookie_value}, EXPIRES: {expires}, COOKIE_NAME: {cookie_name}')
         max_age = timedelta(seconds=expires)
         logger.debug('Set cookie %s with %s, max_age %s',
                      cookie_name, cookie_value, max_age)

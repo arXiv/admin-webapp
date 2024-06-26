@@ -25,7 +25,7 @@ import pathlib
 from sqlalchemy import create_engine, select, text
 from sqlalchemy.orm import Session
 
-from arxiv.db import models
+from arxiv.db import models, transaction
 
 from admin_webapp.factory import create_web_app
 
@@ -35,6 +35,19 @@ DB_FILE = "./pytest.db"
 SQL_DATA_FILE = './tests/data/data.sql'
 
 DELETE_DB_FILE_ON_EXIT = True
+
+TEST_CONFIG = {
+    'CLASSIC_COOKIE_NAME':'foo_tapir_session',
+    'AUTH_SESSION_COOKIE_NAME':'baz_session',
+    'AUTH_SESSION_COOKIE_SECURE':False,
+    'SESSION_DURATION':500,
+    'JWT_SECRET':'bazsecret',
+    'CLASSIC_DB_URI':'sqlite:///db.sqlite',
+    'CLASSIC_SESSION_HASH':'xyz1234',
+    'REDIS_FAKE':True,
+    'BASE_SERVER':'example.com',
+    'CREATE_DB':True
+}
 
 def test_load_db_file(engine, test_data: str):
     """Loads the SQL from the `test_data` file into the `engine`"""
@@ -95,6 +108,30 @@ def parse_cookies(cookie_data):
         cookies[key] = dict(value=value, **extra)
     return cookies
 
+@pytest.fixture(scope='session')
+def app_with_db():
+    app = create_web_app(**TEST_CONFIG)
+    app.config['SERVER_NAME'] = 'example.com'
+    try:
+        yield app
+    finally:
+        try:
+            os.remove(TEST_CONFIG['CLASSIC_DB_URI'])
+        except:
+            pass
+
+@pytest.fixture(scope='session')
+def app_with_populated_db():
+    app = create_web_app(**TEST_CONFIG)
+    app.config['SERVER_NAME'] = 'example.com'
+    test_load_db_file(app.engine, SQL_DATA_FILE)
+    try:
+        yield app
+    finally:
+        try:
+            os.remove(TEST_CONFIG['CLASSIC_DB_URI'])
+        except:
+            pass
 
 @pytest.fixture(scope='session')
 def engine():
@@ -122,65 +159,72 @@ def db(engine):
     yield engine
 
 @pytest.fixture(scope='session')
-def admin_user(db):
-    with Session(db) as session:
-        admin_exits = select(models.TapirUser).where(models.TapirUser.email == 'testadmin@example.con')
-        admin = session.scalar(admin_exits)
-        if admin:
-            return admin
+def admin_user(app_with_db):
+    with app_with_db.app_context():
+        with transaction() as session:
+            admin_exists = select(models.TapirUser).where(models.TapirUser.email == 'testadmin@example.com')
+            admin = session.scalar(admin_exists)
+            if admin:
+                return {
+                    'email':'testadmin@example.com',
+                    'password_cleartext':b'thepassword'
+                }
 
-        salt = b'fdoo'
-        password = b'thepassword'
-        hashed = hashlib.sha1(salt + b'-' + password).digest()
-        encrypted = b64encode(salt + hashed)
+            salt = b'fdoo'
+            password = b'thepassword'
+            hashed = hashlib.sha1(salt + b'-' + password).digest()
+            encrypted = b64encode(salt + hashed)
 
-        # We have a good old-fashioned user.
-        db_user = models.TapirUsersPassword(
-            user_id=59999,
-            first_name='testadmin',
-            last_name='admin',
-            suffix_name='',
-            email='testadmin@example.com',
-            policy_class=2,
-            flag_edit_users=1,
-            flag_email_verified=1,
-            flag_edit_system=0,
-            flag_approved=1,
-            flag_deleted=0,
-            flag_banned=0,
-            tracking_cookie='foocookie',
-            password_storage=2,
-            password_enc=encrypted
-        )
+            # We have a good old-fashioned user.
+            db_user = models.TapirUser (
+                user_id=59999,
+                first_name='testadmin',
+                last_name='admin',
+                suffix_name='',
+                email='testadmin@example.com',
+                policy_class=2,
+                flag_edit_users=1,
+                flag_email_verified=1,
+                flag_edit_system=0,
+                flag_approved=1,
+                flag_deleted=0,
+                flag_banned=0,
+                tracking_cookie='foocookie',
+            )
+            db_pw = models.TapirUsersPassword(
+                user=db_user,
+                password_storage=2,
+                password_enc=encrypted
+            )
+            db_nick=models.TapirNickname(
+                user_id = db_user.user_id,
+                nickname='foouser',
+                user_seq=1,
+                flag_valid=1,
+                role=0,
+                policy=0,
+                flag_primary=1
+            )
+            db_demo = models.Demographic(
+                user_id=db_user.user_id,
+                country='US',
+                affiliation='Cornell U.',
+                url='http://example.com/bogus',
+                original_subject_classes='cs.OH',
+                subject_class = 'OH',
+                archive ='cs',
+                type=5,
+            )
 
-        db_nick=models.TapirNickname(
-            user_id = db_user.user_id,
-            nickname='foouser',
-            user_seq=1,
-            flag_valid=1,
-            role=0,
-            policy=0,
-            flag_primary=1
-        )
-        db_demo = models.Demographic(
-            user_id=db_user.user_id,
-            country='US',
-            affiliation='Cornell U.',
-            url='http://example.com/bogus',
-            original_subject_classes='cs.OH',
-            subject_class = 'OH',
-            archive ='cs',
-            type=5,
-        )
 
+            session.add(db_user)
+            session.add(db_pw)
+            session.add(db_nick)
+            session.add(db_demo)
 
-        session.add(db_user)
-        session.add(db_nick)
-        session.add(db_demo)
-
-        session.commit()
-        rd=dict(email=db_user.email, password_cleartext=password)
-        return rd
+            session.commit()
+            rd=dict(email=db_user.email, password_cleartext=password)
+            return rd
 
 @pytest.fixture(scope='session')
 def secret():
@@ -203,19 +247,18 @@ def app(db, secret, admin_user):
 
 
 @pytest.fixture(scope='session')
-def admin_client(app, admin_user):
+def admin_client(app_with_db, admin_user):
     """A flask app client pre configured to send admin cookies"""
-    client = app.test_client()
+    client = app_with_db.test_client()
     resp = client.post('/login', data=dict(username=admin_user['email'],
                                            password=admin_user['password_cleartext']))
     assert resp.status_code == 303
-
     cookies = parse_cookies(resp.headers.getlist('Set-Cookie'))
-    ngcookie_name = app.config['AUTH_SESSION_COOKIE_NAME']
+    ngcookie_name = app_with_db.config['AUTH_SESSION_COOKIE_NAME']
     assert ngcookie_name in cookies
-    classic_cookie_name = app.config['CLASSIC_COOKIE_NAME']
+    classic_cookie_name = app_with_db.config['CLASSIC_COOKIE_NAME']
     assert classic_cookie_name in cookies
-    client.set_cookie('', ngcookie_name, cookies[ngcookie_name]['value'])
-    client.set_cookie('', classic_cookie_name, cookies[classic_cookie_name]['value'])
-    client.set_cookie('', app.config['CLASSIC_TRACKING_COOKIE'], 'fake_browser_tracking_cookie_value')
+    client.set_cookie(ngcookie_name, cookies[ngcookie_name]['value'])
+    client.set_cookie(classic_cookie_name, cookies[classic_cookie_name]['value'])
+    client.set_cookie(app_with_db.config['CLASSIC_TRACKING_COOKIE'], 'fake_browser_tracking_cookie_value')
     return client
