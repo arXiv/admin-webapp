@@ -94,7 +94,6 @@ def create_web_app(**kwargs) -> Flask:
     app.jinja_env.filters['unix_to_datetime'] = filters.unix_to_datetime
 
     if app.config['CREATE_DB']:
-        print ("CREATED DB")
         legacy_create_all(app.engine)
 
     return app

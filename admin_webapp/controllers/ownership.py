@@ -1,6 +1,7 @@
 """arXiv paper ownership controllers."""
 
 from datetime import datetime, timedelta
+from pytz import timezone
 import logging
 
 from flask import Blueprint, request, current_app, Response, abort
@@ -49,7 +50,7 @@ def ownership_post(data:dict) -> Response:
 
             is_author = 1 if request.form['is_author'] else 0
             cookie = request.cookies.get(current_app.config['CLASSIC_TRACKING_COOKIE'])
-            now = int(datetime.now().astimezone(current_app.config['ARXIV_BUSINESS_TZ']).timestamp())
+            now = int(datetime.now().astimezone(timezone(current_app.config['ARXIV_BUSINESS_TZ'])).timestamp())
 
             for doc_id in to_add_ownership:
                 session.add(PaperOwner(
@@ -67,15 +68,21 @@ def ownership_post(data:dict) -> Response:
             data['success_count'] = len(docs_to_own - already_owns)
             data['success_already_owned'] = len(docs_to_own & already_owns)
         elif 'reject' in request.form:
-            stmt=text("""UPDATE arXiv_ownership_requests SET workflow_status='rejected'
-            WHERE request_id=:reqid""")
-            session.execute(stmt, dict(reqid=oreq.request_id))
+            stmt = (
+                update(OwnershipRequest)
+                .where(OwnershipRequest.request_id == oreq.request_id)
+                .values(workflow_status = 'rejected')
+            )
+            session.execute(stmt)
             data['success']='rejected'
         elif 'revisit' in request.form:
             # A revisit does not undo the paper ownership. This the same as legacy.
-            stmt=text("""UPDATE arXiv_ownership_requests SET workflow_status='pending'
-            WHERE request_id=:reqid""")
-            session.execute(stmt, dict(reqid=oreq.request_id))
+            stmt = (
+                update(OwnershipRequest)
+                .where(OwnershipRequest.request_id == oreq.request_id)
+                .values(workflow_status = 'pending')
+            )
+            session.execute(stmt)
             data['success']='revisited'
         else:
             abort(400)
@@ -102,16 +109,16 @@ def ownership_detail(ownership_id:int, postfn=None) -> dict:
     if not oreq:
         abort(404)
 
-    already_owns =[paper.paper_id for paper in oreq.user.owned_papers]
+    already_owns =[paper.document.paper_id for paper in oreq.user.owned_papers]
     for paper in oreq.documents:
         setattr(paper, 'already_owns', paper.paper_id in already_owns)
 
     endorsement_req = oreq.endorsement_request if oreq.endorsement_request else None
     data = dict(ownership=oreq,
                 user=oreq.user,
-                nickname= oreq.user.tapir_nicknames[0].nickname,
+                nickname= oreq.user.tapir_nicknames.nickname,
                 papers=oreq.documents,
-                audit=oreq.request_audit[0],
+                audit=oreq.request_audit,
                 ownership_id=ownership_id,
                 docids =  [paper.paper_id for paper in oreq.documents],
                 endorsement_req=endorsement_req,)

@@ -29,8 +29,7 @@ from arxiv.db import models, transaction
 
 from admin_webapp.factory import create_web_app
 
-DB_FILE = "./pytest.db"
-
+DB_FILE = "pytest.db"
 
 SQL_DATA_FILE = './tests/data/data.sql'
 
@@ -42,7 +41,7 @@ TEST_CONFIG = {
     'AUTH_SESSION_COOKIE_SECURE':False,
     'SESSION_DURATION':500,
     'JWT_SECRET':'bazsecret',
-    'CLASSIC_DB_URI':'sqlite:///db.sqlite',
+    'CLASSIC_DB_URI':f'sqlite:///{DB_FILE}',
     'CLASSIC_SESSION_HASH':'xyz1234',
     'REDIS_FAKE':True,
     'BASE_SERVER':'example.com',
@@ -92,6 +91,7 @@ def test_load_db_file(engine, test_data: str):
             # moved this out of the except to avoid pytest printing huge stack traces
             raise Exception(badcmd)
         else:
+            db.commit()
             print(f"Done loading test data. Ran {cmd_count} commands.")
 
 def parse_cookies(cookie_data):
@@ -116,8 +116,8 @@ def app_with_db():
         yield app
     finally:
         try:
-            os.remove(TEST_CONFIG['CLASSIC_DB_URI'])
-        except:
+            os.remove(DB_FILE)
+        except Exception as e:
             pass
 
 @pytest.fixture(scope='session')
@@ -129,34 +129,34 @@ def app_with_populated_db():
         yield app
     finally:
         try:
-            os.remove(TEST_CONFIG['CLASSIC_DB_URI'])
-        except:
+            os.remove(DB_FILE)
+        except Exception as e:
             pass
 
-@pytest.fixture(scope='session')
-def engine():
-    db_file = pathlib.Path(DB_FILE).resolve()
-    try:
-        print(f"Created db at {db_file}")
-        connect_args = {"check_same_thread": False}
-        engine = create_engine(f"sqlite:///{db_file}",
-                               connect_args=connect_args)
-        yield engine
-    finally: # cleanup
-        if DELETE_DB_FILE_ON_EXIT:
-            db_file.unlink(missing_ok=True)
-            print(f"Deleted {db_file} at end of test. "
-                  "Set DELETE_DB_FILE_ON_EXIT to control.")
+# @pytest.fixture(scope='session')
+# def engine():
+#     db_file = pathlib.Path(DB_FILE).resolve()
+#     try:
+#         print(f"Created db at {db_file}")
+#         connect_args = {"check_same_thread": False}
+#         engine = create_engine(f"sqlite:///{db_file}",
+#                                connect_args=connect_args)
+#         yield engine
+#     finally: # cleanup
+#         if DELETE_DB_FILE_ON_EXIT:
+#             db_file.unlink(missing_ok=True)
+#             print(f"Deleted {db_file} at end of test. "
+#                   "Set DELETE_DB_FILE_ON_EXIT to control.")
 
-@pytest.fixture(scope='session')
-def db(engine):
-    """Create and load db tables."""
-    print("Making tables...")
-    from arxiv.db import Base
-    Base.metadata.create_all(bind=engine)
-    print("Done making tables.")
-    test_load_db_file(engine, SQL_DATA_FILE)
-    yield engine
+# @pytest.fixture(scope='session')
+# def db(engine):
+#     """Create and load db tables."""
+#     print("Making tables...")
+#     from arxiv.db import Base
+#     Base.metadata.create_all(bind=engine)
+#     print("Done making tables.")
+#     test_load_db_file(engine, SQL_DATA_FILE)
+#     yield engine
 
 @pytest.fixture(scope='session')
 def admin_user(app_with_db):
@@ -230,21 +230,20 @@ def admin_user(app_with_db):
 def secret():
     return f'bogus secret set in {__file__}'
 
-@pytest.fixture(scope='session')
-def app(db, secret, admin_user):
-    """Flask client"""
-    app = create_web_app()
-    #app.config['CLASSIC_COOKIE_NAME'] = 'foo_tapir_session'
-    #app.config['AUTH_SESSION_COOKIE_NAME'] = 'baz_session'
-    app.config['WTF_CSRF_ENABLED'] = False
-    app.config['AUTH_SESSION_COOKIE_SECURE'] = '0'
-    app.config['JWT_SECRET'] = "jwt_" + secret
-    app.config['CLASSIC_SESSION_HASH'] = "classic_hash_" +secret
-    app.config['CLASSIC_DATABASE_URI'] = db.url
-    app.config['SQLALCHEMY_DATABASE_URI'] = db.url
-    app.config['REDIS_FAKE'] = True
-    return app
-
+# @pytest.fixture(scope='session')
+# def app(db, secret, admin_user):
+#     """Flask client"""
+#     app = create_web_app()
+#     #app.config['CLASSIC_COOKIE_NAME'] = 'foo_tapir_session'
+#     #app.config['AUTH_SESSION_COOKIE_NAME'] = 'baz_session'
+#     app.config['WTF_CSRF_ENABLED'] = False
+#     app.config['AUTH_SESSION_COOKIE_SECURE'] = '0'
+#     app.config['JWT_SECRET'] = "jwt_" + secret
+#     app.config['CLASSIC_SESSION_HASH'] = "classic_hash_" +secret
+#     app.config['CLASSIC_DATABASE_URI'] = db.url
+#     app.config['SQLALCHEMY_DATABASE_URI'] = db.url
+#     app.config['REDIS_FAKE'] = True
+#     return app
 
 @pytest.fixture(scope='session')
 def admin_client(app_with_db, admin_user):

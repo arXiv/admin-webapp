@@ -41,7 +41,7 @@
 
   <div class="col card">
     <table>
-      <tr><td>Endorsee:</td><td> <a href='{{url_for('user.detail', user_id=endo_req.endorsee_id)}}'>
+      <tr><td>Endorsee:</td><td> <a href='{{url_for('user.display', user_id=endo_req.endorsee_id)}}'>
             {{endo_req.endorsee.nickname}}</a></td></tr>
       <tr><td>Request Id:</td><td> {{endo_req.request_id}}</td></tr>
       <tr><td>Issued When:</td><td> {{endo_req.issued_when}}</td></tr>
