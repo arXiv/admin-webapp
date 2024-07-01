@@ -25,7 +25,7 @@ def audit_admin(affected_user:int, action:Actions, data="", comment=""):
     item=TapirAdminAudit(log_date=int(datetime.now().astimezone(current_app.config['ARXIV_BUSINESS_TZ']).timestamp()),
                          ip_addr = request.remote_addr,
                          affected_user=affected_user,
-                         tracking_cookie=request.cookies.get(current_app.config['CLASSIC_COOKIE_NAME'], ''),
+                         tracking_cookie=request.cookies.get(current_app.config['AUTH_SESSION_COOKIE_NAME'], ''),
                          action=action,
                          data=data,
                          comment=comment,

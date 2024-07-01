@@ -192,14 +192,11 @@ def login() -> Response:
 def logout() -> Response:
     """Log out of arXiv."""
     session_cookie_key = current_app.config['AUTH_SESSION_COOKIE_NAME']
-    classic_cookie_key = current_app.config['CLASSIC_COOKIE_NAME']
     session_cookie = request.cookies.get(session_cookie_key, None)
-    classic_cookie = request.cookies.get(classic_cookie_key, None)
     default_next_page = current_app.config['DEFAULT_LOGOUT_REDIRECT_URL']
     next_page = request.args.get('next_page', default_next_page)
     logger.debug('Request to log out, then redirect to %s', next_page)
-    data, code, headers = authentication.logout(session_cookie, classic_cookie,
-                                                next_page)
+    data, code, headers = authentication.logout(session_cookie, next_page)
     # Flask puts cookie-setting methods on the response, so we do that here
     # instead of in the controller.
     if code is status.HTTP_303_SEE_OTHER:

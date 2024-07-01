@@ -34,7 +34,7 @@ class TestRegister(TestCase):
         self.ip_address = '10.1.2.3'
         self.environ_base = {'REMOTE_ADDR': self.ip_address}
         settings = {
-            'CLASSIC_COOKIE_NAME':'foo_tapir_session',
+            'CLASSIC_COOKIE_NAME':'baz_session',
             'AUTH_SESSION_COOKIE_NAME':'baz_session',
             'AUTH_SESSION_COOKIE_SECURE':False,
             'SESSION_DURATION':self.expiry,
@@ -118,7 +118,8 @@ class TestRegister(TestCase):
 
     @mock.patch('admin_webapp.controllers.registration.accounts')
     @mock.patch('admin_webapp.controllers.registration.stateless_captcha.check')
-    def test_post_minimum(self, captcha, users):
+    @unittest.skip("not in use and not ready to use")
+    def test_register_post_minimum_data(self, captcha, users):
         """POST request with minimum required data."""
         captcha.return_value = None     # No exception -> OK.
         users.does_username_exist.return_value = False
@@ -364,7 +365,7 @@ class TestRegister(TestCase):
     @mock.patch('admin_webapp.controllers.registration.sessions.invalidate_by_id')
     @mock.patch('admin_webapp.controllers.registration.accounts')
     @unittest.skip("not in use and not ready to use")
-    def test_post_minimum(self, users, create, invalidate):
+    def test_edit_profile_post_minimum_data(self, users, create, invalidate):
         """POST request with minimum required data."""
         users.get_user_by_id.return_value = mock.MagicMock(user_id=1)
         users.does_username_exist.return_value = False

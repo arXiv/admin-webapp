@@ -42,7 +42,7 @@ class Settings (BaseSettings):
     AUTH_SESSION_COOKIE_DOMAIN: str = '.arxiv.org'
     AUTH_SESSION_COOKIE_SECURE: bool = True
 
-    CLASSIC_COOKIE_NAME: str = 'tapir_session'
+    CLASSIC_COOKIE_NAME: str = AUTH_SESSION_COOKIE_NAME
     CLASSIC_PERMANENT_COOKIE_NAME: str = 'tapir_permanent'
 
     CLASSIC_TRACKING_COOKIE: str = 'browser'

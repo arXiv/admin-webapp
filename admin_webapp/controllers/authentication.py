@@ -15,7 +15,7 @@ import re
 
 from werkzeug.datastructures import MultiDict
 from werkzeug.exceptions import InternalServerError
-from flask import current_app
+from flask import current_app, request
 from markupsafe import Markup
 
 from wtforms import StringField, PasswordField, Form
@@ -29,8 +29,6 @@ from arxiv.db import transaction
 
 from arxiv.auth.domain import User, Authorizations, Session
 
-from arxiv.auth.auth.sessions import SessionStore
-
 from arxiv.auth.legacy import exceptions, sessions as legacy_sessions
 from arxiv.auth.legacy.authenticate import authenticate
 
@@ -42,7 +40,7 @@ ResponseData = Tuple[dict, int, dict]
 
 
 def login(method: str, form_data: MultiDict, ip: str,
-          next_page: str, track: str = '') -> ResponseData:
+          next_page: str, track: str = '', session_cookie: Optional[str] = None) -> ResponseData:
     """
     Provide the login form.
 
@@ -64,8 +62,7 @@ def login(method: str, form_data: MultiDict, ip: str,
     dict
         Headers to add to the response.
 
-    """
-    sessions = SessionStore.current_session()
+    """        
     if method == 'GET':
         logger.debug('Request for login form')
         # TODO: If a permanent token is provided, attempt to log the user in,
@@ -112,16 +109,16 @@ def login(method: str, form_data: MultiDict, ip: str,
         })
         return data, status.HTTP_400_BAD_REQUEST, {}
 
-    try:    # Create a session in the distributed session store.
-        session = sessions.create(auths, ip, ip, track, user=user)
-        cookie = sessions.generate_cookie(session)
-        logger.debug('Created session: %s', session.session_id)
-    except sessions.exceptions.SessionCreationFailed as e:
-        logger.debug('Could not create session: %s', e)
-        raise InternalServerError('Cannot log in') from e  # type: ignore
+    # try:    # Create a session in the distributed session store.
+    #     session = sessions.create(auths, ip, ip, track, user=user)
+    #     cookie = sessions.generate_cookie(session)
+    #     logger.debug('Created session: %s', session.session_id)
+    # except sessions.exceptions.SessionCreationFailed as e:
+    #     logger.debug('Could not create session: %s', e)
+    #     raise InternalServerError('Cannot log in') from e  # type: ignore
 
     try:    # Create a session in the legacy session store.
-        c_session, c_cookie = _do_login(auths, ip, track, user)
+        session, cookie = _do_login(auths, ip, track, user)
     except exceptions.SessionCreationFailed as e:
         logger.debug('Could not create legacy session: %s', e)
         raise InternalServerError('Cannot log in') from e  # type: ignore
@@ -130,24 +127,22 @@ def login(method: str, form_data: MultiDict, ip: str,
     data.update({
         'cookies': {
             'auth_session_cookie': (cookie, session.expires),
-            'classic_cookie': (c_cookie, c_session.expires)
+            # 'classic_cookie': (c_cookie, c_session.expires)
         }
     })
+    print (f"COOKIES: {data['cookies']}")
     next_page = next_page if good_next_page(next_page) else current_app.config['DEFAULT_LOGIN_REDIRECT_URL']
     return data, status.HTTP_303_SEE_OTHER, {'Location': next_page}
 
 
 def logout(session_cookie: Optional[str],
-           classic_session_cookie: Optional[str],
            next_page: str) -> ResponseData:
     """
     Log the user out, and redirect to arXiv.org.
 
     Parameters
     ----------
-    session_id : str or None
-        If not None, invalidates the session.
-    classic_session_id : str or None
+    session_cookie : str
         If not None, invalidates the session.
     next_page : str
         Page to which the user should be redirected upon logout.
@@ -163,17 +158,10 @@ def logout(session_cookie: Optional[str],
 
     """
     logger.debug('Request to log out')
-    sessions = SessionStore.current_session()
     if session_cookie:
         try:
-            sessions.delete(session_cookie)
-        except sessions.exceptions.SessionDeletionFailed as e:
-            logger.debug('Logout failed: %s', e)
-
-    if classic_session_cookie:
-        try:
             with transaction():
-                _do_logout(classic_session_cookie)
+                _do_logout(session_cookie)
         except exceptions.SessionDeletionFailed as e:
             logger.debug('Logout failed: %s', e)
         except exceptions.UnknownSession as e:
@@ -182,7 +170,6 @@ def logout(session_cookie: Optional[str],
     data = {
         'cookies': {
             'auth_session_cookie': ('', 0),
-            'classic_cookie': ('', 0)
         }
     }
     return data, status.HTTP_303_SEE_OTHER, {'Location': next_page}

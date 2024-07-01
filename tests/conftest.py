@@ -36,7 +36,7 @@ SQL_DATA_FILE = './tests/data/data.sql'
 DELETE_DB_FILE_ON_EXIT = True
 
 TEST_CONFIG = {
-    'CLASSIC_COOKIE_NAME':'foo_tapir_session',
+    'CLASSIC_COOKIE_NAME':'baz_session',
     'AUTH_SESSION_COOKIE_NAME':'baz_session',
     'AUTH_SESSION_COOKIE_SECURE':False,
     'SESSION_DURATION':500,
@@ -255,9 +255,9 @@ def admin_client(app_with_db, admin_user):
     cookies = parse_cookies(resp.headers.getlist('Set-Cookie'))
     ngcookie_name = app_with_db.config['AUTH_SESSION_COOKIE_NAME']
     assert ngcookie_name in cookies
-    classic_cookie_name = app_with_db.config['CLASSIC_COOKIE_NAME']
-    assert classic_cookie_name in cookies
+    # classic_cookie_name = app_with_db.config['CLASSIC_COOKIE_NAME']
+    # assert classic_cookie_name in cookies
     client.set_cookie(ngcookie_name, cookies[ngcookie_name]['value'])
-    client.set_cookie(classic_cookie_name, cookies[classic_cookie_name]['value'])
+    # client.set_cookie(classic_cookie_name, cookies[classic_cookie_name]['value'])
     client.set_cookie(app_with_db.config['CLASSIC_TRACKING_COOKIE'], 'fake_browser_tracking_cookie_value')
     return client
