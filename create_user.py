@@ -47,14 +47,12 @@ def create_user(username: str, email: str, password: str,
                 first_name: str, last_name: str, suffix_name: str = '',
                 affiliation: str = 'FSU', home_page: str = 'https://asdf.com'):
     """Create a new user. For dev/test purposes only."""
-    app = create_web_app()
+    app = create_web_app(CREATE_DB=True)
     with app.app_context():
-        util.create_all()
-
         with transaction() as session:
             ip_addr = '127.0.0.1'
             joined_date = util.epoch(datetime.now().replace(tzinfo=EASTERN))
-            db_user = models.DBUser(
+            db_user = models.TapirUser(
                 first_name=first_name,
                 last_name=last_name,
                 suffix_name=suffix_name,
@@ -77,7 +75,7 @@ def create_user(username: str, email: str, password: str,
             session.add(db_user)
 
             # Create a username.
-            db_nick = models.DBUserNickname(
+            db_nick = models.TapirNickname(
                 user=db_user,
                 nickname=username,
                 flag_valid=1,
@@ -86,12 +84,12 @@ def create_user(username: str, email: str, password: str,
 
             # Create the user's profile.
             archive, subject_class = _random_category()
-            db_profile = models.DBProfile(
+            db_profile = models.Demographic(
                 user=db_user,
                 country='us',
                 affiliation=affiliation,
                 url=home_page,
-                rank=random.randint(1, 5),
+                type=random.randint(1, 5),
                 archive=archive,
                 subject_class=subject_class,
                 original_subject_classes='',
@@ -104,7 +102,7 @@ def create_user(username: str, email: str, password: str,
             )
 
             # Set the user's password.
-            db_password = models.DBUserPassword(
+            db_password = models.TapirUsersPassword(
                 user=db_user,
                 password_storage=2,
                 password_enc=passwords.hash_password(password)

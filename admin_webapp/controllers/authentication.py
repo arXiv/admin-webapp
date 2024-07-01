@@ -116,7 +116,7 @@ def login(method: str, form_data: MultiDict, ip: str,
         session = sessions.create(auths, ip, ip, track, user=user)
         cookie = sessions.generate_cookie(session)
         logger.debug('Created session: %s', session.session_id)
-    except sessions.exceptions.SessionCreationFailed as e:
+    except exceptions.SessionCreationFailed as e:
         logger.debug('Could not create session: %s', e)
         raise InternalServerError('Cannot log in') from e  # type: ignore
 
