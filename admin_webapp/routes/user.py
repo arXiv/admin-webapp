@@ -2,6 +2,8 @@
 
 from flask import Blueprint, render_template, Response, request, redirect
 
+from . import admin_scoped
+
 from admin_webapp.controllers.users import administrator_listing, administrator_edit_sys_listing, suspect_listing, user_profile, moderator_listing, moderator_by_category_listing, flip_email_verified_flag, flip_bouncing_flag, flip_edit_users_flag, flip_edit_system_flag, non_academic_email_listing
 from admin_webapp.controllers.search import general_search
 
@@ -9,6 +11,7 @@ blueprint = Blueprint('user', __name__, url_prefix='/user')
 
 
 @blueprint.route('/<int:user_id>', methods=['GET'])
+@admin_scoped
 def display(user_id:int) -> Response:
     """Display a user."""
     if request.method == 'GET':
@@ -17,6 +20,7 @@ def display(user_id:int) -> Response:
 
 # perhaps we need to scope this?
 @blueprint.route('/administrators', methods=['GET'])
+@admin_scoped
 def administrators() -> Response:
     """
     Show administrators view
@@ -31,6 +35,7 @@ def administrators() -> Response:
 
 # perhaps we need to scope this?
 @blueprint.route('/administrators/sys', methods=['GET'])
+@admin_scoped
 def administrators_sys() -> Response:
     """
     Show administrators view
@@ -46,6 +51,7 @@ def administrators_sys() -> Response:
 
 # perhaps we need to scope this?
 @blueprint.route('/suspects', methods=['GET'])
+@admin_scoped
 def suspects() -> Response:
     """
     Show administrators view
@@ -59,6 +65,7 @@ def suspects() -> Response:
     return render_template('user/list.html', **data)
 
 @blueprint.route('/moderators', methods=['GET'])
+@admin_scoped
 def moderators() -> Response:
     """
     Show moderators view
@@ -70,6 +77,7 @@ def moderators() -> Response:
     return render_template('user/moderators.html', **data)
 
 @blueprint.route('/moderators_by_category', methods=['GET'])
+@admin_scoped
 def moderators_by_category() -> Response:
     """
     Show moderators by category view
@@ -81,6 +89,7 @@ def moderators_by_category() -> Response:
     return render_template('user/moderators_by_category.html', **data)
 
 @blueprint.route('/non_academic_emails', methods=['GET'])
+@admin_scoped
 def non_academic_emails() -> Response:
     """
     Show users with non-academic emails
@@ -91,6 +100,7 @@ def non_academic_emails() -> Response:
     return render_template('user/non_academic_emails.html', **data)
 
 @blueprint.route('/search', methods=['GET', 'POST'])
+@admin_scoped
 def search() -> Response:
     args = request.args
     term = args.get('search')
@@ -103,17 +113,21 @@ def search() -> Response:
     return render_template('user/list.html', **data)
 
 @blueprint.route('/flip/email_verified', methods=['POST'])
+@admin_scoped
 def flip_email_verified() -> Response:
     return flip_email_verified_flag()
 
 @blueprint.route('/flip/bouncing', methods=['POST'])
+@admin_scoped
 def flip_bouncing() -> Response:
     return flip_bouncing_flag()
 
 @blueprint.route('flip/edit_users', methods=['POST'])
+@admin_scoped
 def flip_edit_users() -> Response: 
     return flip_edit_users_flag()
 
 @blueprint.route('flip/edit_system', methods=['POST'])
+@admin_scoped
 def flip_edit_system() -> Response:
     return flip_edit_system_flag()

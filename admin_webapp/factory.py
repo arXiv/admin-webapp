@@ -14,6 +14,7 @@ from arxiv.db.models import configure_db
 from arxiv.auth import auth
 from arxiv.auth.auth.middleware import AuthMiddleware
 from arxiv.auth.legacy.util import create_all as legacy_create_all
+from arxiv.auth.auth.sessions.store import SessionStore
 
 from . import filters
 from .config import Settings
@@ -49,8 +50,9 @@ def create_web_app(**kwargs) -> Flask:
     session_lifetime = app.config['PERMANENT_SESSION_LIFETIME']
 
     print(f"Session Lifetime: {session_lifetime} seconds")
-    # Configure Flask session (use filesystem for dev purposes)
-    app.config['SESSION_TYPE'] = 'filesystem'
+    # Configure Flask session (use FakeRedis for dev purposes)
+    app.config['SESSION_TYPE'] = 'redis'
+    app.config['SESSION_REDIS'] = SessionStore.get_session(app).r
     Session(app)
     Bootstrap5(app)
 

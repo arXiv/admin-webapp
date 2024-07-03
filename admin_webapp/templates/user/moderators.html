@@ -9,11 +9,11 @@
     </tr>
     {%for mod in mods%}
     <tr>
-      <td><a href="{{url_for('user.display', user_id=mod.user_id)}}">{{mod.TapirUsers.tapir_nicknames.nickname}}</a></td>
+      <td><a href="{{url_for('user.display', user_id=mod.user_id)}}">{{mod.mod_user.tapir_nicknames.nickname}}</a></td>
       <td>
-          {{mod.TapirUsers.first_name}} {{mod.TapirUsers.last_name}}</a>
+          {{mod.mod_user.first_name}} {{mod.mod_user.last_name}}</a>
       </td>
-      <td>{{mod.TapirUsers.email}}</td>
+      <td>{{mod.mod_user.email}}</td>
       <td>{{mod.archive_subject_list|replace(',', ',&nbsp;')|safe}}</td>
     </tr>
     {%endfor%}

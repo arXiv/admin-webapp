@@ -3,22 +3,18 @@
 <h1>Moderators by category</h1>
 <div>See also <a href="{{url_for('user.moderators')}}">moderators by nickname</a>. There are {{count}} moderators (excluding test categories)</div>
 <br/>
-{% for pair in mods_map %}
-    <div><strong>{{pair}}</strong></div>
-    
-    {% if pair %}
-        
+{% for cat, user_list in pairs %}
+    <div><strong>{{cat}}</strong></div>
         <ul style="list-style: none; padding-left: 20px;">
             <li>
-                <a href="mailto:{% for user in mods_map[pair] %}{{ user.email }}{% if not loop.last %}, {% endif %}{% endfor %}">
-                Email all {{ mods_map[pair]|length }} <strong>{{pair}}</strong> moderators
+                <a href="mailto:{% for user in user_list %}{{ user.email }}{% if not loop.last %}, {% endif %}{% endfor %}">
+                Email all {{ user_list|length }} <strong>{{cat}}</strong> moderators
                 </a>
             </li>
-            {% for user in mods_map[pair] %}
+            {% for user in user_list %}
                 <li>{{ user.first_name }} {{ user.last_name }} (<a style="text-decoration: none;" href="{{url_for('user.display', user_id=user.user_id)}}">@{{user.tapir_nicknames.nickname}}</a>) &middot; <a href="mailto:{{user.email}}">{{user.email}}</a> </li> 
             {% endfor %}
         </ul>
-    {% endif %}
 {% endfor %}
 
 {%- endblock content -%}

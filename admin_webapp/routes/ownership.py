@@ -6,11 +6,13 @@ from flask import Blueprint, render_template, request, \
 from admin_webapp.controllers.ownership import ownership_detail, \
     ownership_listing, ownership_post
 
+from . import admin_scoped
 
 blueprint = Blueprint('ownership', __name__, url_prefix='/ownership')
 
 
 @blueprint.route('/<int:ownership_id>', methods=['GET', 'POST'])
+@admin_scoped
 def display(ownership_id:int) -> Response:
     if request.method == 'GET':
         return render_template('ownership/display.html',**ownership_detail(ownership_id, None))
@@ -19,6 +21,7 @@ def display(ownership_id:int) -> Response:
 
 
 @blueprint.route('/pending', methods=['GET'])
+@admin_scoped
 def pending() -> Response:
     """Pending ownership requests."""
     args = request.args
@@ -31,6 +34,7 @@ def pending() -> Response:
 
 
 @blueprint.route('/accepted', methods=['GET'])
+@admin_scoped
 def accepted() -> Response:
     """Accepted ownership requests."""
     args = request.args
@@ -45,6 +49,7 @@ def accepted() -> Response:
 
 
 @blueprint.route('/rejected', methods=['GET'])
+@admin_scoped
 def rejected() -> Response:
     """Rejected ownership reqeusts."""
     args = request.args
@@ -59,6 +64,7 @@ def rejected() -> Response:
 
 # @scoped()
 @blueprint.route('/need-paper-password', methods=['GET','POST'])
+@admin_scoped
 def need_papper_password() -> Response:
     """User claims ownership of a paper using submitter provided password."""
     form = PaperPasswordForm()

@@ -9,6 +9,7 @@ from flask import Blueprint, render_template, Response, request, current_app, ab
 from wtforms import SelectField, BooleanField, StringField, validators
 from flask_wtf import FlaskForm
 
+from . import admin_scoped
 # need to refactor this back into a controller
 from arxiv.db.models import EndorsementRequest, Endorsement, TapirUser
 from arxiv.db import session
@@ -19,6 +20,7 @@ from admin_webapp.controllers.endorsement import endorsement_listing # multiple 
 blueprint = Blueprint('endorsement', __name__, url_prefix='/endorsement')
 
 @blueprint.route('/all', methods=['GET'])
+@admin_scoped
 def endorsements() -> Response:
     """
     Show administrators view
@@ -32,6 +34,7 @@ def endorsements() -> Response:
     return render_template('endorsement/list.html', **data)
 
 @blueprint.route('/request/<int:endorsement_req_id>', methods=['GET'])
+@admin_scoped
 def request_detail(endorsement_req_id:int) -> Response:
     """Display a single request for endorsement."""
     stmt = (select(EndorsementRequest)
@@ -48,6 +51,7 @@ def request_detail(endorsement_req_id:int) -> Response:
     return render_template('endorsement/display.html')
 
 @blueprint.route('/request/<int:endorsement_req_id>/flip_valid', methods=['POST'])
+@admin_scoped
 def flip_valid(endorsement_req_id:int) -> Response:
     """Flip an endorsement_req valid column."""
     stmt = (select(EndorsementRequest)
@@ -59,6 +63,7 @@ def flip_valid(endorsement_req_id:int) -> Response:
     return redirect(url_for('endorsement.request_detail', endorsement_req_id=endorsement_req_id))
 
 @blueprint.route('/request/<int:endorsement_req_id>/flip_score', methods=['POST'])
+@admin_scoped
 def flip_score(endorsement_req_id:int) -> Response:
     """Flip an endorsement_req score."""
     stmt = (select(EndorsementRequest)
@@ -74,11 +79,13 @@ def flip_score(endorsement_req_id:int) -> Response:
     return redirect(url_for('endorsement.request_detail', endorsement_req_id=endorsement_req_id))
 
 @blueprint.route('/<int:endorsement_id>', methods=['GET'])
+@admin_scoped
 def detail(endorsement_id: int) -> Response:
     """Display a single endorsement."""
     abort(500)
 
 @blueprint.route('/requests/today', methods=['GET'])
+@admin_scoped
 def today() -> Response:
     """Reports today's endorsement requests."""
     args = request.args
@@ -102,6 +109,7 @@ def _check_report_args(per_page, page, days_back, flagged):
         abort(400)
 
 @blueprint.route('/requests/last_week', methods=['GET'])
+@admin_scoped
 def last_week() -> Response:
     """Reports last 7 days endorsement requests."""
     args = request.args
@@ -116,6 +124,7 @@ def last_week() -> Response:
 
 
 @blueprint.route('/requests/negative', methods=['GET'])
+@admin_scoped
 def negative() -> Response:
     """Reports non-positive scored  endorsement requests for last 7 days."""
     args = request.args
@@ -131,11 +140,13 @@ def negative() -> Response:
 New feature for approved and blocked user list
 """
 @blueprint.route('/modify', methods=['GET'])
+@admin_scoped
 def modify_form() -> Response:
     """Modify lists"""
     return render_template('endorsement/modify.html')
 
 @blueprint.route('/endorse', methods=['GET', 'POST'])
+@admin_scoped
 def endorse() -> Response:
     """Endorse page."""
 

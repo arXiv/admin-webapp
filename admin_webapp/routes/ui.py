@@ -9,7 +9,7 @@ from flask import Blueprint, render_template, url_for, request, \
 from arxiv import status
 from arxiv.base import logging
 
-from arxiv.auth.auth.decorators import scoped
+from . import admin_scoped
 
 from ..controllers import captcha_image, registration, authentication
 from admin_webapp.controllers.tapir_functions import manage_email_templates, email_template, create_email_template
@@ -230,7 +230,7 @@ def auth_status() -> Response:
 
 
 @blueprint.route('/protected')
-# @scoped()
+@admin_scoped
 def an_example() -> Response:
     """Example of protected landing page.
 
@@ -245,29 +245,35 @@ def an_example() -> Response:
 
 
 @blueprint.route('/auth/v2/dev')
+@admin_scoped
 def dev() -> Response:
     """Dev landing page."""
     return render_template('dev.html')
 
 @blueprint.route('/email-template-menu', methods=['GET'])
+@admin_scoped
 def email_template_mgmt() -> Response:
     """Email template management"""
     data = manage_email_templates()
     return render_template('manage_email_templates.html', **data)
 
 @blueprint.route('/templates/<int:template_id>')
+@admin_scoped
 def template_data(template_id: int):
     return render_template('email_template_display.html', **email_template(template_id))
 
 @blueprint.route('templates/<int:template_id>/edit')
+@admin_scoped
 def template_data_edit(template_id: int):
     return render_template('email_template_edit.html', **email_template(template_id))
 
 @blueprint.route('/templates/create')
+@admin_scoped
 def create_email_template() -> Response:
     return render_template('email_template_create.html')
 
 @blueprint.route('/templates/submit_new_template', methods=['POST'])
+@admin_scoped
 def flip_edit_system() -> Response:
     data = create_email_template()
     

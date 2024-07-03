@@ -15,7 +15,7 @@ from arxiv.base import logging
 from arxiv.auth.auth.decorators import scoped
 from arxiv.db import session
 from arxiv.db.models import (
-    TapirUser, Document, ShowEmailRequest, Demographic,
+    TapirUser, Document, ShowEmailRequest, Demographic, TapirNickname,
     TapirAdminAudit, TapirSession, Endorsement, t_arXiv_moderators)
 
 
@@ -134,8 +134,33 @@ def suspect_listing(per_page:int, page: int) -> dict:
     #                .limit(per_page).offset((page -1) * per_page)
     test_stmt = (select(TapirUser).limit(10))
 
-    report_stmt_sql = "SELECT u.user_id, u.first_name, n.nickname, u.last_name, u.joined_date, u.email, u.flag_email_verified, s.session_count FROM tapir_users u JOIN tapir_nicknames n ON n.user_id = u.user_id  JOIN arXiv_demographics d ON d.user_id = u.user_id  JOIN ( SELECT user_id, COUNT(session_id) AS session_count FROM tapir_sessions GROUP BY user_id ) s ON s.user_id = u.user_id WHERE d.flag_suspect = 1  LIMIT :per_page OFFSET :offset"
-    users = session.execute(report_stmt_sql, {"per_page": per_page, "offset": (page -1) * per_page})
+    users = session.execute(
+        select(
+            TapirUser.user_id,
+            TapirUser.first_name,
+            TapirNickname.nickname,
+            TapirUser.last_name,
+            TapirUser.joined_date,
+            TapirUser.email,
+            TapirUser.flag_email_verified,
+            func.count(TapirSession.session_id).label('session_count')
+        )
+        .join(TapirNickname, TapirNickname.user_id == TapirUser.user_id)
+        .join(Demographic, Demographic.user_id == TapirUser.user_id)
+        .join(TapirSession, TapirSession.user_id == TapirUser.user_id)
+        .filter(Demographic.flag_suspect == 1)
+        .group_by(
+            TapirUser.user_id,
+            TapirUser.first_name,
+            TapirNickname.nickname,
+            TapirUser.last_name,
+            TapirUser.joined_date,
+            TapirUser.email,
+            TapirUser.flag_email_verified
+        )
+        .limit(per_page)
+        .offset((page - 1) * per_page)
+    ).all()
 
     test=session.scalars(test_stmt)
     suspects = select(TapirUser) \
@@ -158,20 +183,28 @@ def moderator_listing() -> dict:
     count_stmt = select(func.count(func.distinct(t_arXiv_moderators.c.user_id)))
 
     # mods = session.scalars(report_stmt)
-    mods = (
-    session.query(
-        t_arXiv_moderators.c.user_id,
-        # TODO: Note, is checking for empty string in subject_class enough?
-        func.group_concat(func.concat(t_arXiv_moderators.c.archive, case([(t_arXiv_moderators.c.subject_class != '', '.',)], else_=''), t_arXiv_moderators.c.subject_class), order_by=(t_arXiv_moderators.c.archive, t_arXiv_moderators.c.subject_class), separator=', ').label('archive_subject_list'),
-        TapirUser,
-    )
-    .join(TapirUser, t_arXiv_moderators.c.user_id == TapirUser.user_id)
-    # .join(TapirNickname, Moderators.user_id == TapirNickname.user_id)
 
-    .group_by(t_arXiv_moderators.c.user_id)
-    .order_by(TapirUser.last_name) # order by nickname?
-    .all()
+    user_alias = aliased(TapirUser, name='mod_user')
+    mods = (
+        session.query(
+            t_arXiv_moderators.c.user_id,
+            func.aggregate_strings(
+                func.concat(
+                    t_arXiv_moderators.c.archive,
+                    case((t_arXiv_moderators.c.subject_class != '', '.'), else_=''),
+                    t_arXiv_moderators.c.subject_class
+                ),
+                ', '
+            ).label('archive_subject_list'),
+            user_alias,
+        )
+        .join(user_alias, t_arXiv_moderators.c.user_id == user_alias.user_id)
+        # .join(TapirNickname, Moderators.user_id == TapirNickname.user_id)
+        .group_by(t_arXiv_moderators.c.user_id)
+        .order_by(user_alias.last_name)  # order by nickname?
+        .all()
     )
+
     count = session.execute(count_stmt).scalar_one()
 
     return dict(count=count, mods=mods)
@@ -180,29 +213,34 @@ def moderator_listing() -> dict:
 def moderator_by_category_listing() -> dict:
     count_stmt = select(func.count(func.distinct(t_arXiv_moderators.c.user_id)))
 
+    user_alias = aliased(TapirUser, name='mod_user')
     mods = (
-    session.query(
-        t_arXiv_moderators.c.user_id,
-        # TODO: Note, is checking for empty string in subject_class enough?
-        func.group_concat(func.concat(t_arXiv_moderators.c.archive, case([(t_arXiv_moderators.c.subject_class != '', '.',)], else_=''), t_arXiv_moderators.c.subject_class), order_by=(t_arXiv_moderators.c.archive, t_arXiv_moderators.c.subject_class), separator=', ').label('archive_subject_list'),
-        TapirUser
+        session.query(
+            t_arXiv_moderators.c.user_id,
+            func.aggregate_strings(
+                func.concat(
+                    t_arXiv_moderators.c.archive,
+                    case((t_arXiv_moderators.c.subject_class != '', '.'), else_=''),
+                    t_arXiv_moderators.c.subject_class
+                ),
+                # order_by=(t_arXiv_moderators.c.archive, t_arXiv_moderators.c.subject_class),
+                ', '
+            ).label('archive_subject_list'),
+            user_alias,
+        )
+        .join(user_alias, t_arXiv_moderators.c.user_id == user_alias.user_id)
+        .group_by(t_arXiv_moderators.c.user_id)
+        .all()
     )
-    .join(TapirUser, t_arXiv_moderators.c.user_id == TapirUser.user_id)
-    .group_by(t_arXiv_moderators.c.user_id)
-    .all()
-    )
+
     count = session.execute(count_stmt).scalar_one()
     mods_map = defaultdict(list)
-    mods = sorted(mods, key=lambda x: x[1])
     for mod in mods:
         for pair in mod.archive_subject_list.split(','):
-            user = session.scalar((select(TapirUser)
-            .where(
-                TapirUser.user_id == mod.user_id
-            )))
-            mods_map[pair].append(user)
-
-    return dict(count=count, mods_map=mods_map)
+            mods_map[pair].append(mod.mod_user)
+    pairs = sorted(list(mods_map.items()), key=lambda x: x[0])
+    print (f"PAIRS: {pairs}")
+    return dict(count=count, pairs=pairs)
 
 def add_to_blocked():
     if request.method == 'POST': 
