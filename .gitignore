@@ -155,3 +155,4 @@ accounts/deploy/env_values.txt
 *.key
 *.cer
 
+/.bootstrap

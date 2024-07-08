@@ -1,14 +1,18 @@
-export FLASK_APP=admin_webapp/app.py
-export CLASSIC_DB_URI=sqlite:///test.db
-export DEFAULT_LOGIN_REDIRECT_URL='/protected'
-export AUTH_SESSION_COOKIE_DOMAIN='localhost.arxiv.org'
-export CLASSIC_COOKIE_NAME='LOCALHOST_DEV_admin_webapp_classic_cookie'
-export AUTH_SESSION_COOKIE_SECURE=0
-export DEFAULT_LOGOUT_REDIRECT_URL='/login'
-export REDIS_FAKE=1
+#!/usr/bin/env bash
 
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+root_dir="$( dirname "$script_dir" )"
 
-# SET UP CONNECTION TO WRITABLE DB W/ DATA
+if [ ! -x poetry ] ; then
+    # activate the venv if poetry not on the path yet
+    source $root_dir/venv/bin/activate
+fi
+# Local run env
+source $root_dir/.localenv
+cat $root_dir/.localenv
+echo ""
+echo "Open"
+echo "http://localhost.arxiv.org:5000/login"
+echo ""
 
-poetry run python create_user.py
 poetry run flask run
