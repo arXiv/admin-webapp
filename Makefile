@@ -9,8 +9,10 @@ venv:
 	. venv/bin/activate && poetry install
 
 .bootstrap: venv
-	. venv/bin/activate && . .env && poetry run python create_user.py # SET UP CONNECTION TO WRITABLE DB W/ DATA
 	touch .bootstrap
 
-run: .bootstrap
+test.db: .bootstrap
+	. venv/bin/activate && . ./.localenv && poetry run python create_user.py --password boguspassword --username bob --email bogus@example.com --first-name Bob --last-name Bogus --suffix-name '' --affiliation FSU --home-page https://asdf.com
+
+run: test.db
 	script/run_local.sh
