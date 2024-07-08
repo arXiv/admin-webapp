@@ -231,7 +231,7 @@ def auth_status() -> Response:
 
 @blueprint.route('/protected')
 @admin_scoped
-def an_example() -> Response:
+def protected() -> Response:
     """Example of protected landing page.
 
     see arxiv.auth.auth.decorators in arxiv-auth for more details.

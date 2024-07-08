@@ -1,8 +1,7 @@
-from flask import url_for
 from conftest import parse_cookies
 
-def test_can_get_login_form(admin_client):
-    resp = admin_client.get('/login')
+def test_can_get_login_form(app_with_db):
+    resp = app_with_db.test_client().get('/login')
     assert resp.status_code == 200
 
 def test_can_login(admin_user, admin_client):

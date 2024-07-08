@@ -257,7 +257,7 @@ def admin_client(app_with_db, admin_user):
     assert ngcookie_name in cookies
     classic_cookie_name = app_with_db.config['CLASSIC_COOKIE_NAME']
     assert classic_cookie_name in cookies
-    client.set_cookie(ngcookie_name, cookies[ngcookie_name]['value'])
-    client.set_cookie(classic_cookie_name, cookies[classic_cookie_name]['value'])
-    client.set_cookie(app_with_db.config['CLASSIC_TRACKING_COOKIE'], 'fake_browser_tracking_cookie_value')
+    client.set_cookie(ngcookie_name, cookies[ngcookie_name]['value'], domain=app_with_db.config['BASE_SERVER'])
+    client.set_cookie(classic_cookie_name, cookies[classic_cookie_name]['value'], domain=app_with_db.config['BASE_SERVER'])
+    client.set_cookie(app_with_db.config['CLASSIC_TRACKING_COOKIE'], 'fake_browser_tracking_cookie_value', domain=app_with_db.config['BASE_SERVER'])
     return client
