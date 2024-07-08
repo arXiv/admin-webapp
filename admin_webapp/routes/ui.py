@@ -25,7 +25,10 @@ def anonymous_only(func: Callable) -> Callable:
         if hasattr(request, 'auth') and request.auth:
             next_page = request.args.get('next_page',
                                          current_app.config['DEFAULT_LOGIN_REDIRECT_URL'])
-            return make_response(redirect(next_page, code=status.HTTP_303_SEE_OTHER))
+            response = redirect(next_page, code=status.HTTP_303_SEE_OTHER)
+            for key, value in request.cookies.items():
+                response.set_cookie(key, value)
+            return response
         else:
             return func(*args, **kwargs)
     return wrapper

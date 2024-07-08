@@ -9,7 +9,7 @@ def test_can_login(admin_user, admin_client):
                     data=dict(username=admin_user['email'],
                                 password=admin_user['password_cleartext']))
     assert resp.status_code == 303
-
+    print (resp.headers.getlist('Set-Cookie'))
     cookies = parse_cookies(resp.headers.getlist('Set-Cookie'))
     ngcookie_name = admin_client.application.config['AUTH_SESSION_COOKIE_NAME']
     assert ngcookie_name in cookies
