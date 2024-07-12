@@ -19,3 +19,7 @@ def test_can_login(admin_user, admin_client):
 def test_can_get_protected(admin_client):
     resp = admin_client.get('/protected')
     assert resp.status_code == 200
+
+def test_logout(admin_client, app_with_db):
+    resp = admin_client.get('/protected')
+    assert resp.status_code == 200

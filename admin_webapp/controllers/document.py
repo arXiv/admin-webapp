@@ -15,7 +15,7 @@ from arxiv.auth.auth.decorators import scoped
 from arxiv.db import session
 from arxiv.db.models import Document, Metadata, PaperPw
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 def paper_detail(doc_id:int) -> Response:
     doc_stmt = (select(Document).where(Document.document_id == doc_id))

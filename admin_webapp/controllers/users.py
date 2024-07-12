@@ -21,7 +21,7 @@ from arxiv.db.models import (
 
 from .util import Pagination
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 # blueprint = Blueprint('ownership', __name__, url_prefix='/ownership')
 """
@@ -32,7 +32,7 @@ def user_profile(user_id:int) -> Response:
             .where(
                 TapirUser.user_id == user_id
             ))
-    print(stmt)
+    logger.debug(stmt)
     user = session.scalar(stmt)
     # TODO: optimize this so we can join with the Tapir Users rather than separate query?
     demographics_stmt = (select(Demographic)
@@ -173,7 +173,7 @@ def suspect_listing(per_page:int, page: int) -> dict:
 
     # users = session.scalars(report_stmt)
     # users = session.scalars(report_stmt)
-    # print(users[0].session_count)
+    logger.debug(users[0].session_count)
     pagination = Pagination(query=None, page=page, per_page=per_page, total=count, items=None)
     
     return dict(pagination=pagination, count=count, users=users, test=test)

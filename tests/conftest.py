@@ -26,6 +26,7 @@ from sqlalchemy import create_engine, select, text
 from sqlalchemy.orm import Session
 
 from arxiv.db import models, transaction
+from arxiv.auth.legacy import passwords
 
 from admin_webapp.factory import create_web_app
 
@@ -164,16 +165,13 @@ def admin_user(app_with_db):
         with transaction() as session:
             admin_exists = select(models.TapirUser).where(models.TapirUser.email == 'testadmin@example.com')
             admin = session.scalar(admin_exists)
+            password = b'thepassword'
             if admin:
                 return {
                     'email':'testadmin@example.com',
-                    'password_cleartext':b'thepassword'
+                    'password_cleartext': password
                 }
-
-            salt = b'fdoo'
-            password = b'thepassword'
-            hashed = hashlib.sha1(salt + b'-' + password).digest()
-            encrypted = b64encode(salt + hashed)
+            encrypted = passwords.hash_password(password)
 
             # We have a good old-fashioned user.
             db_user = models.TapirUser (

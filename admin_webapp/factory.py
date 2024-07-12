@@ -1,6 +1,9 @@
 """Application factory for admin_webapp."""
 
 import logging
+import os
+
+from pythonjsonlogger import jsonlogger
 
 from flask import Flask
 from flask_session import Session
@@ -20,7 +23,16 @@ from . import filters
 from .config import Settings
 from .routes import ui, ownership, endorsement, user, paper
 
-logger = logging.getLogger(__name__)
+
+def setup_logger():
+    logHandler = logging.StreamHandler()
+    formatter = jsonlogger.JsonFormatter('%(asctime)s %(levelname)s %(name)s %(message)s',
+                                         rename_fields={'levelname': 'level', 'asctime': 'timestamp'})
+    logHandler.setFormatter(formatter)
+    logger = logging.getLogger()
+    logger.addHandler(logHandler)
+    logger.setLevel(logging.DEBUG)
+
 
 csrf = CSRFProtect()
 
@@ -43,13 +55,16 @@ def change_loglevel(pkg:str, level):
 
 def create_web_app(**kwargs) -> Flask:
     """Initialize and configure the admin_webapp application."""
+    setup_logger()
+    logger = logging.getLogger(__name__)
     app = Flask('admin_webapp')
     settings = Settings(**kwargs)
     app.config.from_object(settings)
     app.engine, _  = configure_db(settings)
     session_lifetime = app.config['PERMANENT_SESSION_LIFETIME']
 
-    print(f"Session Lifetime: {session_lifetime} seconds")
+
+    logger.info(f"Session Lifetime: {session_lifetime} seconds")
     # Configure Flask session (use FakeRedis for dev purposes)
     app.config['SESSION_TYPE'] = 'redis'
     app.config['SESSION_REDIS'] = SessionStore.get_session(app).r
@@ -102,5 +117,6 @@ def create_web_app(**kwargs) -> Flask:
 
 
 def setup_warnings(app):
+    logger = logging.getLogger(__name__)
     if not app.config.get('WTF_CSRF_ENABLED'):
         logger.warning("CSRF protection is DISABLED, Do not disable CSRF in production")

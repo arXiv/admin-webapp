@@ -72,11 +72,11 @@ def login(method: str, form_data: MultiDict, ip: str,
         # and redirect if successful. Otherwise, proceed as normal without
         # complaint.
         if not next_page or good_next_page(next_page):
-            print ("GOT HERE")
+            logger.debug("GOT HERE")
             response_data = {'form': LoginForm(), 'next_page': next_page}
             return response_data, status.HTTP_200_OK, {}
         else:
-            print ("FAILED< GOT HERE")
+            logger.debug("FAILED< GOT HERE")
             response_data = {'form': LoginForm(), 'error':'next_page is invalid'}
             return response_data, status.HTTP_400_BAD_REQUEST, {}
 

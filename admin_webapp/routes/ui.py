@@ -5,8 +5,8 @@ from datetime import timedelta, datetime
 from functools import wraps
 from flask import Blueprint, render_template, url_for, request, \
     make_response, redirect, current_app, send_file, Response, session
+from http import HTTPStatus as status
 
-from arxiv import status
 from arxiv.base import logging
 
 from . import admin_scoped
@@ -25,7 +25,7 @@ def anonymous_only(func: Callable) -> Callable:
         if hasattr(request, 'auth') and request.auth:
             next_page = request.args.get('next_page',
                                          current_app.config['DEFAULT_LOGIN_REDIRECT_URL'])
-            response = redirect(next_page, code=status.HTTP_303_SEE_OTHER)
+            response = redirect(next_page, code=status.SEE_OTHER)
             for key, value in request.cookies.items():
                 response.set_cookie(key, value)
             return response
@@ -111,11 +111,11 @@ def register() -> Response:
     captcha_secret = current_app.config['CAPTCHA_SECRET']
     ip_address = request.remote_addr
     next_page = request.args.get('next_page', url_for('ui.register2'))
-    
+
     data, code, headers = registration.register(request.method, request.form,
                                                 captcha_secret, ip_address,
                                                 next_page)
-    
+
     # flask session storage
     session['email'] = data['form'].email.data
     session['username'] = data['form'].username.data
@@ -123,7 +123,7 @@ def register() -> Response:
 
     # Flask puts cookie-setting methods on the response, so we do that here
     # instead of in the controller.
-    if code is status.HTTP_303_SEE_OTHER:
+    if code is status.SEE_OTHER:
         response = make_response(redirect(headers['Location'], code=code))
         # set_cookies(response, data)
         return response
@@ -148,7 +148,7 @@ def register2() -> Response:
 
     # Flask puts cookie-setting methods on the response, so we do that here
     # instead of in the controller.
-    if code is status.HTTP_303_SEE_OTHER:
+    if code is status.SEE_OTHER:
         response = make_response(redirect(headers['Location'], code=code))
         set_cookies(response, data)
         return response
@@ -175,14 +175,14 @@ def login() -> Response:
     data.update({'pagetitle': 'Log in to arXiv'})
     # Flask puts cookie-setting methods on the response, so we do that here
     # instead of in the controller.
-    if code is status.HTTP_303_SEE_OTHER:
+    if code is status.SEE_OTHER:
         # Set the session cookie.
         response = make_response(redirect(headers.get('Location'), code=code))
         set_cookies(response, data)
         unset_submission_cookie(response)    # Fix for ARXIVNG-1149.
         return response
 
-    print("attempted login?")
+    logger.debug("attempted login?")
     # Form is invalid, or login failed.
     response = Response(
         render_template("login.html", **data),
@@ -205,7 +205,7 @@ def logout() -> Response:
                                                 next_page)
     # Flask puts cookie-setting methods on the response, so we do that here
     # instead of in the controller.
-    if code is status.HTTP_303_SEE_OTHER:
+    if code is status.SEE_OTHER:
         logger.debug('Redirecting to %s: %i', headers.get('Location'), code)
         response = make_response(redirect(headers.get('Location'), code=code))
         set_cookies(response, data)
@@ -213,7 +213,7 @@ def logout() -> Response:
         # Partial fix for ARXIVNG-1653, ARXIVNG-1644
         unset_permanent_cookie(response)
         return response
-    return redirect(next_page, code=status.HTTP_302_FOUND)
+    return redirect(next_page, code=status.FOUND)
 
 
 @blueprint.route('/captcha', methods=['GET'])

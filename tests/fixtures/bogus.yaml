@@ -1,0 +1,41 @@
+users:
+- user:
+    first_name: bob
+    last_name: bogus
+    suffix_name: ''
+    share_first_name: 1
+    share_last_name: 1
+    email: bogus@example.com
+    flag_approved: 1
+    flag_deleted: 0
+    flag_banned: 0
+    flag_edit_users: 1
+    flag_edit_system: 0
+    flag_email_verified: 1
+    share_email: 8
+    email_bouncing: 0
+    policy_class: 2
+    joined_date: '2024-04-01'
+    joined_ip_num: 127.0.0.1
+    joined_remote_host: localhost
+  nick:
+    nickname: 'bob'
+    flag_valid: 1
+    flag_primary: 1
+  profile:
+    country: 'us'
+    affiliation: 'IRS'
+    url: 'http://www.irs.gov'
+    type: 2
+    archive: 'physics'
+    subject_class: 'ins-det'
+    original_subject_classes: ''
+    flag_group_math: 1
+    flag_group_cs: 1
+    flag_group_nlin: 1
+    flag_group_q_bio: 1
+    flag_group_q_fin: 1
+    flag_group_stat: 1
+  password:
+    password_storage: 2
+    password_cleartext: 'boguspassword'

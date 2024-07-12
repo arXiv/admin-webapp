@@ -14,7 +14,7 @@ from typing import Dict, Tuple, Any, Optional
 from werkzeug.datastructures import MultiDict
 from werkzeug.exceptions import BadRequest, InternalServerError
 
-from arxiv import status
+from http import HTTPStatus as status
 from arxiv.auth import domain
 from arxiv.base import logging
 
@@ -101,7 +101,7 @@ def register(method: str, params: MultiDict, captcha_secret: str, ip: str,
 
         if not form.validate():
             logger.debug('Registration form not valid')
-            return data, status.HTTP_400_BAD_REQUEST, {}
+            return data, status.BAD_REQUEST, {}
 
         logger.debug('Registration form is valid')
         # password = form.password.data
@@ -127,18 +127,15 @@ def register(method: str, params: MultiDict, captcha_secret: str, ip: str,
         #     'user_id': user.user_id
         # })
 
-        
-        # print(session)
-
-        return data, status.HTTP_303_SEE_OTHER, {'Location': next_page}
-    return data, status.HTTP_200_OK, {}
+        return data, status.SEE_OTHER, {'Location': next_page}
+    return data, status.OK, {}
 
 def register2(method: str, params: MultiDict, ip: str,
              next_page: str) -> ResponseData:
     """Handle requests for the registration view step 2."""
     data: Dict[str, Any]
     
-    print("session data", flask_session)
+    logger.debug("session data", flask_session)
     if method == 'GET':
         form = ProfileForm(params)
         data = {'form': form, 'next_page': next_page}
@@ -151,13 +148,13 @@ def register2(method: str, params: MultiDict, ip: str,
 
         if not form.validate():
             logger.debug('Registration form not valid')
-            return data, status.HTTP_400_BAD_REQUEST, {}
+            return data, status.BAD_REQUEST, {}
 
         logger.debug('Registration form is valid')
         password = flask_session['password']
 
         # Perform the actual registration.
-        print(password, form.forename.data)
+        logger.debug("%s %s", str(password), str(form.forename.data))
         # user, auth = accounts.register(form.to_domain(), password, ip, ip)
 
         try:
@@ -178,9 +175,9 @@ def register2(method: str, params: MultiDict, ip: str,
         })
 
         # next_page = next_page if good_next_page(next_page) else config.DEFAULT_LOGIN_REDIRECT_URL
-        return data, status.HTTP_303_SEE_OTHER, {'Location': next_page}
+        return data, status.SEE_OTHER, {'Location': next_page}
 
-    return data, status.HTTP_200_OK, {}
+    return data, status.OK, {}
 
 
 def edit_profile(method: str, user_id: str, session: domain.Session,
@@ -197,9 +194,9 @@ def edit_profile(method: str, user_id: str, session: domain.Session,
 
         try:
             if not form.validate():
-                return data, status.HTTP_400_BAD_REQUEST, {}
+                return data, status.BAD_REQUEST, {}
         except ValueError:
-            return data, status.HTTP_400_BAD_REQUEST, {}
+            return data, status.BAD_REQUEST, {}
 
         if form.user_id.data != user_id:
             msg = 'User ID in request does not match'
@@ -211,7 +208,7 @@ def edit_profile(method: str, user_id: str, session: domain.Session,
         except Exception as e:  # pylint: disable=broad-except
             data['error'] = 'Could not save user profile; please try again'
             logger.error('Problem while editing profile', e)
-            return data, status.HTTP_500_INTERNAL_SERVER_ERROR, {}
+            return data, status.INTERNAL_SERVER_ERROR, {}
 
         # We need a new session, to update user's data.
         _logout(session.session_id)
@@ -219,8 +216,8 @@ def edit_profile(method: str, user_id: str, session: domain.Session,
         data.update({'cookies': {
             'session_cookie': (new_cookie, new_session.expires)
         }})
-        return data, status.HTTP_303_SEE_OTHER, {}
-    return data, status.HTTP_200_OK, {}
+        return data, status.SEE_OTHER, {}
+    return data, status.OK, {}
 
 
 class ProfileForm(Form):
@@ -293,8 +290,8 @@ class ProfileForm(Form):
 
     def to_domain(self) -> domain.User:
         """Generate a :class:`.User` from this form's data."""
-        print(self.default_category.data.split('.'))
-        print(self.default_category.data)
+        logger.debug(self.default_category.data.split('.'))
+        # logger.debug(self.default_category.data)
         return domain.User(
             user_id=self.user_id.data if self.user_id.data else None,
             # use flask session data for step 1 fields

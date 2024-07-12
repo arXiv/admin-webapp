@@ -12,7 +12,9 @@ venv:
 	touch .bootstrap
 
 test.db: .bootstrap
-	. venv/bin/activate && . ./.localenv && poetry run python create_user.py --password boguspassword --username bob --email bogus@example.com --first-name Bob --last-name Bogus --suffix-name '' --affiliation FSU --home-page https://asdf.com
+	#. venv/bin/activate && . ./.localenv && poetry run python create_user.py create-user --password boguspassword --username bob --email bogus@example.com --first-name Bob --last-name Bogus --suffix-name '' --affiliation FSU --home-page https://asdf.com
+	. venv/bin/activate && . ./.localenv && poetry run python create_user.py load-users tests/fixtures/bogus.yaml
+
 
 run: test.db
 	script/run_local.sh

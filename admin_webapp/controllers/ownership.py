@@ -17,7 +17,7 @@ from arxiv.db.models import OwnershipRequest, OwnershipRequestsAudit, TapirUser,
 
 from .util import Pagination
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 blueprint = Blueprint('ownership', __name__, url_prefix='/ownership')
 
