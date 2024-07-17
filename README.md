@@ -29,6 +29,12 @@ create tables. Conventional read/write access should be sufficient.
 
 You should be able to go to a page like  http://localhost:5000/login  or  http://localhost:5000/register
 
+While developing, it's best to open up dev.arxiv.org/admin for legacy Tapir so you can make changes freely. In some cases it can be helpful to open up production Tapir at arxiv.org/admin, but tread carefully so you don't unintentionally modify a user profile. In most cases, however, there isn't too much to worry about.
+
+# Database Schema
+
+Since there are several db schemata running around, this application makes some assumptions. They are a) a Moderators table in associative_tables.py in `arxiv-db` cannot exist and b) in the tapir_users.py file in `arxiv-db` the tapir_nickanames field needs to be one to one which means `useList` needs to be set to `false`.
+
 # Running the tests
 
 After setting up you should be able to run the tests with
