@@ -165,7 +165,7 @@ def admin_user(app_with_db):
         with transaction() as session:
             admin_exists = select(models.TapirUser).where(models.TapirUser.email == 'testadmin@example.com')
             admin = session.scalar(admin_exists)
-            password = b'thepassword'
+            password = 'thepassword'
             if admin:
                 return {
                     'email':'testadmin@example.com',
