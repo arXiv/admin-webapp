@@ -48,3 +48,17 @@ details on subsequent requests to the accounts service or any other service.
    Containers in the user accounts system.
 
 """
+
+APP_SECRET_KEY = 'your_secret_key'  # Replace with a secure secret key
+
+# Keycloak configuration
+KEYCLOAK_SERVER_URL = 'https://keycloak-service-6lhtms3oua-uc.a.run.app'
+REALM_NAME = 'arxiv'
+CLIENT_ID = 'arxiv-user'
+CLIENT_SECRET = 'your-client-secret'
+REDIRECT_URI = 'http://localhost:5000/callback'
+
+# Keycloak endpoints
+AUTH_URL = f'{KEYCLOAK_SERVER_URL}/realms/{REALM_NAME}/protocol/openid-connect/auth'
+TOKEN_URL = f'{KEYCLOAK_SERVER_URL}/realms/{REALM_NAME}/protocol/openid-connect/token'
+
