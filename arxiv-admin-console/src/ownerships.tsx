@@ -34,8 +34,7 @@ import React from "react";
     type: str | None # Mapped[Optional[Literal['user', 'admin', 'auto']]] = mapped_column(Enum('user', 'admin', 'auto'))
     point_value: int # Mapped[int] = mapped_column(Integer, nullable=False, server_default=FetchedValue())
     issued_when: int # Mapped[int] = mapped_column(Integer, nullable=False, server_default=FetchedValue())
-    request_id: int | None # Mapped[Optional[int]] = mapped_column(ForeignKey('arXiv_endorsement_requests.request_id'), index=True)
-
+    request_id: int | None # Mapped[Optional[int]] = mapped_column(ForeignKey('arXiv_ownership_requests.request_id'), index=True)
  */
 
 const presetOptions = [
@@ -58,7 +57,7 @@ const calculatePresetDates = (preset: string) => {
     }
 };
 
-const EndorsementFilter = (props: any) => {
+const OwnershipFilter = (props: any) => {
     const { setFilters, filterValues } = useListContext();
     const handlePresetChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const { startDate, endDate } = calculatePresetDates(event.target.value);
@@ -86,15 +85,15 @@ const EndorsementFilter = (props: any) => {
 };
 
 
-export const EndorsementList = () => {
-    const sorter: SortPayload = {field: 'endorsement_id', order: 'ASC'};
+export const OwnershipList = () => {
+    const sorter: SortPayload = {field: 'ownership_id', order: 'ASC'};
     const isSmall = useMediaQuery<any>(theme => theme.breakpoints.down('sm'));
     return (
-        <List filters={<EndorsementFilter />}>
+        <List filters={<OwnershipFilter />}>
             {isSmall ? (
                 <SimpleList
                     primaryText={record => record.name}
-                    secondaryText={record => record.endorsementname}
+                    secondaryText={record => record.ownershipname}
                     tertiaryText={record => record.email}
                 />
             ) : (
@@ -122,7 +121,7 @@ export const EndorsementList = () => {
                     <NumberField source="point_value" label={"Point"} />
                     <DateField source="issued_when" label={"Issued"} />
 
-                    <ReferenceField source="request_id" reference="endorsement_requests" label={"Request"}
+                    <ReferenceField source="request_id" reference="ownership_requests" label={"Request"}
                                     link={(record, reference) => `/${reference}/${record.id}`} >
                         Show
                     </ReferenceField>
@@ -133,13 +132,13 @@ export const EndorsementList = () => {
 };
 
 
-const EndorsementTitle = () => {
+const OwnershipTitle = () => {
     const record = useRecordContext();
-    return <span>Endorsement {record ? `"${record.last_name}, ${record.first_name}" - ${record.email}` : ''}</span>;
+    return <span>Ownership {record ? `"${record.last_name}, ${record.first_name}" - ${record.email}` : ''}</span>;
 };
 
-export const EndorsementEdit = () => (
-    <Edit title={<EndorsementTitle />}>
+export const OwnershipEdit = () => (
+    <Edit title={<OwnershipTitle />}>
         <SimpleForm>
             <ReferenceField source="endorsee_id" reference="users" label={"Endorsee"}
                             link={(record, reference) => `/${reference}/${record.id}`} >
@@ -164,14 +163,14 @@ export const EndorsementEdit = () => (
             <NumberInput source="point_value" label={"Point"} />
             <DateInput source="issued_when" label={"Issued"} />
 
-            <ReferenceField source="request_id" reference="endorsement_request" label={"Request"}
+            <ReferenceField source="request_id" reference="ownership_request" label={"Request"}
                             link={(record, reference) => `/${reference}/${record.id}`} >
             </ReferenceField>
         </SimpleForm>
     </Edit>
 );
 
-export const EndorsementCreate = () => (
+export const OwnershipCreate = () => (
     <Create>
         <SimpleForm>
             <ReferenceField source="endorsee_id" reference="users" label={"Endorsee"}

@@ -229,7 +229,7 @@ async def create_user(request: Request, session: Session = Depends(transaction))
 
 
 @router.delete('/{user_id:int}')
-def create_user(user_id: int, session: Session = Depends(transaction)) -> UserModel:
+def delete_user(user_id: int, session: Session = Depends(transaction)) -> UserModel:
     user: TapirUser = session.query(TapirUser).filter(TapirUser.user_id == user_id).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")

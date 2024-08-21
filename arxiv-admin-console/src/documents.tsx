@@ -34,7 +34,7 @@ import React from "react";
     type: str | None # Mapped[Optional[Literal['user', 'admin', 'auto']]] = mapped_column(Enum('user', 'admin', 'auto'))
     point_value: int # Mapped[int] = mapped_column(Integer, nullable=False, server_default=FetchedValue())
     issued_when: int # Mapped[int] = mapped_column(Integer, nullable=False, server_default=FetchedValue())
-    request_id: int | None # Mapped[Optional[int]] = mapped_column(ForeignKey('arXiv_endorsement_requests.request_id'), index=True)
+    request_id: int | None # Mapped[Optional[int]] = mapped_column(ForeignKey('arXiv_document_requests.request_id'), index=True)
 
  */
 
@@ -58,7 +58,7 @@ const calculatePresetDates = (preset: string) => {
     }
 };
 
-const EndorsementFilter = (props: any) => {
+const DocumentFilter = (props: any) => {
     const { setFilters, filterValues } = useListContext();
     const handlePresetChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const { startDate, endDate } = calculatePresetDates(event.target.value);
@@ -86,46 +86,36 @@ const EndorsementFilter = (props: any) => {
 };
 
 
-export const EndorsementList = () => {
-    const sorter: SortPayload = {field: 'endorsement_id', order: 'ASC'};
+export const DocumentList = () => {
+    const sorter: SortPayload = {field: 'document_id', order: 'ASC'};
     const isSmall = useMediaQuery<any>(theme => theme.breakpoints.down('sm'));
     return (
-        <List filters={<EndorsementFilter />}>
+        <List filters={<DocumentFilter />}>
             {isSmall ? (
                 <SimpleList
                     primaryText={record => record.name}
-                    secondaryText={record => record.endorsementname}
+                    secondaryText={record => record.documentname}
                     tertiaryText={record => record.email}
                 />
             ) : (
                 <Datagrid rowClick="show" sort={sorter}>
-                    <ReferenceField source="endorsee_id" reference="users" label={"Endorsee"}
+                    <DateField source="dated" label={"Date"}/>
+
+                    <TextField source="paper_id" label={"Paper ID"}/>
+
+                    <TextField source="title" label={"Title"}/>
+
+                    <ReferenceField source="submitter_id" reference="users" label={"Submitter"}
                                     link={(record, reference) => `/${reference}/${record.id}`} >
                         <TextField source={"last_name"} />
                         {", "}
                         <TextField source={"first_name"} />
                     </ReferenceField>
 
-                    <ReferenceField source="endorser_id" reference="users" label={"Endorser"}
-                                    link={(record, reference) => `/${reference}/${record.id}`} >
-                        <TextField source={"last_name"} />
-                        {", "}
-                        <TextField source={"first_name"} />
-                    </ReferenceField>
+                    <TextField source="authors" />
+                    <TextField source="primary_subject_class" />
+                    <DateField source="created" label={"Created"}/>
 
-                    <TextField source="archive" />
-
-                    <TextField source="subject_class" />
-                    <BooleanField source="flag_valid" label={"Valid"} FalseIcon={null} />
-
-                    <TextField source="type" />
-                    <NumberField source="point_value" label={"Point"} />
-                    <DateField source="issued_when" label={"Issued"} />
-
-                    <ReferenceField source="request_id" reference="endorsement_requests" label={"Request"}
-                                    link={(record, reference) => `/${reference}/${record.id}`} >
-                        Show
-                    </ReferenceField>
                 </Datagrid>
             )}
         </List>
@@ -133,13 +123,13 @@ export const EndorsementList = () => {
 };
 
 
-const EndorsementTitle = () => {
+const DocumentTitle = () => {
     const record = useRecordContext();
-    return <span>Endorsement {record ? `"${record.last_name}, ${record.first_name}" - ${record.email}` : ''}</span>;
+    return <span>Document {record ? `${record.paper_id}: ${record.title} by ${record.authors}` : ''}</span>;
 };
 
-export const EndorsementEdit = () => (
-    <Edit title={<EndorsementTitle />}>
+export const DocumentEdit = () => (
+    <Edit title={<DocumentTitle />}>
         <SimpleForm>
             <ReferenceField source="endorsee_id" reference="users" label={"Endorsee"}
                             link={(record, reference) => `/${reference}/${record.id}`} >
@@ -164,14 +154,14 @@ export const EndorsementEdit = () => (
             <NumberInput source="point_value" label={"Point"} />
             <DateInput source="issued_when" label={"Issued"} />
 
-            <ReferenceField source="request_id" reference="endorsement_request" label={"Request"}
+            <ReferenceField source="request_id" reference="document_request" label={"Request"}
                             link={(record, reference) => `/${reference}/${record.id}`} >
             </ReferenceField>
         </SimpleForm>
     </Edit>
 );
 
-export const EndorsementCreate = () => (
+export const DocumentCreate = () => (
     <Create>
         <SimpleForm>
             <ReferenceField source="endorsee_id" reference="users" label={"Endorsee"}

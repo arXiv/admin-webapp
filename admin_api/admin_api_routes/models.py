@@ -2,7 +2,7 @@ from pydantic_sqlalchemy_2 import sqlalchemy_to_pydantic
 
 from arxiv.db.models import Document, Metadata, PaperPw, TapirUser, Demographic, \
     Endorsement, Submission, TapirEmailTemplate, EndorsementRequest, OwnershipRequest, \
-    OwnershipRequestsAudit, PaperOwner, Category
+    OwnershipRequestsAudit, PaperOwner, Category, CrossControl
 
 # TapirEmailTemplateModel = sqlalchemy_to_pydantic(TapirEmailTemplate)
 CategoryModel = sqlalchemy_to_pydantic(Category)
@@ -14,8 +14,10 @@ DemographicModel = sqlalchemy_to_pydantic(Demographic)
 # EndorsementRequestModel = sqlalchemy_to_pydantic(EndorsementRequest)
 SubmissionModel = sqlalchemy_to_pydantic(Submission)
 
-OwnershipRequestModel = sqlalchemy_to_pydantic(OwnershipRequest)
+# OwnershipRequestModel = sqlalchemy_to_pydantic(OwnershipRequest)
 OwnershipRequestsAuditModel = sqlalchemy_to_pydantic(OwnershipRequestsAudit)
 PaperOwnerModel = sqlalchemy_to_pydantic(PaperOwner)
 
 # TapirUserModel = sqlalchemy_to_pydantic(TapirUser)
+
+CrossControlModel = sqlalchemy_to_pydantic(CrossControl)

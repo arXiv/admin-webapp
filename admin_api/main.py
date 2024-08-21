@@ -12,6 +12,8 @@ from admin_api_routes.email_template import router as email_template_router
 from admin_api_routes.endorsement_requsets import router as endorsement_request_router
 from admin_api_routes.endorsements import router as endorsement_router
 from admin_api_routes.categories import router as categories_router
+from admin_api_routes.documents import router as document_router
+from admin_api_routes.ownership_requests import router as ownership_request_router
 from admin_api_routes.frontend import router as frontend_router
 
 
@@ -26,6 +28,7 @@ from app_logging import setup_logger
 KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', '127.0.0.1')
 
 _idp_ = ArxivOidcIdpClient("http://127.0.0.1:5000/api/callback",
+                           scope=["openid"],
                            server_url=KEYCLOAK_SERVER_URL,
                            client_secret=os.environ.get('KEYCLOAK_CLIENT_SECRET', ''),
                            logger=getLogger(__name__)
@@ -79,10 +82,10 @@ def create_app(*args, **kwargs) -> FastAPI:
         arxiv_db_engine=engine,
         arxiv_settings=settings,
         JWT_SECRET="secret",
-        LOGIN_REDIRECT_URL="http://127.0.0.1:5000",
+        LOGIN_REDIRECT_URL="http://127.0.0.1:5000/api/login",
         LOGOUT_REDIRECT_URL="http://127.0.0.1:5000",
-        AUTH_SESSION_COOKIE_NAME="ARXIVNG_COOKIE",
-        CLASSIC_COOKIE_NAME="TAPIR_COOKIE"
+        AUTH_SESSION_COOKIE_NAME="token",
+        CLASSIC_COOKIE_NAME="TAPIR_COOKIE",
     )
 
     app.add_middleware(
@@ -102,6 +105,8 @@ def create_app(*args, **kwargs) -> FastAPI:
     app.include_router(email_template_router, prefix="/v1")
     app.include_router(endorsement_router, prefix="/v1")
     app.include_router(endorsement_request_router, prefix="/v1")
+    app.include_router(ownership_request_router, prefix="/v1")
+    app.include_router(document_router, prefix="/v1")
     app.include_router(frontend_router)
 
     @app.middleware("http")
