@@ -3,6 +3,7 @@ import re
 from datetime import timedelta, datetime, date
 from typing import Optional, List
 
+from arxiv.auth.user_claims import ArxivUserClaims
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request, Response
 
 from sqlalchemy import select, update, func, case, Select, distinct, exists, and_
@@ -12,13 +13,14 @@ from pydantic import BaseModel
 from arxiv.base import logging
 from arxiv.db import transaction
 from arxiv.db.models import Endorsement, EndorsementRequest, Demographic, TapirUser, Category, \
-    EndorsementRequestsAudit
+    EndorsementRequestsAudit, EndorsementRequestsAudit
 
-from . import is_admin_user, get_db, datetime_to_epoch, VERY_OLDE, CategoryModel
+from . import is_admin_user, get_db, datetime_to_epoch, VERY_OLDE, is_any_user, get_current_user
+from .categories import CategoryModel
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(dependencies=[Depends(is_admin_user)], prefix="/endorsement_requests")
+router = APIRouter(prefix="/endorsement_requests", dependencies=[Depends(is_any_user)])
 
 
 class EndorsementRequestModel(BaseModel):
@@ -29,28 +31,11 @@ class EndorsementRequestModel(BaseModel):
     endorsee_id: int
     archive: str
     subject_class: str
-    # secret: str
+    secret: str
     flag_valid: bool
     issued_when: datetime
     point_value: int
     flag_suspect: bool
-
-    arXiv_categories: Optional[CategoryModel]
-    # arXiv_categories = relationship('Category', primaryjoin='and_(EndorsementRequest.archive == Category.archive, EndorsementRequest.subject_class == Category.subject_class)', back_populates='arXiv_endorsement_requests')
-
-    # endorsee: list[UserModel]
-    # endorsee = relationship('TapirUser', primaryjoin='EndorsementRequest.endorsee_id == TapirUser.user_id', back_populates='arXiv_endorsement_requests', uselist=False)
-
-    # endorsement: list[EndorsementModel]
-    # endorsement = relationship('Endorsement', back_populates='request', uselist=False)
-
-    # audit: list[OwnershipRequestsAuditModel]
-    # audit = relationship('EndorsementRequestsAudit', uselist=False)
-
-    #@validator('issued_when', pre=True)
-    #def convert_epoch_to_date(cls, v):
-    #    # Assuming the incoming value `v` is a Unix epoch time as an int
-    #    return datetime.fromtimestamp(v) if isinstance(v, int) else v
 
     @staticmethod
     def base_select(db: Session):
@@ -60,12 +45,12 @@ class EndorsementRequestModel(BaseModel):
             EndorsementRequest.endorsee_id,
             EndorsementRequest.archive,
             EndorsementRequest.subject_class,
+            EndorsementRequest.secret,
             EndorsementRequest.flag_valid,
             EndorsementRequest.issued_when,
             EndorsementRequest.point_value,
             Demographic.flag_suspect.label("flag_suspect"),
 
-            Category,
             # Endorsee ID (single value)
             #TapirUser.user_id.label("endorsee"),
             # Endorsement ID (single value)
@@ -73,16 +58,8 @@ class EndorsementRequestModel(BaseModel):
             # Audit ID (single value)
             #EndorsementRequestsAudit.session_id.label("audit")
         ).outerjoin(
-            Category,
-            and_(
-                EndorsementRequest.archive == Category.archive,
-                EndorsementRequest.subject_class == Category.subject_class
-            )
-        ).outerjoin(
             Demographic,
-            and_(
-                Demographic.user_id == EndorsementRequest.endorsee_id,
-            )
+            Demographic.user_id == EndorsementRequest.endorsee_id,
         )
     pass
 
@@ -101,7 +78,9 @@ async def list_endorsement_requests(
         flag_valid: Optional[bool] = Query(None),
         not_positive: Optional[bool] = Query(None, description="Not positive point value"),
         suspected: Optional[bool] = Query(None, description="Suspected user"),
-        db: Session = Depends(get_db)
+        current_user: ArxivUserClaims = Depends(get_current_user),
+        db: Session = Depends(get_db),
+
     ) -> List[EndorsementRequestModel]:
     query = EndorsementRequestModel.base_select(db)
 
@@ -139,6 +118,9 @@ async def list_endorsement_requests(
             t_end = datetime_to_epoch(end_date, date.today(), hour=23, minute=59, second=59)
             query = query.filter(EndorsementRequest.issued_when.between(t_begin, t_end))
 
+    if not (current_user.is_admin or current_user.is_mod):
+        query = query.filter(EndorsementRequest.endorsee_id == current_user.user_id)
+
     if flag_valid is not None:
         query = query.filter(EndorsementRequest.flag_valid == flag_valid)
 
@@ -165,26 +147,37 @@ async def list_endorsement_requests(
 
 
 @router.get('/{id:int}')
-async def get_endorsement_request(id: int, db: Session = Depends(get_db)) -> EndorsementRequestModel:
-    item = EndorsementRequestModel.base_select(db).filter(EndorsementRequest.request_id == id).all()
-    if item:
-        return EndorsementRequestModel.from_orm(item[0])
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+async def get_endorsement_request(id: int,
+                                  current_user: ArxivUserClaims = Depends(get_current_user),
+                                  db: Session = Depends(get_db)) -> EndorsementRequestModel:
+    item: EndorsementRequest = EndorsementRequestModel.base_select(db).filter(EndorsementRequest.request_id == id).one_or_none()
+    if not item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    if current_user.user_id != item.endorsee_id and (not (current_user.is_admin or current_user.is_mod)):
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+    return EndorsementRequestModel.from_orm(item)
 
 
-@router.put('/{id:int}')
+@router.put('/{id:int}', dependencies=[Depends(is_any_user)])
 async def update_endorsement_request(
         request: Request,
         id: int,
+        current_user: ArxivUserClaims = Depends(get_current_user),
         session: Session = Depends(transaction)) -> EndorsementRequestModel:
     body = await request.json()
 
-    item = session.query(EndorsementRequest).filter(EndorsementRequest.request_id == id).first()
+    item = session.query(EndorsementRequest).filter(EndorsementRequest.request_id == id).one_or_none()
     if item is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Endorsement request not found")
+
+    if current_user.user_id != item.endorsee_id and (not (current_user.is_admin or current_user.is_mod)):
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
 
     # Verify?
     for key, value in body.items():
+        if key == "id":
+            continue
         if key in item.__dict__:
             setattr(item, key, value)
 
@@ -198,6 +191,9 @@ async def create_endorsement_request(
         request: Request,
         session: Session = Depends(transaction)) -> EndorsementRequestModel:
     body = await request.json()
+    # ID is decided after added
+    if "id" in body:
+        del body["id"]
 
     item = EndorsementRequest(**body)
     session.add(item)
@@ -209,11 +205,15 @@ async def create_endorsement_request(
 @router.delete('/{id:int}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_endorsement_request(
         id: int,
+        current_user: ArxivUserClaims = Depends(get_current_user),
         session: Session = Depends(transaction)) -> Response:
 
-    item = session.query(EndorsementRequest).filter(EndorsementRequest.request_id == id).first()
+    item: EndorsementRequest = session.query(EndorsementRequest).filter(EndorsementRequest.request_id == id).one_or_none()
     if item is None:
         raise HTTPException(status_code=404, detail="User not found")
+
+    if current_user.user_id != item.endorsee_id and (not (current_user.is_admin or current_user.is_mod)):
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
 
     item.delete_instance()
     session.commit()

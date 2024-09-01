@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
 
-import { useMediaQuery } from '@mui/material';
+import {Grid, useMediaQuery, Table, TableRow, TableCell} from '@mui/material';
 import {
     useDataProvider,
     List,
@@ -28,6 +28,8 @@ import {
     Show,
     SimpleShowLayout, useGetOne,
 } from 'react-admin';
+
+import CategoryField from "./bits/CategoryField";
 
 import { addDays } from 'date-fns';
 
@@ -104,19 +106,25 @@ export const EndorsementRequestList = () => {
                     tertiaryText={record => record.email}
                 />
             ) : (
-                <Datagrid rowClick="show" sort={sorter}>
-                    <BooleanField source="flag_valid" label={"Valid"} FalseIcon={null} />
-                    <TextField source="archive" label={"Category"}/>
-                    <TextField source="subject_class" label={"Class"}/>
-                    <TextField source="arXiv_categories" label={"Categories"}/>
-                    <DateField source="issued_when" label={"Issued"}/>
-                    <NumberField source="point_value" label={"Point"}/>
+                <Datagrid rowClick="show" sort={sorter} >
+                    <NumberField source="id" label={"ID"}/>
                     <ReferenceField source="endorsee_id" reference="users"
                                     link={(record, reference) => `/${reference}/${record.id}`} >
                         <TextField source={"last_name"} />
                         {", "}
                         <TextField source={"first_name"} />
+                        {"  ("}
+                        <TextField source={"username"} />
+                        {")"}
                     </ReferenceField>
+
+                    <CategoryField label={"Category"} source="id" sourceCategory="archive" sourceClass="subject_class" />
+                    <DateField source="issued_when" label={"Issued"}/>
+
+                    <ReferenceField source="id" reference="endorsement_requests_audit" label={"Remote host"}>
+                        <TextField source={"remote_host"} label={"Remote host"}/>
+                    </ReferenceField>
+                    <BooleanField source="flag_valid" label={"Valid"} FalseIcon={null} />
                 </Datagrid>
             )}
         </List>
@@ -188,28 +196,68 @@ export const EndorsementRequestEdit = () => {
 
     return (
         <Edit title={<EndorsementRequestTitle />}>
+            <Grid container>
+                <Grid item xs={6}>
             <SimpleForm>
-                <TextInput source="id" disabled />
+                <BooleanInput name={"Valid"} source={"flag_valid"} label={"Valid"} />
+                <span>ID: <TextField source="id" />  Category:
+                    <CategoryField sourceCategory={"archive"} sourceClass={"subject_class"} source={"id"} label={"Category"}/>
+                </span>
+                <span>Endorsee:
                 <ReferenceField source="endorsee_id" reference="users"
                                 link={(record, reference) => `/${reference}/${record.id}`} >
                     <TextField source={"last_name"} fontStyle={{fontSize: '1rem'}} />
                     {", "}
                     <TextField source={"first_name"} fontStyle={{fontSize: '1rem'}} />
                 </ReferenceField>
+                    </span>
 
                 <ReferenceInput source="endorser_id" reference="users">
                     <TextField source={"last_name"} fontStyle={{fontSize: '1rem'}} />
-                    {", "}
                     <TextField source={"first_name"} fontStyle={{fontSize: '1rem'}} />
                 </ReferenceInput>
 
-
-                <SelectInput source="archive" label="Category" choices={categoryChoices} onChange={(event) => handleCategoryChange(event as React.ChangeEvent<HTMLSelectElement>)}/>
-                <SelectInput source="subject_class" label="Subject" choices={subjectChoices} />
-
-                <DateInput source="issued_when" disabled label={"Issued"}/>
+                <span>
+                    Issued when: <DateField source="issued_when"  label={"Issued"}/>
+                </span>
                 <NumberInput source="point_value"  label={"Point"} />
             </SimpleForm>
+                </Grid>
+                <Grid item xs={6}>
+                    <Table>
+                        <TableRow>
+                            <TableCell>Session ID</TableCell>
+                            <TableCell>
+                                <ReferenceField source={"id"} reference="endorsement_requests_audit">
+                                    <TextField source={"session_id"}/>
+                                </ReferenceField>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell>Remote Hostname</TableCell>
+                            <TableCell>
+                                <ReferenceField source={"id"} reference="endorsement_requests_audit">
+                                    <TextField source={"remote_host"}/>
+                                </ReferenceField>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell>Remote Address</TableCell>
+                            <TableCell>
+                                <ReferenceField source={"id"} reference="endorsement_requests_audit">
+                                    <TextField source={"remote_addr"}/>
+                                </ReferenceField>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell>Endorsement Code</TableCell>
+                            <TableCell>
+                                <TextField source={"secret"}/>
+                            </TableCell>
+                        </TableRow>
+                    </Table>
+                </Grid>
+            </Grid>
         </Edit>
     );
 }

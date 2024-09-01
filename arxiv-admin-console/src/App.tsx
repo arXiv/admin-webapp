@@ -6,6 +6,9 @@ import EmailIcon from '@mui/icons-material/EmailOutlined';
 import EndorsedEcon from '@mui/icons-material/Verified';
 import RequestIcon from '@mui/icons-material/MeetingRoom';
 import DocumentIcon from '@mui/icons-material/Book';
+import CategoryIcon from '@mui/icons-material/List';
+import ModeratorIcon from '@mui/icons-material/Policy';
+import OwnershipRequestIcon from '@mui/icons-material/Star';
 
 import {TemplateCreate, TemplateList, TemplateEdit} from './templates';
 import { UserList, UserEdit, UserCreate } from './users';
@@ -15,6 +18,9 @@ import { authProvider } from './authProvider';
 import adminApiDataProvider from './adminApiDataProvider';
 import {EndorsementCreate, EndorsementEdit, EndorsementList} from "./endorsements";
 import {DocumentCreate, DocumentEdit, DocumentList} from "./documents";
+import {CategoryList, CategoryCreate, CategoryEdit} from "./categories";
+import {ModeratorCreate, ModeratorEdit, ModeratorList} from "./moderators";
+import {OwnershipRequestEdit, OwnershipRequestList} from "./ownershipRequests";
 
 const dataProvider = new adminApiDataProvider('http://127.0.0.1:5000/api/v1');
 
@@ -32,7 +38,7 @@ const App = () => (
         authProvider={authProvider}
         dataProvider={dataProvider}
         dashboard={Dashboard}
-        loginPage={(<RedirectComponent to={"http://127.0.0.1:5000/api/login?next=http://127.0.0.1:5000"}/>)}
+        loginPage={(<RedirectComponent to={"http://127.0.0.1:5000/login?next=http://127.0.0.1:5000"}/>)}
     >
         <Resource
             name="users"
@@ -84,7 +90,38 @@ const App = () => (
             create={DocumentCreate}
         />
 
+        <Resource
+            name="categories"
+            list={CategoryList}
+            show={ShowGuesser}
+            icon={CategoryIcon}
+            recordRepresentation="name"
+            edit={CategoryEdit}
+            create={CategoryCreate}
+        />
 
+        <Resource
+            name="moderators"
+            list={ModeratorList}
+            show={ShowGuesser}
+            icon={ModeratorIcon}
+            recordRepresentation="archive"
+            edit={ModeratorEdit}
+            create={ModeratorCreate}
+        />
+
+        <Resource
+            name="ownership_requests"
+            list={OwnershipRequestList}
+            edit={OwnershipRequestEdit}
+            show={ShowGuesser}
+            icon={OwnershipRequestIcon}
+            recordRepresentation="user_id"
+        />
+
+        <Resource name="endorsement_requests_audit"/>
+        <Resource name="ownership_requests_audit"/>
+        <Resource name="paper_owners"/>
 
     </Admin>
 );

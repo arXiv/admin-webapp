@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from "react";
-import { Card, CardContent, CardHeader, Grid } from '@mui/material';
+import { Link } from 'react-router-dom';
+import {Card, CardContent, CardHeader, Grid, Button} from '@mui/material';
 import {useDataProvider} from "react-admin";
 import Typography from "@mui/material/Typography";
 import {EndorsementRequestEdit} from "./endorsementRequests";
@@ -50,31 +51,53 @@ export const Dashboard = () => {
     const dataProvider = useDataProvider();
 
     return (
+        <Grid container>
+            <Grid item xs={5}>
         <Card>
-            <CardHeader title="Welcome to the user admin" />
+            <CardHeader title="Submission status" />
             <CardContent>
                 <Grid container spacing={2}>
-                    <Grid item container xs={12}>
-                        <Typography variant="body1" color="textSecondary">Endorsement Request Summary</Typography>
+                    <Grid item xs={12}>
                         <Grid item container xs={12}>
-                            <ResourceSummary resource={"endorsement_requests"} days={1} title={"Today"} />
-                            <ResourceSummary resource={"endorsement_requests"} days={7} title={"Last 7 days"} />
-                            <ResourceSummary resource={"endorsement_requests"} days={60} title={"Last 60 days"} />
-                            <ResourceSummary resource={"endorsement_requests"} days={365} title={"Last 365 days"} />
+                            <Typography variant="body1" color="textSecondary">Endorsement Request Summary</Typography>
+                            <Grid item container xs={12}>
+                                <ResourceSummary resource={"endorsement_requests"} days={1} title={"Today"} />
+                                <ResourceSummary resource={"endorsement_requests"} days={7} title={"Last 7 days"} />
+                                <ResourceSummary resource={"endorsement_requests"} days={60} title={"Last 60 days"} />
+                                <ResourceSummary resource={"endorsement_requests"} days={365} title={"Last 365 days"} />
+                            </Grid>
+                        </Grid>
+
+                        <Grid item container xs={12}>
+                            <Typography variant="body1" color="textSecondary">Endorsement Summary</Typography>
+                            <Grid item container xs={12}>
+                                <ResourceSummary resource={"endorsements"} days={1} title={"Today"} />
+                                <ResourceSummary resource={"endorsements"} days={7} title={"Last 7 days"} />
+                                <ResourceSummary resource={"endorsements"} days={30} title={"Last 30 days"} />
+                            </Grid>
                         </Grid>
                     </Grid>
-
-                    <Grid item container xs={12}>
-                        <Typography variant="body1" color="textSecondary">Endorsement Summary</Typography>
-                        <Grid item container xs={12}>
-                            <ResourceSummary resource={"endorsements"} days={1} title={"Today"} />
-                            <ResourceSummary resource={"endorsements"} days={7} title={"Last 7 days"} />
-                            <ResourceSummary resource={"endorsements"} days={30} title={"Last 30 days"} />
-                        </Grid>
-                    </Grid>
-
                 </Grid>
             </CardContent>
         </Card>
+        </Grid>
+            <Grid item xs={5}>
+                <Card>
+                    <CardHeader title="Users" />
+                    <CardContent>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12}>
+                                <Grid item container xs={12}>
+                                    <Button component={Link} to={{ pathname: '/users', search: '?filter={"suspect":true}' }}>
+                                        Suspect Users
+                                    </Button>
+                                </Grid>
+                            </Grid>
+                        </Grid>
+                    </CardContent>
+                </Card>
+            </Grid>
+
+        </Grid>
     );
 }

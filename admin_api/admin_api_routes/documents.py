@@ -52,6 +52,7 @@ async def list_documents(
         _order: Optional[str] = Query("ASC", description="sort order"),
         _start: Optional[int] = Query(0, alias="_start"),
         _end: Optional[int] = Query(100, alias="_end"),
+        id: Optional[List[int]] = Query(None, description="List of document IDs to filter by"),
         preset: Optional[str] = Query(None),
         start_date: Optional[date] = Query(None, description="Start date for filtering"),
         end_date: Optional[date] = Query(None, description="End date for filtering"),
@@ -62,44 +63,45 @@ async def list_documents(
     if _start < 0 or _end < _start:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Invalid start or end index")
+    if id is None:
+        t0 = datetime.now()
 
-    t0 = datetime.now()
+        order_columns = []
+        if _sort:
+            keys = _sort.split(",")
+            for key in keys:
+                if key == "id":
+                    key = "document_id"
+                try:
+                    order_column = getattr(Document, key)
+                    order_columns.append(order_column)
+                except AttributeError:
+                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                        detail="Invalid start or end index")
 
-    order_columns = []
-    if _sort:
-        keys = _sort.split(",")
-        for key in keys:
-            if key == "id":
-                key = "document_id"
-            try:
-                order_column = getattr(Document, key)
-                order_columns.append(order_column)
-            except AttributeError:
+        if preset is not None:
+            matched = re.search("last_(\d+)_days", preset)
+            if matched:
+                t_begin = datetime_to_epoch(None, t0 - timedelta(days=int(matched.group(1))))
+                t_end = datetime_to_epoch(None, t0)
+                query = query.filter(Document.dated.between(t_begin, t_end))
+            else:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                    detail="Invalid start or end index")
-
-    if preset is not None:
-        matched = re.search("last_(\d+)_days", preset)
-        if matched:
-            t_begin = datetime_to_epoch(None, t0 - timedelta(days=int(matched.group(1))))
-            t_end = datetime_to_epoch(None, t0)
-            query = query.filter(Document.dated.between(t_begin, t_end))
+                                    detail="Invalid preset format")
         else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail="Invalid preset format")
+            if start_date or end_date:
+                t_begin = datetime_to_epoch(start_date, VERY_OLDE)
+                t_end = datetime_to_epoch(end_date, date.today(), hour=23, minute=59, second=59)
+                query = query.filter(Document.dated.between(t_begin, t_end))
+
+
+        for column in order_columns:
+            if _order == "DESC":
+                query = query.order_by(column.desc())
+            else:
+                query = query.order_by(column.asc())
     else:
-        if start_date or end_date:
-            t_begin = datetime_to_epoch(start_date, VERY_OLDE)
-            t_end = datetime_to_epoch(end_date, date.today(), hour=23, minute=59, second=59)
-            query = query.filter(Document.dated.between(t_begin, t_end))
-
-
-    for column in order_columns:
-        if _order == "DESC":
-            query = query.order_by(column.desc())
-        else:
-            query = query.order_by(column.asc())
-
+        query = query.filter(Document.document_id.in_(id))
 
     count = query.count()
     response.headers['X-Total-Count'] = str(count)

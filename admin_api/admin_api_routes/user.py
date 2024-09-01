@@ -12,7 +12,8 @@ from sqlalchemy.orm import Session, aliased
 from pydantic import BaseModel
 
 from arxiv.db import transaction
-from arxiv.db.models import TapirUser, TapirNickname, t_arXiv_moderators, Demographic
+from arxiv.db.models import TapirUser, TapirNickname, t_arXiv_moderators, Demographic, TapirCountry
+
 
 from .models import DemographicModel
 
@@ -48,17 +49,27 @@ class UserModel(BaseModel):
 
     flag_suspect: Optional[bool]
     dirty: Optional[int]  # 0, 1, 2
+    moderator_id: Optional[str]
 
     @staticmethod
     def base_select(db: Session):
-        is_mod_subquery = exists().where(t_arXiv_moderators.c.user_id == TapirUser.user_id)
+        is_mod_subquery = exists().where(t_arXiv_moderators.c.user_id == TapirUser.user_id).correlate(TapirUser)
+        nick_subquery = select(TapirNickname.nickname).where(TapirUser.user_id == TapirNickname.user_id).correlate(TapirUser).limit(1).scalar_subquery()
+        """
+        mod_subquery = select(
+            func.concat(t_arXiv_moderators.c.user_id, "+",
+                        t_arXiv_moderators.c.archive, "+",
+                        t_arXiv_moderators.c.subject_class)
+        ).where(t_arXiv_moderators.c.user_id == TapirUser.user_id).correlate(TapirUser)
+        """
+
         return (db.query(
             TapirUser.user_id.label("id"),
             TapirUser.email,
             TapirUser.first_name,
             TapirUser.last_name,
             TapirUser.suffix_name,
-            TapirNickname.nickname.label("username"),
+            nick_subquery.label("username"),
             TapirUser.email_bouncing,
             TapirUser.policy_class,
             TapirUser.joined_date,
@@ -80,20 +91,20 @@ class UserModel(BaseModel):
             ).label("flag_is_mod"),
             Demographic.flag_suspect.label('flag_suspect'),
             Demographic.dirty,
-        ).join(
-            TapirNickname, TapirUser.user_id == TapirNickname.user_id)
-        ).outerjoin(
-            Demographic, TapirUser.user_id == Demographic.user_id
-        )
+            # mod_subquery.label("moderator_id"),
+            )
+                .outerjoin(Demographic, TapirUser.user_id == Demographic.user_id)
+                # .outerjoin(t_arXiv_moderators, TapirUser.user_id == t_arXiv_moderators.c.user_id)
+                )
 
     pass
 
 
 @router.get("/{user_id:int}")
 def get_one_user(user_id:int, db: Session = Depends(get_db)) -> UserModel:
-    user = UserModel.base_select(db).filter(TapirUser.user_id == user_id).all()
+    user = UserModel.base_select(db).filter(TapirUser.user_id == user_id).one_or_none()
     if user:
-        return UserModel.from_orm(user[0])
+        return UserModel.from_orm(user)
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 

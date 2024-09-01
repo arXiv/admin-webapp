@@ -10,6 +10,10 @@ import {
 } from 'react-admin';
 import jsonServerProvider from 'ra-data-json-server';
 
+const addTrailingSlash = (url: string) => {
+    return url.endsWith('/') ? url : `${url}/`;
+};
+
 class adminApiDataProvider implements DataProvider {
     private dataProvider: DataProvider;
     private api: string;
@@ -41,18 +45,38 @@ class adminApiDataProvider implements DataProvider {
             console.log("endorsees -> users");
             return this.dataProvider.getList<T>("users", params);
         }
+        else if (resource === 'paper_owners') {
+            const { user_id } = params.filter;
+            const url = `${this.api}/paper_owners/user/${user_id}`;
+            try {
+                const response = await fetchUtils.fetchJson(url);
+                return {
+                    data: response.json as T[],
+                    total: response.json.length,
+                };
+            }
+            catch (error) {
+                return {
+                    data: [] as T[],
+                    total: 0,
+                };
+            }
+        }
 
-        return this.dataProvider.getList<T>(resource, params);
+        return this.dataProvider.getList<T>(addTrailingSlash(resource), params);
     }
 
-    getOne: typeof this.dataProvider.getOne = (resource, params) => this.dataProvider.getOne(resource, params);
+    getOne: typeof this.dataProvider.getOne = (resource, params) =>
+    {
+        return this.dataProvider.getOne(resource, params);
+    }
 
     async getMany<T extends RaRecord>(resource: string, params: GetManyParams): Promise<GetManyResult<T>> {
         if (resource === 'endorsees') {
             console.log("endorsees -> users");
-            return this.dataProvider.getMany<T>("users", params);
+            return this.dataProvider.getMany<T>("users/", params);
         }
-        return this.dataProvider.getMany<T>(resource, params);
+        return this.dataProvider.getMany<T>(addTrailingSlash(resource), params);
     }
 
     getManyReference: typeof this.dataProvider.getManyReference = (resource, params) => this.dataProvider.getManyReference(resource, params);

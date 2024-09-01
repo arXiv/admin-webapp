@@ -6,14 +6,20 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import Response, RedirectResponse
 
-from admin_api_routes.authentication import router as auth_router
-from admin_api_routes.user import router as user_router
+# from admin_api_routes.authentication import router as auth_router
+from admin_api_routes.categories import router as categories_router
 from admin_api_routes.email_template import router as email_template_router
 from admin_api_routes.endorsement_requsets import router as endorsement_request_router
+from admin_api_routes.endorsement_requsets_audit import router as endorsement_request_audit_router
 from admin_api_routes.endorsements import router as endorsement_router
-from admin_api_routes.categories import router as categories_router
+from admin_api_routes.demographic import router as demographic_router
 from admin_api_routes.documents import router as document_router
+from admin_api_routes.moderators import router as moderator_router
 from admin_api_routes.ownership_requests import router as ownership_request_router
+from admin_api_routes.ownership_requests_audit import router as ownership_request_audit_router
+from admin_api_routes.paper_owners import router as ownership_router
+from admin_api_routes.user import router as user_router
+
 from admin_api_routes.frontend import router as frontend_router
 
 
@@ -25,12 +31,15 @@ from arxiv.auth.openid.oidc_idp import ArxivOidcIdpClient
 
 from app_logging import setup_logger
 
-KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', '127.0.0.1')
+KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'http://127.0.0.1:3033')
+KEYCLOAK_CLIENT_SECRET = os.environ.get("KEYCLOAK_CLIENT_SECRET", "foo")
+DB_URI = os.environ.get('CLASSIC_DB_URI')
+JWT_SECRET = os.environ.get('JWT_SECRET', "secret")
 
-_idp_ = ArxivOidcIdpClient("http://127.0.0.1:5000/api/callback",
+_idp_ = ArxivOidcIdpClient("http://127.0.0.1:5000/callback",
                            scope=["openid"],
                            server_url=KEYCLOAK_SERVER_URL,
-                           client_secret=os.environ.get('KEYCLOAK_CLIENT_SECRET', ''),
+                           client_secret=KEYCLOAK_CLIENT_SECRET,
                            logger=getLogger(__name__)
                            )
 
@@ -71,7 +80,7 @@ def create_app(*args, **kwargs) -> FastAPI:
     setup_logger()
 
     settings = Settings (
-        CLASSIC_DB_URI = os.environ['CLASSIC_DB_URI'],
+        CLASSIC_DB_URI = DB_URI,
         LATEXML_DB_URI = None
     )
     engine, _ = configure_db(settings)
@@ -81,11 +90,11 @@ def create_app(*args, **kwargs) -> FastAPI:
         idp=_idp_,
         arxiv_db_engine=engine,
         arxiv_settings=settings,
-        JWT_SECRET="secret",
-        LOGIN_REDIRECT_URL="http://127.0.0.1:5000/api/login",
+        JWT_SECRET=settings.SECRET_KEY,
+        LOGIN_REDIRECT_URL="http://127.0.0.1:5000/login",
         LOGOUT_REDIRECT_URL="http://127.0.0.1:5000",
-        AUTH_SESSION_COOKIE_NAME="token",
-        CLASSIC_COOKIE_NAME="TAPIR_COOKIE",
+        AUTH_SESSION_COOKIE_NAME="arxiv_session_cookie",
+        CLASSIC_COOKIE_NAME="tapir_session_cookie",
     )
 
     app.add_middleware(
@@ -99,14 +108,19 @@ def create_app(*args, **kwargs) -> FastAPI:
     # app.add_middleware(LogMiddleware)
     app.add_middleware(SessionMiddleware, secret_key="SECRET_KEY")
 
-    app.include_router(auth_router)
+    # app.include_router(auth_router)
     app.include_router(categories_router, prefix="/v1")
+    app.include_router(demographic_router, prefix="/v1")
     app.include_router(user_router, prefix="/v1")
     app.include_router(email_template_router, prefix="/v1")
     app.include_router(endorsement_router, prefix="/v1")
     app.include_router(endorsement_request_router, prefix="/v1")
+    app.include_router(endorsement_request_audit_router, prefix="/v1")
     app.include_router(ownership_request_router, prefix="/v1")
+    app.include_router(ownership_request_audit_router, prefix="/v1")
+    app.include_router(moderator_router, prefix="/v1")
     app.include_router(document_router, prefix="/v1")
+    app.include_router(ownership_router, prefix="/v1")
     app.include_router(frontend_router)
 
     @app.middleware("http")

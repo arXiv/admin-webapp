@@ -1,6 +1,7 @@
 import { AuthProvider } from 'react-admin';
+import {useEffect, useState} from "react";
 
-const apiUrl = 'http://127.0.0.1:5000/api';
+const authUrl = 'http://127.0.0.1:5000';
 
 function getCookie(name: string): string | null {
     const value = `; ${document.cookie}`;
@@ -9,20 +10,38 @@ function getCookie(name: string): string | null {
     return null;
 }
 
-const cookie_name: string = "token";
+let cookie_name = "arxiv_session_cookie";
+const fetchCookieName = async() => {
+    const res = await fetch(`${authUrl}/token-names`);
+    if (res.ok) {
+        const plain = await res.clone().text();
+        console.log(plain)
+        try {
+            const data = await res.json();
+            cookie_name = data.session;
+        }
+        catch (e) {
+            console.error(e);
+        }
+    }
+    else {
+        console.log(`cookie name is default ${cookie_name}`);
+    }
+}
+fetchCookieName();
 
 export const authProvider: AuthProvider = {
     // called when the user attempts to log in
     login: () => {
         console.log("auth: /login");
-        window.location.href = `${apiUrl}/login`;
+        window.location.href = `${authUrl}/login`;
         return Promise.resolve();
     },
     // called when the user clicks on the logout button
     logout: () => {
         console.log("auth: /logout");
         /* document.cookie = `${cookie_name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`; */
-        return fetch(`${apiUrl}/logout`, {
+        return fetch(`${authUrl}/logout?next=http://127.0.0.1:5000/`, {
             method: "GET",
             credentials: "include",
         }).then(response => {
@@ -35,8 +54,7 @@ export const authProvider: AuthProvider = {
                 console.log("auth: response ng");
                 return Promise.reject();
             }
-        })
-            .catch(error => {
+        }).catch(error => {
             console.error(`error auth logout ${error}`);
         });
     },

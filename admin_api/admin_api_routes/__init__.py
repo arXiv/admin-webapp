@@ -34,7 +34,6 @@ def is_any_user(request: Request) -> bool:
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 
-
 def get_current_user(request: Request) -> ArxivUserClaims | None:
     logger = getLogger(__name__)
     session_cookie_key = request.app.extra['AUTH_SESSION_COOKIE_NAME']
@@ -71,6 +70,22 @@ def get_db():
     db = SessionLocal()
     try:
         yield db
+    finally:
+        db.close()
+
+
+def transaction():
+    logger = getLogger(__name__)
+    db = SessionLocal()
+    try:
+        yield db
+
+        if db.new or db.dirty or db.deleted:
+            db.commit()
+    except Exception as e:
+        logger.warning(f'Commit failed, rolling back', exc_info=1)
+        db.rollback()
+        raise
     finally:
         db.close()
 

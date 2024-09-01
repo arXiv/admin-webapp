@@ -2,7 +2,7 @@
 import re
 from datetime import timedelta, datetime, date
 from enum import Enum
-from typing import Optional, List
+from typing import Optional, List, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request, Response
 
@@ -15,7 +15,6 @@ from arxiv.db import transaction
 from arxiv.db.models import Category
 
 from . import is_admin_user, get_db, datetime_to_epoch, VERY_OLDE
-from .models import CategoryModel
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +24,6 @@ class EndorseOption(str, Enum):
     y = 'y'
     n = 'n'
     d = 'd'
-
 
 class ArchiveModel(BaseModel):
     id: str
@@ -37,28 +35,72 @@ class SubjectClassModel(BaseModel):
     name: str
     description: str
 
+class CategoryModel(BaseModel):
+    id: str
+    archive: str
+    subject_class: Optional[str]
+    definitive: bool
+    active: bool
+    category_name: Optional[str]
+    endorse_all: str # Mapped[Literal['y', 'n', 'd']] = mapped_column(Enum('y', 'n', 'd'), nullable=False, server_default=text("'d'"))
+    endorse_email: str # Mapped[Literal['y', 'n', 'd']] = mapped_column(Enum('y', 'n', 'd'), nullable=False, server_default=text("'d'"))
+    papers_to_endorse: int
+    endorsement_domain: Optional[str]
+
+    class Config:
+        orm_mode = True
+
+    @classmethod
+    def base_query(cls, db: Session) -> Query:
+        return db.query(
+            func.concat(Category.archive, "+", Category.subject_class).label("id"),
+            Category.archive,
+            Category.subject_class,
+            Category.definitive,
+            Category.active,
+            Category.category_name,
+            Category.endorse_all,
+            Category.endorse_email,
+            Category.papers_to_endorse,
+            Category.endorsement_domain
+        )
+
 @router.get('/')
 async def list_categories(
         response: Response,
         _order: Optional[str] = Query("ASC", description="sort order"),
         _start: Optional[int] = Query(0, alias="_start"),
         _end: Optional[int] = Query(100, alias="_end"),
+        archive: Optional[str] = Query(""),
+        subject_class: Optional[str] = Query(""),
+        active: Optional[bool] = Query(None, description="active"),
         db: Session = Depends(get_db)
-    ) -> List[ArchiveModel]:
+    ) -> List[CategoryModel]:
     if _start < 0 or _end < _start:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Invalid start or end index")
 
-    query = db.query(Category.archive).distinct()
+    query = CategoryModel.base_query(db)
+    if archive:
+        query = query.filter(Category.archive.ilike(archive + "%"))
+
+    if subject_class:
+        query = query.filter(Category.subject_class.ilike(subject_class + "%"))
+
+    if active is not None:
+        state = 1 if active else 0
+        query = query.filter(Category.active == state)
 
     if _order == "DESC":
         query = query.order_by(Category.archive.desc())
+        query = query.order_by(Category.subject_class.desc())
     else:
         query = query.order_by(Category.archive.asc())
+        query = query.order_by(Category.subject_class.asc())
 
     count = query.count()
     response.headers['X-Total-Count'] = str(count)
-    return [{"id": cat.archive, "name": cat.archive, "description": cat.archive} for cat in query.offset(_start).limit(_end - _start).all()]
+    return [CategoryModel.from_orm(cat) for cat in query.offset(_start).limit(_end - _start).all()]
 
 
 @router.get('/{archive}/subject-class')
@@ -69,12 +111,12 @@ async def list_subject_classes(
         _start: Optional[int] = Query(0, alias="_start"),
         _end: Optional[int] = Query(100, alias="_end"),
         db: Session = Depends(get_db)
-    ) -> List[SubjectClassModel]:
+    ) -> List[CategoryModel]:
     if _start < 0 or _end < _start:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Invalid start or end index")
 
-    query = db.query(Category.subject_class).filter(Category.archive == archive)
+    query = CategoryModel.base_query(db).filter(Category.archive == archive)
 
     if _order == "DESC":
         query = query.order_by(Category.subject_class.desc())
@@ -83,7 +125,8 @@ async def list_subject_classes(
 
     count = query.count()
     response.headers['X-Total-Count'] = str(count)
-    return [{"id": cat.subject_class, "name": cat.subject_class, "description": cat.subject_class} for cat in query.offset(_start).limit(_end - _start).all()]
+    return [CategoryModel.from_orm(cat) for cat in query.offset(_start).limit(_end - _start).all()]
+
 
 
 @router.get('/{archive}/subject-class/{subject_class}')
@@ -93,7 +136,7 @@ async def get_category(
         subject_class: str,
         db: Session = Depends(get_db)
     ) -> CategoryModel:
-    query = db.query(Category).filter(Category.archive == archive, Category.subject_class == subject_class)
+    query = CategoryModel.base_query(db).filter(Category.archive == archive, Category.subject_class == subject_class).scalar()
     count = query.count()
     if count == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,)
@@ -101,22 +144,23 @@ async def get_category(
     return query.all()[0]
 
 
-@router.get('/{id:int}')
-async def get_category(id: int, db: Session = Depends(get_db)) -> CategoryModel:
-    item = CategoryModel.base_select(db).filter(Category.request_id == id).all()
+@router.get('/{id:str}')
+async def get_category(id: str, db: Session = Depends(get_db)) -> CategoryModel:
+    [archive, subject_class] = id.split("+")
+    item = db.query(Category).filter(Category.archive == archive and Category.subject_class == subject_class).all()
     if item:
-        return CategoryModel.from_orm(item[0])
+        return CategoryModel(item[0])
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@router.put('/{id:int}')
+@router.put('/{id:str}')
 async def update_category(
         request: Request,
-        id: int,
+        id: str,
         session: Session = Depends(transaction)) -> CategoryModel:
     body = await request.json()
-
-    item = session.query(Category).filter(Category.request_id == id).first()
+    [archive, subject_class] = id.split("+")
+    item = session.query(Category).filter(Category.archive == archive and Category.subject_class == subject_class).first()
     if item is None:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -127,7 +171,7 @@ async def update_category(
 
     session.commit()
     session.refresh(item)  # Refresh the instance with the updated data
-    return CategoryModel.from_orm(item)
+    return CategoryModel(item)
 
 
 @router.post('/')
@@ -140,15 +184,16 @@ async def create_category(
     session.add(item)
     session.commit()
     session.refresh(item)
-    return CategoryModel.from_orm(item)
+    return CategoryModel(item)
 
 
-@router.delete('/{id:int}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/{id:str}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_category(
-        id: int,
+        id: str,
         session: Session = Depends(transaction)) -> Response:
 
-    item = session.query(Category).filter(Category.request_id == id).first()
+    [archive, subject_class] = id.split("+")
+    item = session.query(Category).filter(Category.archive == archive and Category.subject_class == subject_class).first()
     if item is None:
         raise HTTPException(status_code=404, detail="User not found")
 
