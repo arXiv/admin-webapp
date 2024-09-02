@@ -12,7 +12,8 @@ import {
     useMediaQuery,
     Box,
     Typography,
-    TablePagination
+    TablePagination,
+    Tooltip
 } from '@mui/material';
 
 import YesIcon from '@mui/icons-material/Check';
@@ -244,7 +245,9 @@ const PaperOwnerList: React.FC = () => {
             />
             <Table>
                 <TableHead>
-                    <TableCell>Owner</TableCell>
+                    <TableCell>
+                        Owner
+                    </TableCell>
                     <TableCell>Paper</TableCell>
                     <TableCell>Title</TableCell>
                     <TableCell>Authors</TableCell>
@@ -256,7 +259,9 @@ const PaperOwnerList: React.FC = () => {
                             {paperOwners[index].flag_author ? <YesIcon /> : null}
                         </TableCell>
                         <TableCell>
-                            {document.paper_id}
+                            <ReferenceField source="id" reference="documents" record={document} link="show">
+                                <TextField source="paper_id" />
+                            </ReferenceField>
                         </TableCell>
                         <TableCell>
                             {document.title}
@@ -343,7 +348,9 @@ const RequestedPaperList: React.FC = () => {
             </Typography>
             <Table>
                 <TableHead>
-                    <TableCell>Owner</TableCell>
+                    <TableCell>
+                    <Tooltip title={"If this is on, the user is already a owner"}><span>Owner</span></Tooltip>
+                    </TableCell>
                     <TableCell>Paper</TableCell>
                     <TableCell>Title</TableCell>
                     <TableCell>Authors</TableCell>
@@ -357,7 +364,9 @@ const RequestedPaperList: React.FC = () => {
                             </RecordContextProvider>
                         </TableCell>
                         <TableCell>
-                            {document.paper_id}
+                            <ReferenceField source="id" reference="documents" record={document} link="show">
+                                <TextField source="paper_id" />
+                            </ReferenceField>
                         </TableCell>
                         <TableCell>
                             {document.title}
@@ -396,6 +405,7 @@ export const OwnershipRequestEdit = () => {
                         <Table>
                             <TableHead>
                                 <TableCell>User</TableCell>
+                                <TableCell>Email</TableCell>
                                 <TableCell>Info</TableCell>
                             </TableHead>
                             <TableRow>
@@ -405,9 +415,10 @@ export const OwnershipRequestEdit = () => {
                                         <TextField source={"last_name"} />
                                         {", "}
                                         <TextField source={"first_name"} />
-                                        {" email: "}
-                                        <EmailField source={"email"} />
-                                        {" email: "}
+                                    </ReferenceField>
+                                </TableCell>
+                                <TableCell>
+                                    <ReferenceField source="user_id" reference="users">
                                         <EmailField source={"email"} />
                                     </ReferenceField>
                                 </TableCell>

@@ -1,4 +1,13 @@
-import {useMediaQuery, ToggleButton, ToggleButtonGroup, Grid, Table, TableRow, TableCell} from '@mui/material';
+import {
+    useMediaQuery,
+    ToggleButton,
+    ToggleButtonGroup,
+    Grid,
+    Table,
+    TableRow,
+    TableCell,
+    TableHead
+} from '@mui/material';
 import {
     List,
     SimpleList,
@@ -9,11 +18,20 @@ import {
     SortPayload,
     useRecordContext,
     Edit,
-    SimpleForm, TextInput, ReferenceInput, Create, Filter, BooleanInput, DateField, ReferenceField, SelectInput
+    SimpleForm,
+    TextInput,
+    ReferenceInput,
+    Create,
+    Filter,
+    BooleanInput,
+    DateField,
+    ReferenceField,
+    SelectInput,
+    RecordContextProvider, useDataProvider
 } from 'react-admin';
 
 import DoDisturbOnIcon from '@mui/icons-material/DoDisturbOn';
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 
 const UserFilter = (props: any) => (
     <Filter {...props}>
@@ -102,7 +120,7 @@ export const UserList = () => {
                         }
                         <BooleanField source="flag_edit_users" label={"Admin"} FalseIcon={null}/>
                         <BooleanField source="flag_is_mod" label={"Mod"} FalseIcon={null}/>
-                        <BooleanField source="flag_banned" label={"Banned"} FalseIcon={null}
+                        <BooleanField source="flag_banned" label={"Suspended"} FalseIcon={null}
                                       TrueIcon={DoDisturbOnIcon}/>
                         <BooleanField source="flag_suspect" label={"Suspect"} FalseIcon={null}
                                       TrueIcon={DoDisturbOnIcon}/>
@@ -133,7 +151,33 @@ const policyClassChoices = [
 ];
 
 
-export const UserEdit = () => (
+export const UserEdit = () => {
+    const record = useRecordContext<{id: number}>();
+    const dataProvider = useDataProvider();
+    const [demographic, setDemographic] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchDemographic = async (userId: number) => {
+            try {
+                const response = await dataProvider.getOne('demographics', {id: userId});
+                setDemographic(response.data);
+                setLoading(false);
+            } catch (error) {
+                console.error("Error fetching demographic data:", error);
+                setLoading(false);
+            }
+        };
+
+        if (record)
+            fetchDemographic(record.id);
+    }, [dataProvider, record]);
+
+    if (loading) {
+        return (<div>Loading...</div>);
+    }
+
+    return (
     <Edit title={<UserTitle />}>
         <SimpleForm>
             <Grid container>
@@ -166,6 +210,7 @@ export const UserEdit = () => (
                                 <TextField source="username" />
                             </TableCell>
                         </TableRow>
+
                         <TableRow>
                             <TableCell>
                                 policy class
@@ -181,6 +226,15 @@ export const UserEdit = () => (
 
                 <Grid item xs={6}>
                     <Table>
+                        <TableHead>
+                            <TableCell>
+                                Property
+                            </TableCell>
+                            <TableCell>
+                                Values
+                            </TableCell>
+
+                        </TableHead>
                         <TableRow>
                             <TableCell>
                                 User ID
@@ -197,12 +251,33 @@ export const UserEdit = () => (
                                 <TextField source="id" />
                             </TableCell>
                         </TableRow>
+                        <TableRow>
+                            <TableCell>Affiliation</TableCell>
+                            <TableCell>
+                                <RecordContextProvider value={demographic}>
+                                    <TextField source="affiliation" />
+                                </RecordContextProvider>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell>Country</TableCell>
+                            <TableCell>
+                                <TextField source="country" />
+                            </TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell>URL</TableCell>
+                            <TableCell>
+                                <TextField source="url" />
+                            </TableCell>
+                        </TableRow>
                     </Table>
                 </Grid>
             </Grid>
         </SimpleForm>
     </Edit>
-);
+)
+};
 
 export const UserCreate = () => (
     <Create>

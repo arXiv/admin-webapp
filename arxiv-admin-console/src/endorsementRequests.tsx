@@ -26,12 +26,13 @@ import {
     ReferenceField,
     NumberInput,
     Show,
-    SimpleShowLayout, useGetOne,
+    SimpleShowLayout, useGetOne, RecordContextProvider,
 } from 'react-admin';
 
 import CategoryField from "./bits/CategoryField";
 
 import { addDays } from 'date-fns';
+import PointValueBooleanField from "./bits/PointValueBooleanField";
 
 interface Category {
     id: string;
@@ -79,6 +80,7 @@ const EndorsementRequestFilter = (props: any) => {
 
     return (
         <Filter {...props}>
+            <BooleanInput label="Open" source="not_positive" alwaysOn/>
             <SelectInput
                 label="Preset Date Range"
                 source="preset"
@@ -88,7 +90,7 @@ const EndorsementRequestFilter = (props: any) => {
             />
             <DateInput label="Start Date" source="start_date" />
             <DateInput label="End Date" source="end_date" />
-            <BooleanInput label="Valid" source="flag_valid" />
+            <BooleanInput label="Valid" source="flag_valid" defaultValue="true"/>
         </Filter>
     );
 };
@@ -98,7 +100,9 @@ export const EndorsementRequestList = () => {
     const sorter: SortPayload = {field: 'endorsementRequest_id', order: 'ASC'};
     const isSmall = useMediaQuery<any>(theme => theme.breakpoints.down('sm'));
     return (
-        <List filters={<EndorsementRequestFilter />}>
+        <List filters={<EndorsementRequestFilter />}
+              filterDefaultValues={{not_positive: true}}
+              sort={{field: 'id', order: 'DESC'}}>
             {isSmall ? (
                 <SimpleList
                     primaryText={record => record.name}
@@ -125,6 +129,7 @@ export const EndorsementRequestList = () => {
                         <TextField source={"remote_host"} label={"Remote host"}/>
                     </ReferenceField>
                     <BooleanField source="flag_valid" label={"Valid"} FalseIcon={null} />
+                    <PointValueBooleanField source="point_value" label={"Open"} />
                 </Datagrid>
             )}
         </List>
@@ -153,12 +158,100 @@ const EndorsementRequestTitle = () => {
     );
 };
 
+
+export const ShowDemographic = () => {
+    const record = useRecordContext();
+    const dataProvider = useDataProvider();
+    const [demographic, setDemographic] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchDemographic = async (userId: number) => {
+            try {
+                const response = await dataProvider.getOne('demographics', {id: userId});
+                setDemographic(response.data);
+                console.log("demo: " + JSON.stringify(response.data));
+                setLoading(false);
+            } catch (error) {
+                console.error("Error fetching demographic data:", error);
+                setLoading(false);
+            }
+        };
+
+        if (record) {
+            console.log("show-demo: " + JSON.stringify(record));
+            fetchDemographic(record.endorsee_id);
+        }
+    }, [dataProvider, record]);
+
+
+    return (
+        <Table>
+            <TableRow>
+                <TableCell>Session ID</TableCell>
+                <TableCell>
+                    <ReferenceField source={"id"} reference="endorsement_requests_audit">
+                        <TextField source={"session_id"}/>
+                    </ReferenceField>
+                </TableCell>
+            </TableRow>
+            <TableRow>
+                <TableCell>Remote Hostname</TableCell>
+                <TableCell>
+                    <ReferenceField source={"id"} reference="endorsement_requests_audit">
+                        <TextField source={"remote_host"}/>
+                    </ReferenceField>
+                </TableCell>
+            </TableRow>
+            <TableRow>
+                <TableCell>Remote Address</TableCell>
+                <TableCell>
+                    <ReferenceField source={"id"} reference="endorsement_requests_audit">
+                        <TextField source={"remote_addr"}/>
+                    </ReferenceField>
+                </TableCell>
+            </TableRow>
+            <TableRow>
+                <TableCell>Endorsement Code</TableCell>
+                <TableCell>
+                    <TextField source={"secret"}/>
+                </TableCell>
+            </TableRow>
+            <RecordContextProvider value={demographic}>
+                <TableRow>
+                    <TableCell>Affiliation</TableCell>
+                    <TableCell>
+                            <TextField source={"affiliation"}/>
+                    </TableCell>
+                </TableRow>
+                <TableRow>
+                    <TableCell>Country</TableCell>
+                    <TableCell>
+                        <TextField source={"country"}/>
+                    </TableCell>
+                </TableRow>
+                <TableRow>
+                    <TableCell>URL</TableCell>
+                    <TableCell>
+                        <RecordContextProvider value={demographic}>
+                            <TextField source={"url"}/>
+                        </RecordContextProvider>
+                    </TableCell>
+                </TableRow>
+            </RecordContextProvider>
+        </Table>
+    );
+}
+
+
 export const EndorsementRequestEdit = () => {
+    const record = useRecordContext();
+    const dataProvider = useDataProvider();
     const [categoryChoices, setCategoryChoices] = useState<Category[]>([]);
     const [categoryChoice, setCategoryChoice] = useState<Category>();
     const [subjectChoices, setSubjectChoices] = useState<CategorySubject[]>([]);
-
-    const dataProvider = useDataProvider();
+    const [demographic, setDemographic] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -189,78 +282,66 @@ export const EndorsementRequestEdit = () => {
         }
     }, [dataProvider, categoryChoice]);
 
+    useEffect(() => {
+        const fetchDemographic = async (userId: number) => {
+            try {
+                const response = await dataProvider.getOne('demographics', {id: userId});
+                setDemographic(response.data);
+                setLoading(false);
+            } catch (error) {
+                console.error("Error fetching demographic data:", error);
+                setLoading(false);
+            }
+        };
+
+        if (record)
+            fetchDemographic(record.endorsee_id);
+    }, [dataProvider, record]);
+
+
     const handleCategoryChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
         const categoryId = event.target.value;
         setCategoryChoice(categoryChoices.find((c) => c.id === categoryId));
     };
 
+
     return (
         <Edit title={<EndorsementRequestTitle />}>
             <Grid container>
                 <Grid item xs={6}>
-            <SimpleForm>
-                <BooleanInput name={"Valid"} source={"flag_valid"} label={"Valid"} />
-                <span>ID: <TextField source="id" />  Category:
-                    <CategoryField sourceCategory={"archive"} sourceClass={"subject_class"} source={"id"} label={"Category"}/>
-                </span>
-                <span>Endorsee:
-                <ReferenceField source="endorsee_id" reference="users"
-                                link={(record, reference) => `/${reference}/${record.id}`} >
-                    <TextField source={"last_name"} fontStyle={{fontSize: '1rem'}} />
-                    {", "}
-                    <TextField source={"first_name"} fontStyle={{fontSize: '1rem'}} />
-                </ReferenceField>
-                    </span>
+                    <SimpleForm>
+                        <BooleanInput name={"Valid"} source={"flag_valid"} label={"Valid"} />
+                        <span>ID: <TextField source="id" />  Category:
+                            <CategoryField sourceCategory={"archive"} sourceClass={"subject_class"} source={"id"} label={"Category"}/>
+                        </span>
+                        <span>Endorsee:
+                        <ReferenceField source="endorsee_id" reference="users"
+                                        link={(record, reference) => `/${reference}/${record.id}`} >
+                            <TextField source={"last_name"} fontStyle={{fontSize: '1rem'}} />
+                            {", "}
+                            <TextField source={"first_name"} fontStyle={{fontSize: '1rem'}} />
+                        </ReferenceField>
+                            </span>
 
-                <ReferenceInput source="endorser_id" reference="users">
-                    <TextField source={"last_name"} fontStyle={{fontSize: '1rem'}} />
-                    <TextField source={"first_name"} fontStyle={{fontSize: '1rem'}} />
-                </ReferenceInput>
+                        <ReferenceInput source="endorser_id" reference="users">
+                            <TextField source={"last_name"} fontStyle={{fontSize: '1rem'}} />
+                            <TextField source={"first_name"} fontStyle={{fontSize: '1rem'}} />
+                        </ReferenceInput>
 
-                <span>
-                    Issued when: <DateField source="issued_when"  label={"Issued"}/>
-                </span>
-                <NumberInput source="point_value"  label={"Point"} />
-            </SimpleForm>
+                        <span>
+                            Issued when: <DateField source="issued_when"  label={"Issued"}/>
+                        </span>
+                        <NumberInput source="point_value"  label={"Point"} />
+                    </SimpleForm>
                 </Grid>
                 <Grid item xs={6}>
-                    <Table>
-                        <TableRow>
-                            <TableCell>Session ID</TableCell>
-                            <TableCell>
-                                <ReferenceField source={"id"} reference="endorsement_requests_audit">
-                                    <TextField source={"session_id"}/>
-                                </ReferenceField>
-                            </TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell>Remote Hostname</TableCell>
-                            <TableCell>
-                                <ReferenceField source={"id"} reference="endorsement_requests_audit">
-                                    <TextField source={"remote_host"}/>
-                                </ReferenceField>
-                            </TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell>Remote Address</TableCell>
-                            <TableCell>
-                                <ReferenceField source={"id"} reference="endorsement_requests_audit">
-                                    <TextField source={"remote_addr"}/>
-                                </ReferenceField>
-                            </TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell>Endorsement Code</TableCell>
-                            <TableCell>
-                                <TextField source={"secret"}/>
-                            </TableCell>
-                        </TableRow>
-                    </Table>
+                    <ShowDemographic />
                 </Grid>
             </Grid>
         </Edit>
     );
 }
+
 
 export const EndorsementRequestCreate = () => (
     <Create>

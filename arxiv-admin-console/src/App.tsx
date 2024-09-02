@@ -122,6 +122,7 @@ const App = () => (
         <Resource name="endorsement_requests_audit"/>
         <Resource name="ownership_requests_audit"/>
         <Resource name="paper_owners"/>
+        <Resource name="demographics"/>
 
     </Admin>
 );

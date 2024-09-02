@@ -86,11 +86,12 @@ async def list_demographics(
     ) -> List[DemographicModel]:
     query = DemographicModel.base_select(db)
 
-    if _start < 0 or _end < _start:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="Invalid start or end index")
-
-    t0 = datetime.now()
+    if id is not None:
+        query = query.filter(Demographic.user_id.in_(id))
+    else:
+        if _start < 0 or _end < _start:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Invalid start or end index")
 
     order_columns = []
     if _sort:
@@ -104,16 +105,11 @@ async def list_demographics(
             except AttributeError:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                     detail="Invalid start or end index")
-
-    if id is not None:
-        query = query.filter(Demographic.user_id.in_(id))
-
     for column in order_columns:
         if _order == "DESC":
             query = query.order_by(column.desc())
         else:
             query = query.order_by(column.asc())
-
 
     count = query.count()
     response.headers['X-Total-Count'] = str(count)
@@ -125,9 +121,8 @@ async def list_demographics(
 def get_demographic(id:int,
                     session: Session = Depends(get_db)) -> DemographicModel:
     """Display a paper."""
-    query = DemographicModel.base_select(session).filter(Demographic.user_id == id)
-    doc = query.all()
+    doc = DemographicModel.base_select(session).filter(Demographic.user_id == id).one_or_none()
     if not doc:
-        raise HTTPException(status_code=404, detail="Paper not found")
-    return doc[0]
+        raise HTTPException(status_code=404, detail=f"Demographic not found for {id}")
+    return doc
 

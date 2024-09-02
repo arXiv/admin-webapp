@@ -14,8 +14,6 @@ let cookie_name = "arxiv_session_cookie";
 const fetchCookieName = async() => {
     const res = await fetch(`${authUrl}/token-names`);
     if (res.ok) {
-        const plain = await res.clone().text();
-        console.log(plain)
         try {
             const data = await res.json();
             cookie_name = data.session;
@@ -72,7 +70,6 @@ export const authProvider: AuthProvider = {
     // called when the user navigates to a new location, to check for authentication
     checkAuth: () => {
         const token = getCookie(cookie_name);
-        console.log(`${cookie_name} -> ` + token);
         return Promise.resolve();
         return token ? Promise.resolve() : Promise.reject();
     },
