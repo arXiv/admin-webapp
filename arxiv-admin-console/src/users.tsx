@@ -154,18 +154,15 @@ const policyClassChoices = [
 export const UserEdit = () => {
     const record = useRecordContext<{id: number}>();
     const dataProvider = useDataProvider();
-    const [demographic, setDemographic] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
+    const [demographic, setDemographic] = useState<any>({country: "No data", affiliation: "No data", url: ""});
 
     useEffect(() => {
         const fetchDemographic = async (userId: number) => {
             try {
                 const response = await dataProvider.getOne('demographics', {id: userId});
                 setDemographic(response.data);
-                setLoading(false);
             } catch (error) {
                 console.error("Error fetching demographic data:", error);
-                setLoading(false);
             }
         };
 
@@ -173,9 +170,6 @@ export const UserEdit = () => {
             fetchDemographic(record.id);
     }, [dataProvider, record]);
 
-    if (loading) {
-        return (<div>Loading...</div>);
-    }
 
     return (
     <Edit title={<UserTitle />}>
