@@ -32,6 +32,9 @@ from arxiv.auth.openid.oidc_idp import ArxivOidcIdpClient
 
 from app_logging import setup_logger
 
+# API root path (excluding the host)
+ADMIN_API_ROOT_PATH = os.environ.get('ADMIN_API_ROOT_PATH', '/adminapi')
+
 # Admin app URL
 #
 ADMIN_APP_URL = os.environ.get('ADMIN_APP_URL', 'http://127.0.0.1:5000')
@@ -97,7 +100,7 @@ def create_app(*args, **kwargs) -> FastAPI:
     engine, _ = configure_db(settings)
 
     app = FastAPI(
-        root_path="/api",
+        root_path=ADMIN_API_ROOT_PATH,
         idp=_idp_,
         arxiv_db_engine=engine,
         arxiv_settings=settings,

@@ -13,8 +13,9 @@ KEYCLOAK_CLIENT_SECRET := $(shell cat ${HOME}/.arxiv/keycloak-secret-dev)
 
 APP_DOCKER_RUN := docker run --cpus ${AAUTH2C_CPUS} --rm -p ${app_port}:${dockerport} \
 -e PORT=${dockerport} -e WORKERS=${AAUTH2C_WORKERS} \
--e KEYCLOAK_SERVER_URL=${KEYCLOAK_SERVER_URL} \
+-e ADMIN_API_ROOT_PATH=/adminapi \
 -e ADMIN_APP_URL=https://dev3.arxiv.org/admin-console \
+-e KEYCLOAK_SERVER_URL=${KEYCLOAK_SERVER_URL} \
 -e KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET} \
 -e CLASSIC_DB_URI=${CLASSIC_DB_URI} \
 -e AAA_CALLBACK_URL=https://dev3.arxiv.org/aaa/callback \

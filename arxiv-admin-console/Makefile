@@ -73,4 +73,4 @@ stop:
 #-# Command: sh
 #-#   runs a bash shell in the container to look inside of it
 sh: stop
-	${APP_DOCKER_RUN}  -v ${HOME}/Downloads:/home/worker/Downloads -w /home/worker -it ${app_tag}:latest  /bin/bash
+	${APP_DOCKER_RUN}  -it ${app_tag}:latest  /bin/sh
