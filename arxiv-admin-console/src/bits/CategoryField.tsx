@@ -11,6 +11,7 @@ const CategoryField: React.FC<CategoryFieldProps> = ({ sourceCategory, sourceCla
     const record = useRecordContext<{ [key: string]: string }>();
 
     if (!record) return null;
+    console.log("CategoryField:", JSON.stringify(record));
 
     return (
         <span>

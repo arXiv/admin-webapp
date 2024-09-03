@@ -51,6 +51,31 @@ class UserModel(BaseModel):
     dirty: Optional[int]  # 0, 1, 2
     moderator_id: Optional[str]
 
+    # From Demographic
+    country: Optional[str] # = mapped_column(String(2), nullable=False, index=True, server_default=FetchedValue())
+    affiliation: Optional[str] # = mapped_column(String(255), nullable=False, server_default=FetchedValue())
+    url: Optional[str] # = mapped_column(String(255), nullable=False, server_default=FetchedValue())
+    type: Optional[int] # = mapped_column(SmallInteger, index=True)
+    archive: Optional[str] # = mapped_column(String(16))
+    subject_class: Optional[str] # = mapped_column(String(16))
+    original_subject_classes: str # = mapped_column(String(255), nullable=False, server_default=FetchedValue())
+    flag_group_physics: Optional[int] # = mapped_column(Integer, index=True)
+    flag_group_math: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_group_cs: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_group_nlin: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_proxy: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_journal: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_xml: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    dirty: Optional[int] #  = mapped_column(Integer, nullable=False, server_default=text("'0'"))
+    flag_group_test: Optional[int] #  = mapped_column(Integer, nullable=False, server_default=text("'0'"))
+    flag_suspect: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_group_q_bio: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_group_q_fin: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_group_stat: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_group_eess: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_group_econ: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    veto_status: Optional[str] # Mapped[Literal['ok', 'no-endorse', 'no-upload', 'no-replace']] = mapped_column(Enum('ok', 'no-endorse', 'no-upload', 'no-replace'), nullable=False, server_default=text("'ok'"))
+
     @staticmethod
     def base_select(db: Session):
         is_mod_subquery = exists().where(t_arXiv_moderators.c.user_id == TapirUser.user_id).correlate(TapirUser)
@@ -89,13 +114,32 @@ class UserModel(BaseModel):
                 (is_mod_subquery, True),  # Pass each "when" condition as a separate positional argument
                 else_=False
             ).label("flag_is_mod"),
-            Demographic.flag_suspect.label('flag_suspect'),
-            Demographic.dirty,
             # mod_subquery.label("moderator_id"),
-            )
-                .outerjoin(Demographic, TapirUser.user_id == Demographic.user_id)
-                # .outerjoin(t_arXiv_moderators, TapirUser.user_id == t_arXiv_moderators.c.user_id)
-                )
+            Demographic.country,
+            Demographic.affiliation,
+            Demographic.url,
+            Demographic.type,
+            Demographic.archive,
+            Demographic.subject_class,
+            Demographic.original_subject_classes,
+            Demographic.flag_group_physics,
+            Demographic.flag_group_math,
+            Demographic.flag_group_cs,
+            Demographic.flag_group_nlin,
+            Demographic.flag_proxy,
+            Demographic.flag_journal,
+            Demographic.flag_xml,
+            Demographic.dirty,
+            Demographic.flag_group_test,
+            Demographic.flag_suspect,
+            Demographic.flag_group_q_bio,
+            Demographic.flag_group_q_fin,
+            Demographic.flag_group_stat,
+            Demographic.flag_group_eess,
+            Demographic.flag_group_econ,
+            Demographic.veto_status
+        ).outerjoin(Demographic, TapirUser.user_id == Demographic.user_id)
+        )
 
     pass
 

@@ -88,6 +88,12 @@ export const Dashboard = () => {
                         <Grid container spacing={2}>
                             <Grid item xs={12}>
                                 <Grid item container xs={12}>
+                                    <Button component={Link} to={{ pathname: '/users', search: '?filter={"flag_edit_users":true}' }}>
+                                        Administrators
+                                    </Button>
+                                    <Button component={Link} to={{ pathname: '/users', search: '?filter={"flag_is_mod":true}' }}>
+                                        Moderators
+                                    </Button>
                                     <Button component={Link} to={{ pathname: '/users', search: '?filter={"suspect":true}' }}>
                                         Suspect Users
                                     </Button>

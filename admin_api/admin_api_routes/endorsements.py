@@ -68,6 +68,9 @@ async def list_endorsements(
         start_date: Optional[datetime] = Query(None, description="Start date for filtering"),
         end_date: Optional[datetime] = Query(None, description="End date for filtering"),
         flag_valid: Optional[bool] = Query(None),
+        endorsee_id: Optional[int] = Query(None),
+        endorser_id: Optional[int] = Query(None),
+        id: Optional[List[int]] = Query(None, description="List of user IDs to filter by"),
         db: Session = Depends(get_db)
     ) -> List[EndorsementModel]:
     query = EndorsementModel.base_select(db)
@@ -79,6 +82,7 @@ async def list_endorsements(
     t0 = datetime.now()
 
     order_columns = []
+
     if _sort:
         keys = _sort.split(",")
         for key in keys:
@@ -90,6 +94,14 @@ async def list_endorsements(
             except AttributeError:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                     detail="Invalid start or end index")
+
+    if id is not None:
+        query = query.filter(Endorsement.endorsement_id.in_(id))
+    else:
+        if endorsee_id is not None:
+            query = query.filter(Endorsement.endorsee_id == endorsee_id)
+        if endorser_id is not None:
+            query = query.filter(Endorsement.endorser_id == endorser_id)
 
     if preset is not None:
         matched = re.search("last_(\d+)_days", preset)

@@ -6,7 +6,7 @@ import {
     Table,
     TableRow,
     TableCell,
-    TableHead
+    TableHead, Box, Button
 } from '@mui/material';
 import {
     List,
@@ -17,6 +17,7 @@ import {
     BooleanField,
     SortPayload,
     useRecordContext,
+    useEditContext,
     Edit,
     SimpleForm,
     TextInput,
@@ -27,11 +28,14 @@ import {
     DateField,
     ReferenceField,
     SelectInput,
-    RecordContextProvider, useDataProvider
+    RecordContextProvider,
+    useDataProvider, IconButtonWithTooltip, useListContext, useRedirect
 } from 'react-admin';
 
 import DoDisturbOnIcon from '@mui/icons-material/DoDisturbOn';
 import React, {useEffect, useState} from "react";
+import CategoryField from "./bits/CategoryField";
+import PersonNameField from "./bits/PersonNameField";
 
 const UserFilter = (props: any) => (
     <Filter {...props}>
@@ -59,7 +63,7 @@ export const UserList = () => {
     const isSmall = useMediaQuery<any>(theme => theme.breakpoints.down('sm'));
     const [visibleColumns, setVisibleColumns] = useState<VisibleColumns>(
         {
-            email: false,
+            email: true,
             joinedDate: false,
             mod: false,
         }
@@ -108,13 +112,13 @@ export const UserList = () => {
                     />
                 ) : (
 
-                    <Datagrid rowClick="show" sort={sorter}>
-                        <TextField source="last_name"/>
-                        <TextField source="first_name"/>
-                        <TextField source="suffix_name" label={"S"}/>
+                    <Datagrid rowClick="edit" sort={sorter}>
+                        <PersonNameField source={"id"} label="Name" />
                         <TextField source="username" label={"Login name"}/>
 
-                        <EmailField source="email"/>
+                        {
+                            visibleColumns.email ? <EmailField source="email"/> : null
+                        }
                         {
                             visibleColumns.joinedDate ? <DateField source="joined_date"/> : null
                         }
@@ -150,11 +154,11 @@ const policyClassChoices = [
     { id: 3, name: 'Legacy user' },
 ];
 
-
-export const UserEdit = () => {
-    const record = useRecordContext<{id: number}>();
-    const dataProvider = useDataProvider();
+function UserDemographic() {
+    /*
+    const record = useRecordContext<any>();
     const [demographic, setDemographic] = useState<any>({country: "No data", affiliation: "No data", url: ""});
+    const dataProvider = useDataProvider();
 
     useEffect(() => {
         const fetchDemographic = async (userId: number) => {
@@ -169,11 +173,135 @@ export const UserEdit = () => {
         if (record)
             fetchDemographic(record.id);
     }, [dataProvider, record]);
+*/
+    return (
+    <Table>
+        <TableHead>
+            <TableCell>
+                Property
+            </TableCell>
+            <TableCell>
+                Values
+            </TableCell>
 
+        </TableHead>
+        <TableRow>
+            <TableCell>
+                User ID
+            </TableCell>
+            <TableCell>
+                <TextField source="id" />
+            </TableCell>
+        </TableRow>
+        <TableRow>
+            <TableCell>
+                Last login
+            </TableCell>
+            <TableCell>
+                <TextField source="id" />
+            </TableCell>
+        </TableRow>
+        <TableRow>
+            <TableCell>Affiliation</TableCell>
+            <TableCell>
+                <TextField source="affiliation" />
+            </TableCell>
+        </TableRow>
+        <TableRow>
+            <TableCell>Country</TableCell>
+            <TableCell>
+                <TextField source="country" />
+            </TableCell>
+        </TableRow>
+        <TableRow>
+            <TableCell>URL</TableCell>
+            <TableCell>
+                <TextField source="url" />
+            </TableCell>
+        </TableRow>
+    </Table>);
+}
+
+
+function UserEndorsements() {
+    const record = useRecordContext<any>();
+    const [endorsements, setEndorsements] = useState<any[]>([]);
+    const dataProvider = useDataProvider();
+
+    useEffect(() => {
+        const fetchEndorsements = async (userId: number) => {
+            try {
+                const response = await dataProvider.getList('endorsements', {
+                    filter: {endorsee_id: userId}, sort: {field: 'archive,subject_class', order: 'ASC'},
+                });
+                setEndorsements(response.data);
+            } catch (error) {
+                console.error("Error fetching endorsements data:", error);
+            }
+        };
+
+        if (record)
+            fetchEndorsements(record.id);
+    }, [dataProvider, record]);
+
+    function Endorsement(props: any) {
+        return (
+                <RecordContextProvider value={props.endorsement} >
+                    <Grid item>
+                        <ReferenceField source="id" reference="endorsements" label={""}
+                                        link={(record, reference) => `/${reference}/${record.id}`}>
+                            <CategoryField source="id" sourceCategory="archive" sourceClass="subject_class"/>
+                        </ReferenceField>
+
+                    </Grid>
+                </RecordContextProvider>
+        );
+    }
+
+    return (
+        <Grid container item xs={12}>
+            <Grid item xs={2}>Endorsed for</Grid>
+            {
+                endorsements.map((endorsement, index) => (
+                    <Grid item xs={2}>
+                        <Endorsement endorsement={endorsement} />
+                    </Grid>
+                ))
+            }
+        </Grid>);
+}
+
+
+export const UserEdit = () => {
+    /*
+    const record = useRecordContext();
+    const redirect = useRedirect();
+
+
+    const previousRecordId = currentIndex > 0 ? ids[currentIndex - 1] : null;
+    const nextRecordId = currentIndex < ids.length - 1 ? ids[currentIndex + 1] : null;
+
+    const goToPrevious = () => {
+        if (previousRecordId) {
+            redirect('edit', 'users', previousRecordId);
+        }
+    };
+
+    const goToNext = () => {
+        if (nextRecordId) {
+            redirect('edit', 'users', nextRecordId);
+        }
+    };
+    <Box display="flex" justifyContent="space-between" mt={2}>
+                <IconButtonWithTooltip onClick={goToPrevious} disabled={currentIndex <= 0} label="Prev"/>
+                <Button onClick={goToNext} disabled={currentIndex >= (ids.length - 1) }>Next</Button>
+            </Box>
+     */
 
     return (
     <Edit title={<UserTitle />}>
         <SimpleForm>
+
             <Grid container>
                 <Grid item xs={6}>
                     <Table>
@@ -211,61 +339,44 @@ export const UserEdit = () => {
                             </TableCell>
                             <TableCell>
                                 <SelectInput source="policy_class" choices={policyClassChoices} />
-                                <BooleanInput source="flag_edit_users" label={"Admin"}/>
-                                <BooleanInput source="flad_banned" label={"Banned"}/>
+                                <Grid container>
+                                    <Grid item xs={12}>
+                                        <BooleanInput source="flag_veto_status" label={"Veto status"}/>
+                                    </Grid>
+                                    <Grid item xs={4}>
+                                        <BooleanInput source="flag_edit_users" label={"Edit Users"}/>
+                                    </Grid>
+                                    <Grid item xs={4}>
+                                <BooleanInput source="flag_edit_system" label={"Edit System"}/>
+                                    </Grid>
+                                    <Grid item xs={4}>
+                                <BooleanInput source="flag_banned" label={"Suspended"}/>
+                                    </Grid>
+                                    <Grid item xs={4}>
+                                <BooleanInput source="flag_proxy" label={"Proxy"}/>
+                                    </Grid>
+                                    <Grid item xs={4}>
+                                        <BooleanInput source="flag_suspect" label={"Suspect"}/>
+                                    </Grid>
+                                    <Grid item xs={4}>
+                                <BooleanInput source="flag_xml" label={"XML"}/>
+                                    </Grid>
+                                    <Grid item xs={4}>
+                                <BooleanInput source="flag_group_test" label={"Test"}/>
+                                    </Grid>
+                                </Grid>
                             </TableCell>
                         </TableRow>
                     </Table>
                 </Grid>
 
                 <Grid item xs={6}>
-                    <Table>
-                        <TableHead>
-                            <TableCell>
-                                Property
-                            </TableCell>
-                            <TableCell>
-                                Values
-                            </TableCell>
-
-                        </TableHead>
-                        <TableRow>
-                            <TableCell>
-                                User ID
-                            </TableCell>
-                            <TableCell>
-                                <TextField source="id" />
-                            </TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell>
-                                Last login
-                            </TableCell>
-                            <TableCell>
-                                <TextField source="id" />
-                            </TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell>Affiliation</TableCell>
-                            <TableCell>
-                                <RecordContextProvider value={demographic}>
-                                    <TextField source="affiliation" />
-                                </RecordContextProvider>
-                            </TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell>Country</TableCell>
-                            <TableCell>
-                                <TextField source="country" />
-                            </TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell>URL</TableCell>
-                            <TableCell>
-                                <TextField source="url" />
-                            </TableCell>
-                        </TableRow>
-                    </Table>
+                    <UserDemographic />
+                </Grid>
+            </Grid>
+            <Grid container >
+                <Grid item xs={12}>
+                    <UserEndorsements />
                 </Grid>
             </Grid>
         </SimpleForm>

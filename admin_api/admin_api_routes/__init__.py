@@ -13,28 +13,29 @@ import jwcrypto.jwt
 
 from .models import *
 from arxiv.auth.user_claims import ArxivUserClaims
+from arxiv.auth.openid.oidc_idp import ArxivOidcIdpClient
 from arxiv.db import SessionLocal
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 
-def is_admin_user(request: Request) -> bool:
+async def is_admin_user(request: Request) -> bool:
     # temporary - use user claims in base
 
-    user = get_current_user(request)
+    user = await get_current_user(request)
     if user and user.is_admin:
         return True
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 
-def is_any_user(request: Request) -> bool:
-    user = get_current_user(request)
+async def is_any_user(request: Request) -> bool:
+    user = await get_current_user(request)
     if user:
         return True
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 
-def get_current_user(request: Request) -> ArxivUserClaims | None:
+async def get_current_user(request: Request) -> ArxivUserClaims | None:
     logger = getLogger(__name__)
     session_cookie_key = request.app.extra['AUTH_SESSION_COOKIE_NAME']
     token = request.cookies.get(session_cookie_key)
@@ -46,24 +47,27 @@ def get_current_user(request: Request) -> ArxivUserClaims | None:
         logger.error("The app is misconfigured or no JWT secret has been set")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    try:
-        claims = ArxivUserClaims.decode_jwt_token(token, secret)
-    except jwcrypto.jwt.JWTExpired:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-    except jwcrypto.jwt.JWTInvalidClaimFormat:
-        logger.warning(f"Chowed cookie '{token}'")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-    except jwt.DecodeError:
-        logger.warning(f"Chowed cookie '{token}'")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-    except Exception as exc:
-        logger.warning(f"token {token} is wrong?", exc_info=exc)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    tokens, jwt_payload = ArxivUserClaims.unpack_token(token)
+    while True:
+        try:
+            claims = ArxivUserClaims.decode_jwt_payload(tokens, jwt_payload, secret)
+            return claims
+        except jwcrypto.jwt.JWTExpired:
+            if 'refresh' in tokens:
+                idp: ArxivOidcIdpClient = request.app.extra['idp']
+                claims = idp.refresh_access_token(tokens['refresh'])
+                return claims
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        except jwcrypto.jwt.JWTInvalidClaimFormat:
+            logger.warning(f"Chowed cookie '{token}'")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        except jwt.DecodeError:
+            logger.warning(f"Chowed cookie '{token}'")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        except Exception as exc:
+            logger.warning(f"token {token} is wrong?", exc_info=exc)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    if not claims:
-        logger.info(f"unpacking token {token} failed")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-    return claims
 
 def get_db():
     """Dependency for fastapi routes"""

@@ -7,7 +7,7 @@ from sqlalchemy.orm.properties import ColumnProperty
 
 from arxiv.db.models import Document, Metadata, PaperPw, TapirUser, Demographic, \
     Endorsement, Submission, TapirEmailTemplate, EndorsementRequest, OwnershipRequest, \
-    EndorsementRequestsAudit, \
+    EndorsementRequestsAudit, TapirSession, \
     OwnershipRequestsAudit, PaperOwner, Category, CrossControl
 
 
@@ -56,7 +56,6 @@ DemographicModel = sqlalchemy_to_pydantic(Demographic)
 # EndorsementModel = sqlalchemy_to_pydantic(Endorsement)
 # EndorsementRequestModel = sqlalchemy_to_pydantic(EndorsementRequest)
 EndorsementRequestsAuditModel = sqlalchemy_to_pydantic(EndorsementRequestsAudit)
-SubmissionModel = sqlalchemy_to_pydantic(Submission)
 
 # OwnershipRequestModel = sqlalchemy_to_pydantic(OwnershipRequest)
 OwnershipRequestsAuditModel = sqlalchemy_to_pydantic(OwnershipRequestsAudit)
@@ -65,3 +64,5 @@ PaperOwnerModel = sqlalchemy_to_pydantic(PaperOwner, id_key="document_id")
 # TapirUserModel = sqlalchemy_to_pydantic(TapirUser)
 
 CrossControlModel = sqlalchemy_to_pydantic(CrossControl)
+
+TapirSessionModel = sqlalchemy_to_pydantic(TapirSession, id_key="session_id")

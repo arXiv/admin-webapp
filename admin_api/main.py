@@ -19,6 +19,7 @@ from admin_api_routes.ownership_requests import router as ownership_request_rout
 from admin_api_routes.ownership_requests_audit import router as ownership_request_audit_router
 from admin_api_routes.paper_owners import router as ownership_router
 from admin_api_routes.user import router as user_router
+from admin_api_routes.tapir_sessions import router as tapir_session_router
 
 from admin_api_routes.frontend import router as frontend_router
 
@@ -121,6 +122,7 @@ def create_app(*args, **kwargs) -> FastAPI:
     app.include_router(moderator_router, prefix="/v1")
     app.include_router(document_router, prefix="/v1")
     app.include_router(ownership_router, prefix="/v1")
+    app.include_router(tapir_session_router, prefix="/v1")
     app.include_router(frontend_router)
 
     @app.middleware("http")
