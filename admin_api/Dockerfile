@@ -33,8 +33,9 @@ RUN $VIRTUAL_ENV/bin/poetry install --no-dev --no-interaction --no-ansi ; exit 0
 RUN $VIRTUAL_ENV/bin/pip uninstall -y poetry
 
 ADD admin_api_routes /opt/arxiv/admin_api_routes
-ADD main.py /opt/arxiv/main.py
+ADD main.py /opt/arxiv/
 ADD app-logging.conf /opt/arxiv/
+ADD app_logging.py /opt/arxiv/
 ADD hypercorn-config.toml /opt/arxiv/
 
 RUN $VIRTUAL_ENV/bin/pip install hypercorn
@@ -42,4 +43,4 @@ RUN $VIRTUAL_ENV/bin/pip install hypercorn
 ENV WORKERS 8
 ENV SQLALCHEMY_TRACK_MODIFICATIONS False
 EXPOSE $PORT
-CMD  $VIRTUAL_ENV/bin/hypercorn --config hypercorn-config.toml --bind 0.0.0.0:$PORT --log-config app-logging.conf --workers $WORKERS "arxiv_oauth2.main:create_app()"
+CMD  $VIRTUAL_ENV/bin/hypercorn --config hypercorn-config.toml --bind 0.0.0.0:$PORT --log-config app-logging.conf --workers $WORKERS "main:create_app()"
