@@ -136,7 +136,10 @@ async def get_category(
         subject_class: str,
         db: Session = Depends(get_db)
     ) -> CategoryModel:
-    query = CategoryModel.base_query(db).filter(Category.archive == archive, Category.subject_class == subject_class).scalar()
+    query = CategoryModel.base_query(db).filter(
+        and_(
+            Category.archive == archive,
+            Category.subject_class == subject_class)).scalar()
     count = query.count()
     if count == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,)
@@ -147,7 +150,10 @@ async def get_category(
 @router.get('/{id:str}')
 async def get_category(id: str, db: Session = Depends(get_db)) -> CategoryModel:
     [archive, subject_class] = id.split("+")
-    item = db.query(Category).filter(Category.archive == archive and Category.subject_class == subject_class).all()
+    item = db.query(Category).filter(
+        and_(
+            Category.archive == archive,
+            Category.subject_class == subject_class)).all()
     if item:
         return CategoryModel(item[0])
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -160,7 +166,10 @@ async def update_category(
         session: Session = Depends(transaction)) -> CategoryModel:
     body = await request.json()
     [archive, subject_class] = id.split("+")
-    item = session.query(Category).filter(Category.archive == archive and Category.subject_class == subject_class).first()
+    item = session.query(Category).filter(
+        and_(
+            Category.archive == archive,
+            Category.subject_class == subject_class).one_or_none())
     if item is None:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -193,10 +202,12 @@ async def delete_category(
         session: Session = Depends(transaction)) -> Response:
 
     [archive, subject_class] = id.split("+")
-    item = session.query(Category).filter(Category.archive == archive and Category.subject_class == subject_class).first()
+    item = session.query(Category).filter(
+        and_(
+            Category.archive == archive,
+            Category.subject_class == subject_class)).one_or_none()
     if item is None:
         raise HTTPException(status_code=404, detail="User not found")
-
     item.delete_instance()
     session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

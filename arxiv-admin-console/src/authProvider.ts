@@ -1,7 +1,7 @@
 import { AuthProvider } from 'react-admin';
 import {useEffect, useState} from "react";
 
-const authUrl = 'http://127.0.0.1:5000';
+const authUrl = 'http://127.0.0.1:5000/aaa';
 
 function getCookie(name: string): string | null {
     const value = `; ${document.cookie}`;

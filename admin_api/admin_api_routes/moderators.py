@@ -165,7 +165,11 @@ async def list_moderators_2(
         subject_class: str,
         db: Session = Depends(get_db)
     ) -> List[ModeratorModel]:
-    query = ModeratorModel.base_query(db).filter(t_arXiv_moderators.c.archive == archive, t_arXiv_moderators.c.subject_class == subject_class)
+    query = ModeratorModel.base_query(db).filter(
+        and_(
+            t_arXiv_moderators.c.archive == archive,
+            t_arXiv_moderators.c.subject_class == subject_class)
+    )
     count = query.count()
     response.headers['X-Total-Count'] = count
     return [ModeratorModel.from_orm(row) for row in query.all()]
@@ -175,9 +179,14 @@ async def list_moderators_2(
 async def get_moderator(id: str, db: Session = Depends(get_db)) -> ModeratorModel:
     [user_id, archive, subject_class] = id.split("+")
     id = int(user_id)
-    item = ModeratorModel.base_query(db).filter(t_arXiv_moderators.c.user_id == id and t_arXiv_moderators.c.archive == archive and t_arXiv_moderators.c.subject_class == subject_class).one_or_none()
-    if item:
-        return ModeratorModel.from_orm(item)
+    mod = ModeratorModel.base_query(db).filter(
+        and_(
+            t_arXiv_moderators.c.user_id == id,
+            t_arXiv_moderators.c.archive == archive,
+            t_arXiv_moderators.c.subject_class == subject_class
+        )).one_or_none()
+    if mod:
+        return ModeratorModel.from_orm(mod)
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
@@ -186,7 +195,11 @@ async def update_moderator(request: Request, id: str,
                            session: Session = Depends(transaction)) -> ModeratorModel:
     body = await request.json()
     [user_id, archive, subject_class] = id.split("+")
-    item = ModeratorModel.base_query(session).filter(t_arXiv_moderators.c.user_id == int(user_id) and t_arXiv_moderators.c.archive == archive and t_arXiv_moderators.c.subject_class == subject_class).one_or_none()
+    item = ModeratorModel.base_query(session).filter(
+        and_(
+            t_arXiv_moderators.c.user_id == int(user_id),
+            t_arXiv_moderators.c.archive == archive,
+            t_arXiv_moderators.c.subject_class == subject_class)).one_or_none()
     if item is None:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -216,7 +229,11 @@ async def create_moderator(
 @router.delete('/{id:str}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_moderator(id: str, session: Session = Depends(transaction)) -> Response:
     [user_id, archive, subject_class] = id.split("+")
-    item = session.query(t_arXiv_moderators).filter(t_arXiv_moderators.c.user_id == user_id and t_arXiv_moderators.c.archive == archive and t_arXiv_moderators.c.subject_class == subject_class).one_or_none()
+    item = session.query(t_arXiv_moderators).filter(
+        and_(
+            t_arXiv_moderators.c.user_id == user_id,
+            t_arXiv_moderators.c.archive == archive,
+            t_arXiv_moderators.c.subject_class == subject_class)).one_or_none()
     if item is None:
         raise HTTPException(status_code=404, detail="Moderator not found")
 

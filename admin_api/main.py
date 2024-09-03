@@ -32,12 +32,21 @@ from arxiv.auth.openid.oidc_idp import ArxivOidcIdpClient
 
 from app_logging import setup_logger
 
+# Keycloak server url
 KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'http://127.0.0.1:3033')
+# arxiv-user client secret
 KEYCLOAK_CLIENT_SECRET = os.environ.get("KEYCLOAK_CLIENT_SECRET", "foo")
+#
 DB_URI = os.environ.get('CLASSIC_DB_URI')
-JWT_SECRET = os.environ.get('JWT_SECRET', "secret")
+#
+#
+AAA_CALLBACK_URL = os.environ.get("AAA_CALLBACK_URL", "http://127.0.0.1:5000/aaa/callback")
+#
+AAA_LOGIN_REDIRECT_URL = os.environ.get("AAA_LOGIN_REDIRECT_URL", "http://127.0.0.1:5000/aaa/login")
+#
+LOGOUT_REDIRECT_URL = os.environ.get("LOGOUT_REDIRECT_URL", "http://127.0.0.1:5000")
 
-_idp_ = ArxivOidcIdpClient("http://127.0.0.1:5000/callback",
+_idp_ = ArxivOidcIdpClient(AAA_CALLBACK_URL,
                            scope=["openid"],
                            server_url=KEYCLOAK_SERVER_URL,
                            client_secret=KEYCLOAK_CLIENT_SECRET,
@@ -47,8 +56,8 @@ _idp_ = ArxivOidcIdpClient("http://127.0.0.1:5000/callback",
 origins = [
     "http://127.0.0.1",
     "http://localhost",
-    "http://127.0.0.1:5000",
-    "http://localhost:5000",
+    "http://127.0.0.1:5000/aaa",
+    "http://localhost:5000/aaa",
     "http://127.0.0.1:4042",
     "http://localhost:4042",
 ]
@@ -92,8 +101,8 @@ def create_app(*args, **kwargs) -> FastAPI:
         arxiv_db_engine=engine,
         arxiv_settings=settings,
         JWT_SECRET=settings.SECRET_KEY,
-        LOGIN_REDIRECT_URL="http://127.0.0.1:5000/login",
-        LOGOUT_REDIRECT_URL="http://127.0.0.1:5000",
+        LOGIN_REDIRECT_URL=AAA_LOGIN_REDIRECT_URL,
+        LOGOUT_REDIRECT_URL=LOGOUT_REDIRECT_URL,
         AUTH_SESSION_COOKIE_NAME="arxiv_session_cookie",
         CLASSIC_COOKIE_NAME="tapir_session_cookie",
     )

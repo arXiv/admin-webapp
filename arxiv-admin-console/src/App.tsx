@@ -38,7 +38,7 @@ const App = () => (
         authProvider={authProvider}
         dataProvider={dataProvider}
         dashboard={Dashboard}
-        loginPage={(<RedirectComponent to={"http://127.0.0.1:5000/login?next=http://127.0.0.1:5000"}/>)}
+        loginPage={(<RedirectComponent to={"http://127.0.0.1:5000/aaa/login?next=http://127.0.0.1:5000"}/>)}
     >
         <Resource
             name="users"
