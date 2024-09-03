@@ -1,7 +1,7 @@
 import { AuthProvider } from 'react-admin';
 import {useEffect, useState} from "react";
 
-const authUrl = 'http://127.0.0.1:5000/aaa';
+import {authUrl, appUrl} from './settings';
 
 function getCookie(name: string): string | null {
     const value = `; ${document.cookie}`;
@@ -39,7 +39,7 @@ export const authProvider: AuthProvider = {
     logout: () => {
         console.log("auth: /logout");
         /* document.cookie = `${cookie_name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`; */
-        return fetch(`${authUrl}/logout?next=http://127.0.0.1:5000/`, {
+        return fetch(`${authUrl}/logout?next=${appUrl}`, {
             method: "GET",
             credentials: "include",
         }).then(response => {

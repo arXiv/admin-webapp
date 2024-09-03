@@ -21,8 +21,9 @@ import {DocumentCreate, DocumentEdit, DocumentList} from "./documents";
 import {CategoryList, CategoryCreate, CategoryEdit} from "./categories";
 import {ModeratorCreate, ModeratorEdit, ModeratorList} from "./moderators";
 import {OwnershipRequestEdit, OwnershipRequestList} from "./ownershipRequests";
+import {appUrl, authUrl, backendUrl} from "./settings";
 
-const dataProvider = new adminApiDataProvider('http://127.0.0.1:5000/api/v1');
+const dataProvider = new adminApiDataProvider(backendUrl);
 
 const RedirectComponent: React.FC<{to: string}> = ({ to }) => {
     useEffect(() => {
@@ -38,7 +39,7 @@ const App = () => (
         authProvider={authProvider}
         dataProvider={dataProvider}
         dashboard={Dashboard}
-        loginPage={(<RedirectComponent to={"http://127.0.0.1:5000/aaa/login?next=http://127.0.0.1:5000"}/>)}
+        loginPage={(<RedirectComponent to={`${authUrl}/login?next=${appUrl}`}/>)}
     >
         <Resource
             name="users"
