@@ -32,6 +32,10 @@ from arxiv.auth.openid.oidc_idp import ArxivOidcIdpClient
 
 from app_logging import setup_logger
 
+# Admin app URL
+#
+ADMIN_APP_URL = os.environ.get('ADMIN_APP_URL', 'http://127.0.0.1:5000')
+
 # Keycloak server url
 KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'http://127.0.0.1:3033')
 # arxiv-user client secret
@@ -44,7 +48,7 @@ AAA_CALLBACK_URL = os.environ.get("AAA_CALLBACK_URL", "http://127.0.0.1:5000/aaa
 #
 AAA_LOGIN_REDIRECT_URL = os.environ.get("AAA_LOGIN_REDIRECT_URL", "http://127.0.0.1:5000/aaa/login")
 #
-LOGOUT_REDIRECT_URL = os.environ.get("LOGOUT_REDIRECT_URL", "http://127.0.0.1:5000")
+LOGOUT_REDIRECT_URL = os.environ.get("LOGOUT_REDIRECT_URL", ADMIN_APP_URL)
 
 _idp_ = ArxivOidcIdpClient(AAA_CALLBACK_URL,
                            scope=["openid"],
@@ -55,11 +59,8 @@ _idp_ = ArxivOidcIdpClient(AAA_CALLBACK_URL,
 
 origins = [
     "http://127.0.0.1",
-    "http://localhost",
-    "http://127.0.0.1:5000/aaa",
-    "http://localhost:5000/aaa",
-    "http://127.0.0.1:4042",
-    "http://localhost:4042",
+    "http://127.0.0.1:5000",
+    "https://dev3.arxiv.org",
 ]
 
 
@@ -106,6 +107,9 @@ def create_app(*args, **kwargs) -> FastAPI:
         AUTH_SESSION_COOKIE_NAME="arxiv_session_cookie",
         CLASSIC_COOKIE_NAME="tapir_session_cookie",
     )
+
+    if ADMIN_APP_URL not in origins:
+        origins.append(ADMIN_APP_URL)
 
     app.add_middleware(
         CORSMiddleware,
