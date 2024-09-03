@@ -5,8 +5,7 @@ app_port := 4042
 dockerport := 80
 
 ROOT_DIR := $(shell pwd)
-AAUTH2C_CPUS := $(shell echo $${AAUTH2C_CPUS:-2})
-AAUTH2C_WORKERS := $(shell echo $${AAUTH2C_WORKERS:-4})
+AAUTH2C_CPUS := 2
 AAUTH2C_DOCKER_PLATFORM := $(shell echo $${AAUTH2C_DOCKER_PLATFORM:-linux/amd64})
 # // where the auth server is running.
 # export const authUrl = process.env.AAA_URL || 'http://127.0.0.1:5000/aaa';
@@ -14,12 +13,14 @@ AAUTH2C_DOCKER_PLATFORM := $(shell echo $${AAUTH2C_DOCKER_PLATFORM:-linux/amd64}
 # export const backendUrl = process.env.ADMIN_API_BACKEND_URL || 'http://127.0.0.1:5000/api/v1'
 # // and the UI is serving from
 # export const appUrl = process.env.ADMIN_APP_ROOT || 'http://127.0.0.1:5000/';
+# RUN_HOST := https://dev3.arxiv.org
+RUN_HOST := http://127.0.0.1:5000
 
 APP_DOCKER_RUN := docker run --cpus ${AAUTH2C_CPUS} --rm -p ${app_port}:${dockerport} \
--e PORT=${dockerport} -e WORKERS=${AAUTH2C_WORKERS} \
--e AAA_URL=https://dev3.arxiv.org/aaa \
--e ADMIN_API_BACKEND_URL=https://dev3.arxiv.org/adminapi \
--e ADMIN_APP_ROOT=https://dev3.arxiv.org/admin-console \
+-e PORT=${dockerport} \
+-e AAA_URL=${RUN_HOST}/aaa \
+-e ADMIN_API_BACKEND_URL=${RUN_HOST}/adminapi/api/v1 \
+-e ADMIN_APP_ROOT=${RUN_HOST}/admin-console \
 --name ${app_name} --security-opt="no-new-privileges=true" 
 
 .PHONY: HELLO docker run stop
