@@ -6,6 +6,7 @@ COPY . .
 RUN npm run build
 FROM nginx:alpine AS production
 COPY --from=build /app/build /usr/share/nginx/html
+COPY ./src /usr/share/nginx/html/src
 COPY nginx.sh /
 RUN chmod +x /nginx.sh
 EXPOSE 80

@@ -62,10 +62,18 @@ _idp_ = ArxivOidcIdpClient(AAA_CALLBACK_URL,
 
 origins = [
     "http://127.0.0.1",
+    "http://127.0.0.1/",
     "http://127.0.0.1:5000",
+    "http://127.0.0.1:5000/",
+    "http://127.0.0.1:5000/admin-console",
+    "http://127.0.0.1:5000/admin-console/",
     "https://dev3.arxiv.org",
+    "https://dev3.arxiv.org/",
+    "https://dev.arxiv.org",
+    "https://dev.arxiv.org/",
+    "https://arxiv.org",
+    "https://arxiv.org/"
 ]
-
 
 class LogMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:

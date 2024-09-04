@@ -4,22 +4,28 @@ app_port := 4041
 dockerport := 8080
 
 ROOT_DIR := $(shell pwd)
-AAUTH2C_CPUS := $(shell echo $${AAUTH2C_CPUS:-4})
-AAUTH2C_WORKERS := $(shell echo $${AAUTH2C_WORKERS:-8})
-AAUTH2C_DOCKER_PLATFORM := $(shell echo $${AAUTH2C_DOCKER_PLATFORM:-linux/amd64})
-KEYCLOAK_SERVER_URL := ${shell cat ${HOME}/.arxiv/keycloak-url-dev}
-CLASSIC_DB_URI := $(shell cat ${HOME}/.arxiv/arxiv-db-dev)
-KEYCLOAK_CLIENT_SECRET := $(shell cat ${HOME}/.arxiv/keycloak-secret-dev)
+ADMINAPI_CPUS := $(shell echo $${ADMINAPI_CPUS:-4})
+ADMINAPI_WORKERS := $(shell echo $${ADMINAPI_WORKERS:-8})
+ADMINAPI_DOCKER_PLATFORM := $(shell echo $${ADMINAPI_DOCKER_PLATFORM:-linux/amd64})
 
-APP_DOCKER_RUN := docker run --cpus ${AAUTH2C_CPUS} --rm -p ${app_port}:${dockerport} \
--e PORT=${dockerport} -e WORKERS=${AAUTH2C_WORKERS} \
+KEYCLOAK_SERVER_URL := ${shell cat ${HOME}/.arxiv/keycloak-url-dev}
+KEYCLOAK_CLIENT_SECRET := $(shell cat ${HOME}/.arxiv/keycloak-secret-dev)
+CLASSIC_DB_URI := $(shell cat ${HOME}/.arxiv/arxiv-db-dev)
+
+AAA_CALLBACK_URL := $(shell echo $${AAA_CALLBACK_URL:-https://dev3.arxiv.org/aaa/callback})
+AAA_LOGIN_REDIRECT_URL := $(shell echo $${AAA_LOGIN_REDIRECT_URL:-https://dev3.arxiv.org/aaa/login})
+
+ADMIN_CONSOLE_URL := $(shell echo $${ADMIN_CONSOLE_URL:-https://dev3.arxiv.org/admin-console})
+
+APP_DOCKER_RUN := docker run --cpus ${ADMINAPI_CPUS} --rm -p ${app_port}:${dockerport} \
+-e PORT=${dockerport} -e WORKERS=${ADMINAPI_WORKERS} \
 -e ADMIN_API_ROOT_PATH=/adminapi \
--e ADMIN_APP_URL=https://dev3.arxiv.org/admin-console \
+-e ADMIN_APP_URL=${ADMIN_CONSOLE_URL} \
 -e KEYCLOAK_SERVER_URL=${KEYCLOAK_SERVER_URL} \
 -e KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET} \
 -e CLASSIC_DB_URI=${CLASSIC_DB_URI} \
--e AAA_CALLBACK_URL=https://dev3.arxiv.org/aaa/callback \
--e AAA_LOGIN_REDIRECT_URL=https://dev3.arxiv.org/aaa/login \
+-e AAA_CALLBACK_URL=${AAA_CALLBACK_URL} \
+-e AAA_LOGIN_REDIRECT_URL=${AAA_LOGIN_REDIRECT_URL} \
 --name ${app_name} --security-opt="no-new-privileges=true" 
 
 .PHONY: HELLO docker run stop

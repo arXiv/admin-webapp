@@ -2,7 +2,7 @@
 app_tag := arxiv-admin-console
 app_name := arxiv-admin-console
 app_port := 4042
-dockerport := 80
+dockerport := 4042
 
 ROOT_DIR := $(shell pwd)
 AAUTH2C_CPUS := 2
@@ -13,17 +13,17 @@ AAUTH2C_DOCKER_PLATFORM := $(shell echo $${AAUTH2C_DOCKER_PLATFORM:-linux/amd64}
 # export const backendUrl = process.env.ADMIN_API_BACKEND_URL || 'http://127.0.0.1:5000/api/v1'
 # // and the UI is serving from
 # export const appUrl = process.env.ADMIN_APP_ROOT || 'http://127.0.0.1:5000/';
-RUN_HOST := https://dev3.arxiv.org
-# RUN_HOST := http://127.0.0.1:5000
+# RUN_HOST := https://dev3.arxiv.org
+RUN_HOST := http://127.0.0.1:5000
 
 APP_DOCKER_RUN := docker run --cpus ${AAUTH2C_CPUS} --rm -p ${app_port}:${dockerport} \
 -e PORT=${dockerport} \
 -e AAA_URL=${RUN_HOST}/aaa \
 -e ADMIN_API_BACKEND_URL=${RUN_HOST}/adminapi/v1 \
--e ADMIN_APP_ROOT=${RUN_HOST}/admin-console \
+-e ADMIN_APP_ROOT=${RUN_HOST}/admin-console/ \
 --name ${app_name} --security-opt="no-new-privileges=true" 
 
-.PHONY: HELLO docker run stop
+.PHONY: HELLO docker run stop build
 
 default: HELLO venv/lib/python3.12/site-packages/fastapi
 
@@ -47,9 +47,6 @@ docker:
 	@echo "dockerport: ${app_port}"
 	@echo "tag: ${app_tag}"
 	docker buildx build -f ./Dockerfile \
-                --build-arg AAA_URL=${RUN_HOST}/aaa \
-                --build-arg ADMIN_API_BACKEND_URL=${RUN_HOST}/adminapi/v1 \
-                --build-arg ADMIN_APP_ROOT=${RUN_HOST}/admin-console \
 		--security-opt seccomp=unconfined  \
 		--progress=plain \
 		--platform=linux/amd64 -t ${app_tag}:latest .
@@ -78,3 +75,22 @@ stop:
 #-#   runs a bash shell in the container to look inside of it
 sh: stop
 	${APP_DOCKER_RUN}  -it ${app_tag}:latest /bin/sh
+
+
+#-#
+#-# Command: sh
+#-#   runs a bash shell in the container to look inside of it
+build:
+	npm run build
+
+#-#
+#-# Command: local
+#-#   builds the docker image
+local:
+	@echo "PLATFORM: ${PLATFORM}"
+	@echo "dockerport: ${app_port}"
+	@echo "tag: ${app_tag}"
+	docker buildx build -f ./Dockerfile.local \
+		--security-opt seccomp=unconfined  \
+		--progress=plain \
+		--platform=linux/amd64 -t ${app_tag}:latest .
