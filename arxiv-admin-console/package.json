@@ -2,6 +2,7 @@
   "name": "arxiv-admin-console",
   "version": "0.1.0",
   "private": true,
+  "homepage": "/admin-console/",
   "dependencies": {
     "oidc-client-ts": "^3.0.1",
     "ra-core": "^5.1.0",

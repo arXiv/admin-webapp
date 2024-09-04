@@ -21,7 +21,7 @@ import {DocumentCreate, DocumentEdit, DocumentList} from "./documents";
 import {CategoryList, CategoryCreate, CategoryEdit} from "./categories";
 import {ModeratorCreate, ModeratorEdit, ModeratorList} from "./moderators";
 import {OwnershipRequestEdit, OwnershipRequestList} from "./ownershipRequests";
-import {appUrl, authUrl, backendUrl} from "./settings";
+import {appUrl, authUrl, backendUrl, fetch_settings} from "./settings";
 
 const dataProvider = new adminApiDataProvider(backendUrl);
 
@@ -34,7 +34,12 @@ const RedirectComponent: React.FC<{to: string}> = ({ to }) => {
     return null;
 };
 
-const App = () => (
+console.log("urls: " + appUrl + ", " + authUrl + ", " + backendUrl)
+
+const App = () => {
+    Promise.resolve_all(fetch_settings());
+
+    return (
     <Admin
         authProvider={authProvider}
         dataProvider={dataProvider}
@@ -125,7 +130,7 @@ const App = () => (
         <Resource name="paper_owners"/>
         <Resource name="demographics"/>
 
-    </Admin>
-);
+    </Admin>);
+}
 
 export default App;

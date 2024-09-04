@@ -13,13 +13,13 @@ AAUTH2C_DOCKER_PLATFORM := $(shell echo $${AAUTH2C_DOCKER_PLATFORM:-linux/amd64}
 # export const backendUrl = process.env.ADMIN_API_BACKEND_URL || 'http://127.0.0.1:5000/api/v1'
 # // and the UI is serving from
 # export const appUrl = process.env.ADMIN_APP_ROOT || 'http://127.0.0.1:5000/';
-# RUN_HOST := https://dev3.arxiv.org
-RUN_HOST := http://127.0.0.1:5000
+RUN_HOST := https://dev3.arxiv.org
+# RUN_HOST := http://127.0.0.1:5000
 
 APP_DOCKER_RUN := docker run --cpus ${AAUTH2C_CPUS} --rm -p ${app_port}:${dockerport} \
 -e PORT=${dockerport} \
 -e AAA_URL=${RUN_HOST}/aaa \
--e ADMIN_API_BACKEND_URL=${RUN_HOST}/adminapi/api/v1 \
+-e ADMIN_API_BACKEND_URL=${RUN_HOST}/adminapi/v1 \
 -e ADMIN_APP_ROOT=${RUN_HOST}/admin-console \
 --name ${app_name} --security-opt="no-new-privileges=true" 
 
@@ -47,6 +47,9 @@ docker:
 	@echo "dockerport: ${app_port}"
 	@echo "tag: ${app_tag}"
 	docker buildx build -f ./Dockerfile \
+                --build-arg AAA_URL=${RUN_HOST}/aaa \
+                --build-arg ADMIN_API_BACKEND_URL=${RUN_HOST}/adminapi/v1 \
+                --build-arg ADMIN_APP_ROOT=${RUN_HOST}/admin-console \
 		--security-opt seccomp=unconfined  \
 		--progress=plain \
 		--platform=linux/amd64 -t ${app_tag}:latest .
