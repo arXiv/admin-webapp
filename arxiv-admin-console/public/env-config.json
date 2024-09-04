@@ -1,0 +1,5 @@
+{
+  "AAA_URL": "http://127.0.0.1:5000/aaa",
+  "ADMIN_API_BACKEND_URL": "http://127.0.0.1:5000/adminapi/v1",
+  "ADMIN_APP_ROOT": "http://127.0.0.1:5000/admin-console"
+}

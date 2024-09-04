@@ -37,7 +37,7 @@ ADMIN_API_ROOT_PATH = os.environ.get('ADMIN_API_ROOT_PATH', '/adminapi')
 
 # Admin app URL
 #
-ADMIN_APP_URL = os.environ.get('ADMIN_APP_URL', 'http://127.0.0.1:5000')
+ADMIN_APP_URL = os.environ.get('ADMIN_APP_URL', 'http://127.0.0.1:5000/admin-console')
 
 # Keycloak server url
 KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'http://127.0.0.1:3033')

@@ -5,15 +5,14 @@ export let backendUrl = 'http://127.0.0.1:5000/adminapi/v1'
 // and the UI is serving from
 export let appUrl = 'http://127.0.0.1:5000/';
 
-export const fetch_settings() => {
-  return fetch('/env-config.json')
-  .then(response => response.json())
-  .then(config => {
-    authUrl = config.AAA_URL || 'http://127.0.0.1:5000/aaa';
-    backendUrl = config.ADMIN_API_BACKEND_URL || 'http://127.0.0.1:5000/adminapi';
-    appUrl = config.ADMIN_APP_ROOT || 'http://127.0.0.1:5000/admin-console';
-  })
-  .catch(error => {
-    console.error('Error loading configuration:', error);
-  });
+export async function fetch_settings(): Promise<any> {
+    try {
+        const response = await fetch('/admin-console/env-config.json');
+        const config = await response.json();
+        authUrl = config.AAA_URL || authUrl;
+        backendUrl = config.ADMIN_API_BACKEND_URL || backendUrl;
+        appUrl = config.ADMIN_APP_ROOT || appUrl;
+    } catch (error) {
+        console.error('Error loading configuration:', error);
+    }
 }

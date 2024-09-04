@@ -11,7 +11,7 @@ function getCookie(name: string): string | null {
 }
 
 let cookie_name = "arxiv_session_cookie";
-const fetchCookieName = async() => {
+export const fetchCookieName = async() => {
     const res = await fetch(`${authUrl}/token-names`);
     if (res.ok) {
         try {
@@ -26,7 +26,6 @@ const fetchCookieName = async() => {
         console.log(`cookie name is default ${cookie_name}`);
     }
 }
-fetchCookieName();
 
 export const authProvider: AuthProvider = {
     // called when the user attempts to log in
