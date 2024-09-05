@@ -1,5 +1,5 @@
 import { Admin, Resource, ShowGuesser } from 'react-admin';
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 
 import UserIcon from '@mui/icons-material/Group';
 import EmailIcon from '@mui/icons-material/EmailOutlined';
@@ -14,18 +14,15 @@ import {TemplateCreate, TemplateList, TemplateEdit} from './templates';
 import { UserList, UserEdit, UserCreate } from './users';
 import {EndorsementRequestList, EndorsementRequestCreate, EndorsementRequestEdit, EndorsementRequestShow} from './endorsementRequests';
 import { Dashboard } from './Dashboard';
-import { authProvider, fetchCookieName } from './authProvider';
+import {createAuthProvider} from './authProvider';
 import adminApiDataProvider from './adminApiDataProvider';
 import {EndorsementCreate, EndorsementEdit, EndorsementList} from "./endorsements";
 import {DocumentCreate, DocumentEdit, DocumentList} from "./documents";
 import {CategoryList, CategoryCreate, CategoryEdit} from "./categories";
 import {ModeratorCreate, ModeratorEdit, ModeratorList} from "./moderators";
 import {OwnershipRequestEdit, OwnershipRequestList} from "./ownershipRequests";
-import {appUrl, authUrl, backendUrl, fetch_settings} from "./settings";
-import CircularProgress from '@mui/material/CircularProgress';
-import Box from '@mui/material/Box';
+import {RuntimeContext, RuntimeContextProvider} from "./RuntimeContext";
 
-const dataProvider = new adminApiDataProvider(backendUrl);
 
 const RedirectComponent: React.FC<{to: string}> = ({ to }) => {
     useEffect(() => {
@@ -36,33 +33,17 @@ const RedirectComponent: React.FC<{to: string}> = ({ to }) => {
     return null;
 };
 
-function sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-let settingsLoaded = false;
-const loadSettings = async () => {
-    while(!settingsLoaded) {
-        try {
-            await fetchCookieName();
-            await fetch_settings();
-            settingsLoaded = true;
-            console.log("urls: " + appUrl + ", " + authUrl + ", " + backendUrl)
-        } catch (error) {
-            console.error("Error loading settings:", error);
-            await sleep(1000);
-        }
-    }
-};
-loadSettings();
+const AdminConsole: React.FC = () => {
+    const runtimeProps = useContext(RuntimeContext);
+    const dataProvider = new adminApiDataProvider(runtimeProps.ADMIN_API_BACKEND_URL);
+    const authProvider = createAuthProvider(runtimeProps);
 
-
-const App = () => {
     return (
     <Admin
         authProvider={authProvider}
         dataProvider={dataProvider}
         dashboard={Dashboard}
-        loginPage={(<RedirectComponent to={`${authUrl}/login?next=${appUrl}`}/>)}
+        loginPage={(<RedirectComponent to={`${runtimeProps.AAA_URL}/login?next=${runtimeProps.ADMIN_APP_ROOT}`}/>)}
     >
         <Resource
             name="users"
@@ -148,7 +129,16 @@ const App = () => {
         <Resource name="paper_owners"/>
         <Resource name="demographics"/>
 
-    </Admin>);
+    </Admin>
+    )
+}
+
+const App = () => {
+    return (
+        <RuntimeContextProvider>
+            <AdminConsole />
+        </RuntimeContextProvider>
+    );
 }
 
 export default App;

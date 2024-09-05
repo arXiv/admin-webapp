@@ -1,7 +1,6 @@
 import { AuthProvider } from 'react-admin';
-import {useEffect, useState} from "react";
-
-import {authUrl, appUrl} from './settings';
+import {useEffect, useState, useContext} from "react";
+import {RuntimeProps} from "./RuntimeContext";
 
 function getCookie(name: string): string | null {
     const value = `; ${document.cookie}`;
@@ -10,35 +9,19 @@ function getCookie(name: string): string | null {
     return null;
 }
 
-let cookie_name = "arxiv_session_cookie";
-export const fetchCookieName = async() => {
-    const res = await fetch(`${authUrl}/token-names`);
-    if (res.ok) {
-        try {
-            const data = await res.json();
-            cookie_name = data.session;
-        }
-        catch (e) {
-            console.error(e);
-        }
-    }
-    else {
-        console.log(`cookie name is default ${cookie_name}`);
-    }
-}
+export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => ({
 
-export const authProvider: AuthProvider = {
     // called when the user attempts to log in
     login: () => {
         console.log("auth: /login");
-        window.location.href = `${authUrl}/login`;
+        window.location.href = `${runtimeProps.AAA_URL}/login`;
         return Promise.resolve();
     },
     // called when the user clicks on the logout button
     logout: () => {
         console.log("auth: /logout");
         /* document.cookie = `${cookie_name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`; */
-        return fetch(`${authUrl}/logout?next=${appUrl}`, {
+        return fetch(`${runtimeProps.AAA_URL}/logout?next=${runtimeProps.ADMIN_APP_ROOT}`, {
             method: "GET",
             credentials: "include",
         }).then(response => {
@@ -68,10 +51,10 @@ export const authProvider: AuthProvider = {
     },
     // called when the user navigates to a new location, to check for authentication
     checkAuth: () => {
-        const token = getCookie(cookie_name);
+        const token = getCookie(runtimeProps.ARXIV_COOKIE_NAME);
         return Promise.resolve();
         return token ? Promise.resolve() : Promise.reject();
     },
     // called when the user navigates to a new location, to check for permissions / roles
     getPermissions: () => Promise.resolve(),
-};
+});

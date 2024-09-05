@@ -37,19 +37,19 @@ ADMIN_API_ROOT_PATH = os.environ.get('ADMIN_API_ROOT_PATH', '/adminapi')
 
 # Admin app URL
 #
-ADMIN_APP_URL = os.environ.get('ADMIN_APP_URL', 'http://127.0.0.1:5000/admin-console')
+ADMIN_APP_URL = os.environ.get('ADMIN_APP_URL', 'http://localhost.arxiv.org:5000/admin-console')
 
 # Keycloak server url
-KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'http://127.0.0.1:3033')
+KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'http://localhost.arxiv.org:3033')
 # arxiv-user client secret
 KEYCLOAK_CLIENT_SECRET = os.environ.get("KEYCLOAK_CLIENT_SECRET", "foo")
 #
 DB_URI = os.environ.get('CLASSIC_DB_URI')
 #
 #
-AAA_CALLBACK_URL = os.environ.get("AAA_CALLBACK_URL", "http://127.0.0.1:5000/aaa/callback")
+AAA_CALLBACK_URL = os.environ.get("AAA_CALLBACK_URL", "http://localhost.arxiv.org:5000/aaa/callback")
 #
-AAA_LOGIN_REDIRECT_URL = os.environ.get("AAA_LOGIN_REDIRECT_URL", "http://127.0.0.1:5000/aaa/login")
+AAA_LOGIN_REDIRECT_URL = os.environ.get("AAA_LOGIN_REDIRECT_URL", "http://localhost.arxiv.org:5000/aaa/login")
 #
 LOGOUT_REDIRECT_URL = os.environ.get("LOGOUT_REDIRECT_URL", ADMIN_APP_URL)
 
@@ -61,12 +61,14 @@ _idp_ = ArxivOidcIdpClient(AAA_CALLBACK_URL,
                            )
 
 origins = [
-    "http://127.0.0.1",
-    "http://127.0.0.1/",
-    "http://127.0.0.1:5000",
-    "http://127.0.0.1:5000/",
-    "http://127.0.0.1:5000/admin-console",
-    "http://127.0.0.1:5000/admin-console/",
+    "http://localhost.arxiv.org",
+    "http://localhost.arxiv.org/",
+    "https://localhost.arxiv.org",
+    "https://localhost.arxiv.org/",
+    "http://localhost.arxiv.org:5000",
+    "http://localhost.arxiv.org:5000/",
+    "http://localhost.arxiv.org:5000/admin-console",
+    "http://localhost.arxiv.org:5000/admin-console/",
     "https://dev3.arxiv.org",
     "https://dev3.arxiv.org/",
     "https://dev.arxiv.org",
