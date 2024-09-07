@@ -1,11 +1,14 @@
 import os
 from typing import Callable
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import Response, RedirectResponse
 
+from arxiv.base.globals import get_application_config
+
+from admin_api_routes import AccessTokenExpired
 # from admin_api_routes.authentication import router as auth_router
 from admin_api_routes.categories import router as categories_router
 from admin_api_routes.email_template import router as email_template_router
@@ -38,27 +41,28 @@ ADMIN_API_ROOT_PATH = os.environ.get('ADMIN_API_ROOT_PATH', '/adminapi')
 # Admin app URL
 #
 ADMIN_APP_URL = os.environ.get('ADMIN_APP_URL', 'http://localhost.arxiv.org:5000/admin-console')
-
-# Keycloak server url
-KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'http://localhost.arxiv.org:3033')
-# arxiv-user client secret
-KEYCLOAK_CLIENT_SECRET = os.environ.get("KEYCLOAK_CLIENT_SECRET", "foo")
 #
 DB_URI = os.environ.get('CLASSIC_DB_URI')
 #
+# AAA_CALLBACK_URL = os.environ.get("AAA_CALLBACK_URL", "http://localhost.arxiv.org:5000/aaa/callback")
 #
-AAA_CALLBACK_URL = os.environ.get("AAA_CALLBACK_URL", "http://localhost.arxiv.org:5000/aaa/callback")
 #
 AAA_LOGIN_REDIRECT_URL = os.environ.get("AAA_LOGIN_REDIRECT_URL", "http://localhost.arxiv.org:5000/aaa/login")
+AAA_TOKEN_REFRESH_URL = os.environ.get("AAA_TOKEN_REFRESH_URL", "http://localhost.arxiv.org:5000/aaa/refresh")
 #
 LOGOUT_REDIRECT_URL = os.environ.get("LOGOUT_REDIRECT_URL", ADMIN_APP_URL)
 
-_idp_ = ArxivOidcIdpClient(AAA_CALLBACK_URL,
-                           scope=["openid"],
-                           server_url=KEYCLOAK_SERVER_URL,
-                           client_secret=KEYCLOAK_CLIENT_SECRET,
-                           logger=getLogger(__name__)
-                           )
+# Auth is now handled by auth service
+# Keycloak server url
+# KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'http://localhost.arxiv.org:3033')
+# arxiv-user client secret
+# KEYCLOAK_CLIENT_SECRET = os.environ.get("KEYCLOAK_CLIENT_SECRET", "foo")
+#_idp_ = ArxivOidcIdpClient(AAA_CALLBACK_URL,
+#                           scope=["openid"],
+#                           server_url=KEYCLOAK_SERVER_URL,
+#                           client_secret=KEYCLOAK_CLIENT_SECRET,
+#                           logger=getLogger(__name__)
+#                           )
 
 origins = [
     "http://localhost.arxiv.org",
@@ -109,16 +113,17 @@ def create_app(*args, **kwargs) -> FastAPI:
     )
     engine, _ = configure_db(settings)
 
+    jwt_secret = get_application_config().get('JWT_SECRET', settings.SECRET_KEY)
+
     app = FastAPI(
         root_path=ADMIN_API_ROOT_PATH,
-        idp=_idp_,
         arxiv_db_engine=engine,
         arxiv_settings=settings,
-        JWT_SECRET=settings.SECRET_KEY,
+        JWT_SECRET=jwt_secret,
         LOGIN_REDIRECT_URL=AAA_LOGIN_REDIRECT_URL,
         LOGOUT_REDIRECT_URL=LOGOUT_REDIRECT_URL,
-        AUTH_SESSION_COOKIE_NAME="arxiv_session_cookie",
-        CLASSIC_COOKIE_NAME="tapir_session_cookie",
+        AUTH_SESSION_COOKIE_NAME="arxiv_oidc_session",  # can be obtained from /token-names
+        CLASSIC_COOKIE_NAME="tapir_session",            #
     )
 
     if ADMIN_APP_URL not in origins:
@@ -164,5 +169,12 @@ def create_app(*args, **kwargs) -> FastAPI:
     @app.get("/")
     async def root(request: Request):
         return RedirectResponse("/frontend")
+
+    @app.exception_handler(AccessTokenExpired)
+    async def user_not_authenticated_exception_handler(request: Request,
+                                                       _exc: AccessTokenExpired):
+        original_url = str(request.url)
+        redirect_url = f"{AAA_TOKEN_REFRESH_URL}?next_page={original_url}"
+        return RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
 
     return app

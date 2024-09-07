@@ -19,6 +19,10 @@ from arxiv.db import SessionLocal
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 
+class AccessTokenExpired(Exception):
+    pass
+
+
 async def is_admin_user(request: Request) -> bool:
     # temporary - use user claims in base
 
@@ -54,9 +58,11 @@ async def get_current_user(request: Request) -> ArxivUserClaims | None:
             return claims
         except jwcrypto.jwt.JWTExpired:
             if 'refresh' in tokens:
-                idp: ArxivOidcIdpClient = request.app.extra['idp']
-                claims = idp.refresh_access_token(tokens['refresh'])
-                return claims
+                # idp: ArxivOidcIdpClient = request.app.extra['idp']
+                #  claims = idp.refresh_access_token(tokens['refresh'])
+                #return claims
+                raise AccessTokenExpired()
+
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
         except jwcrypto.jwt.JWTInvalidClaimFormat:
             logger.warning(f"Chowed cookie '{token}'")

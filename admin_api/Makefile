@@ -21,12 +21,8 @@ APP_DOCKER_RUN := docker run --cpus ${ADMINAPI_CPUS} --rm -p ${app_port}:${docke
 -e PORT=${dockerport} -e WORKERS=${ADMINAPI_WORKERS} \
 -e ADMIN_API_ROOT_PATH=/adminapi \
 -e ADMIN_APP_URL=${ADMIN_CONSOLE_URL} \
--e KEYCLOAK_SERVER_URL=${KEYCLOAK_SERVER_URL} \
--e KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET} \
 -e CLASSIC_DB_URI=${CLASSIC_DB_URI} \
--e AAA_CALLBACK_URL=${AAA_CALLBACK_URL} \
--e AAA_LOGIN_REDIRECT_URL=${AAA_LOGIN_REDIRECT_URL} \
---name ${app_name} --security-opt="no-new-privileges=true" 
+--name ${app_name} --security-opt="no-new-privileges=true"
 
 .PHONY: HELLO docker run stop
 
