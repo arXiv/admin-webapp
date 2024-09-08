@@ -28,7 +28,6 @@ from arxiv.base.logging import getLogger
 
 from arxiv.config import Settings
 from arxiv.db.models import configure_db
-from arxiv.auth.openid.oidc_idp import ArxivOidcIdpClient
 
 from app_logging import setup_logger
 
@@ -38,11 +37,6 @@ ADMIN_API_ROOT_PATH = os.environ.get('ADMIN_API_ROOT_PATH', '/adminapi')
 # Admin app URL
 #
 ADMIN_APP_URL = os.environ.get('ADMIN_APP_URL', 'http://localhost.arxiv.org:5000/admin-console')
-
-# Keycloak server url
-KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'http://localhost.arxiv.org:3033')
-# arxiv-user client secret
-KEYCLOAK_CLIENT_SECRET = os.environ.get("KEYCLOAK_CLIENT_SECRET", "foo")
 #
 DB_URI = os.environ.get('CLASSIC_DB_URI')
 #
@@ -52,13 +46,11 @@ AAA_CALLBACK_URL = os.environ.get("AAA_CALLBACK_URL", "http://localhost.arxiv.or
 AAA_LOGIN_REDIRECT_URL = os.environ.get("AAA_LOGIN_REDIRECT_URL", "http://localhost.arxiv.org:5000/aaa/login")
 #
 LOGOUT_REDIRECT_URL = os.environ.get("LOGOUT_REDIRECT_URL", ADMIN_APP_URL)
+#
+JWT_SECRET = os.environ.get("JWT_SECRET")
+AUTH_SESSION_COOKIE_NAME = os.environ.get("AUTH_SESSION_COOKIE_NAME", "arxiv_session_cookie")
+CLASSIC_COOKIE_NAME = os.environ.get("CLASSIC_COOKIE_NAME", "tapir_session_cookie")
 
-_idp_ = ArxivOidcIdpClient(AAA_CALLBACK_URL,
-                           scope=["openid"],
-                           server_url=KEYCLOAK_SERVER_URL,
-                           client_secret=KEYCLOAK_CLIENT_SECRET,
-                           logger=getLogger(__name__)
-                           )
 
 origins = [
     "http://localhost.arxiv.org",
@@ -111,14 +103,13 @@ def create_app(*args, **kwargs) -> FastAPI:
 
     app = FastAPI(
         root_path=ADMIN_API_ROOT_PATH,
-        idp=_idp_,
         arxiv_db_engine=engine,
         arxiv_settings=settings,
-        JWT_SECRET=settings.SECRET_KEY,
+        JWT_SECRET=JWT_SECRET if JWT_SECRET else settings.SECRET_KEY,
         LOGIN_REDIRECT_URL=AAA_LOGIN_REDIRECT_URL,
         LOGOUT_REDIRECT_URL=LOGOUT_REDIRECT_URL,
-        AUTH_SESSION_COOKIE_NAME="arxiv_session_cookie",
-        CLASSIC_COOKIE_NAME="tapir_session_cookie",
+        AUTH_SESSION_COOKIE_NAME=AUTH_SESSION_COOKIE_NAME,
+        CLASSIC_COOKIE_NAME=CLASSIC_COOKIE_NAME,
     )
 
     if ADMIN_APP_URL not in origins:

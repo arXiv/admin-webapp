@@ -5,8 +5,8 @@ app_port := 4042
 dockerport := 4042
 
 ROOT_DIR := $(shell pwd)
-AAUTH2C_CPUS := 2
-AAUTH2C_DOCKER_PLATFORM := $(shell echo $${AAUTH2C_DOCKER_PLATFORM:-linux/amd64})
+WEBAPP_CPUS := 2
+WEBAPP_DOCKER_PLATFORM := $(shell echo $${WEBAPP_DOCKER_PLATFORM:-linux/amd64})
 # // where the auth server is running.
 # export const authUrl = process.env.AAA_URL || 'http://127.0.0.1:5000/aaa';
 # // where the backend is running
@@ -14,9 +14,10 @@ AAUTH2C_DOCKER_PLATFORM := $(shell echo $${AAUTH2C_DOCKER_PLATFORM:-linux/amd64}
 # // and the UI is serving from
 # export const appUrl = process.env.ADMIN_APP_ROOT || 'http://127.0.0.1:5000/';
 # RUN_HOST := https://dev3.arxiv.org
-RUN_HOST := http://127.0.0.1:5000
+RUN_HOST := http://localhost:5000
 
-APP_DOCKER_RUN := docker run --cpus ${AAUTH2C_CPUS} --rm -p ${app_port}:${dockerport} \
+APP_DOCKER_RUN := docker run --cpus ${WEBAPP_CPUS} --rm -p ${app_port}:${dockerport} \
+-e WORKERS=4 \
 -e PORT=${dockerport} \
 -e AAA_URL=${RUN_HOST}/aaa \
 -e ADMIN_API_BACKEND_URL=${RUN_HOST}/adminapi/v1 \
@@ -25,7 +26,7 @@ APP_DOCKER_RUN := docker run --cpus ${AAUTH2C_CPUS} --rm -p ${app_port}:${docker
 
 .PHONY: HELLO docker run stop build
 
-default: HELLO venv/lib/python3.12/site-packages/fastapi
+default: HELLO
 
 HELLO:
 	@echo To see the README of this Makefile, type "make help"
