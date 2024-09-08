@@ -6,6 +6,9 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import Response, RedirectResponse
 
+from arxiv.base.globals import get_application_config
+
+from admin_api_routes import AccessTokenExpired
 # from admin_api_routes.authentication import router as auth_router
 from admin_api_routes.categories import router as categories_router
 from admin_api_routes.email_template import router as email_template_router
@@ -41,9 +44,11 @@ ADMIN_APP_URL = os.environ.get('ADMIN_APP_URL', 'http://localhost.arxiv.org:5000
 DB_URI = os.environ.get('CLASSIC_DB_URI')
 #
 #
-AAA_CALLBACK_URL = os.environ.get("AAA_CALLBACK_URL", "http://localhost.arxiv.org:5000/aaa/callback")
 #
 AAA_LOGIN_REDIRECT_URL = os.environ.get("AAA_LOGIN_REDIRECT_URL", "http://localhost.arxiv.org:5000/aaa/login")
+# When it got the expired, ask the oauth server to refresh the token
+# This is still WIP.
+AAA_TOKEN_REFRESH_URL = os.environ.get("AAA_TOKEN_REFRESH_URL", "http://localhost.arxiv.org:5000/aaa/refresh")
 #
 LOGOUT_REDIRECT_URL = os.environ.get("LOGOUT_REDIRECT_URL", ADMIN_APP_URL)
 #
@@ -51,6 +56,8 @@ JWT_SECRET = os.environ.get("JWT_SECRET")
 AUTH_SESSION_COOKIE_NAME = os.environ.get("AUTH_SESSION_COOKIE_NAME", "arxiv_session_cookie")
 CLASSIC_COOKIE_NAME = os.environ.get("CLASSIC_COOKIE_NAME", "tapir_session_cookie")
 
+# Auth is now handled by auth service
+# No need for keycloak URL, etc.
 
 origins = [
     "http://localhost.arxiv.org",
@@ -101,11 +108,13 @@ def create_app(*args, **kwargs) -> FastAPI:
     )
     engine, _ = configure_db(settings)
 
+    jwt_secret = get_application_config().get('JWT_SECRET', settings.SECRET_KEY)
+
     app = FastAPI(
         root_path=ADMIN_API_ROOT_PATH,
         arxiv_db_engine=engine,
         arxiv_settings=settings,
-        JWT_SECRET=JWT_SECRET if JWT_SECRET else settings.SECRET_KEY,
+        JWT_SECRET=jwt_secret,
         LOGIN_REDIRECT_URL=AAA_LOGIN_REDIRECT_URL,
         LOGOUT_REDIRECT_URL=LOGOUT_REDIRECT_URL,
         AUTH_SESSION_COOKIE_NAME=AUTH_SESSION_COOKIE_NAME,
@@ -155,5 +164,12 @@ def create_app(*args, **kwargs) -> FastAPI:
     @app.get("/")
     async def root(request: Request):
         return RedirectResponse("/frontend")
+
+    @app.exception_handler(AccessTokenExpired)
+    async def user_not_authenticated_exception_handler(request: Request,
+                                                       _exc: AccessTokenExpired):
+        original_url = str(request.url)
+        redirect_url = f"{AAA_TOKEN_REFRESH_URL}?next_page={original_url}"
+        return RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
 
     return app
