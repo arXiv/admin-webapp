@@ -60,6 +60,12 @@ const workflowStatus = [
     { id: 'rejected', name: 'Rejected' },
 ];
 
+const presetOptions = [
+    { id: 'last_1_day', name: 'Last 1 Day' },
+    { id: 'last_7_days', name: 'Last 7 Days' },
+    { id: 'last_28_days', name: 'Last 28 Days' },
+];
+
 const calculatePresetDates = (preset: string) => {
     const today = new Date();
     switch (preset) {
@@ -79,8 +85,20 @@ const OwnershipRequestFilter = (props: any) => {
     const { setFilters, filterValues } = useListContext();
 
     const handleWorkflowStatusChoice = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const { startDate, endDate } = calculatePresetDates(event.target.value);
         setFilters({
             ...filterValues,
+            startDate: startDate ? startDate.toISOString().split('T')[0] : '',
+            endDate: endDate ? endDate.toISOString().split('T')[0] : '',
+        });
+    };
+
+    const handlePresetChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const { startDate, endDate } = calculatePresetDates(event.target.value);
+        setFilters({
+            ...filterValues,
+            startDate: startDate ? startDate.toISOString().split('T')[0] : '',
+            endDate: endDate ? endDate.toISOString().split('T')[0] : '',
         });
     };
 
@@ -93,6 +111,15 @@ const OwnershipRequestFilter = (props: any) => {
                 onChange={(event) => handleWorkflowStatusChoice(event as React.ChangeEvent<HTMLSelectElement>)}
                 alwaysOn
             />
+            <SelectInput
+                label="Preset Date Range"
+                source="preset"
+                choices={presetOptions}
+                onChange={(event) => handlePresetChange(event as React.ChangeEvent<HTMLSelectElement>)}
+                alwaysOn
+            />
+            <DateInput label="Start Date" source="start_date" />
+            <DateInput label="End Date" source="end_date" />
         </Filter>
     );
 };
@@ -112,6 +139,7 @@ export const OwnershipRequestList = () => {
             ) : (
                 <Datagrid rowClick="edit" sort={sorter}>
                     <NumberField source="id" label={"Request ID"}/>
+                    <DateField source="date" label={"Date"}/>
                     <ReferenceField source="user_id" reference="users"
                                     link={(record, reference) => `/${reference}/${record.id}`} >
                         <TextField source={"last_name"} />
@@ -122,11 +150,8 @@ export const OwnershipRequestList = () => {
 
                     </ReferenceField>
                     <TextField source="workflow_status" label={"Status"}/>
-                    <ReferenceField source="id" reference="ownership_requests_audit" label={"Audit"}>
-                        {"Remote host: "}
+                    <ReferenceField source="id" reference="ownership_requests_audit" label={"Remote host"}>
                         <TextField source={"remote_host"} defaultValue={"Unknown"}/>
-                        {"Date: "}
-                        <DateField source={"date"} />
                     </ReferenceField>
 
                 </Datagrid>
