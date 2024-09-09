@@ -1,6 +1,6 @@
 """arXiv paper ownership routes."""
-
-from datetime import datetime
+import re
+import datetime
 from enum import Enum
 from typing import Optional, Literal, List
 
@@ -8,14 +8,14 @@ from arxiv.auth.user_claims import ArxivUserClaims
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response, Request
 from sqlalchemy import insert
 
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from sqlalchemy.sql.operators import and_
 from pydantic import BaseModel
 
 from arxiv.base import logging
-from arxiv.db.models import OwnershipRequest, t_arXiv_ownership_requests_papers, PaperOwner
+from arxiv.db.models import OwnershipRequest, t_arXiv_ownership_requests_papers, PaperOwner, OwnershipRequestsAudit
 
-from . import is_admin_user, get_db, is_any_user, get_current_user, transaction
+from . import is_admin_user, get_db, is_any_user, get_current_user, transaction, datetime_to_epoch, VERY_OLDE
 from .models import PaperOwnerModel
 
 logger = logging.getLogger(__name__)
@@ -37,8 +37,16 @@ class OwnershipRequestModel(BaseModel):
     user_id: int
     endorsement_request_id: Optional[int] = None
     workflow_status: WorkflowStatus # Literal['pending', 'accepted', 'rejected']
-
+    date: Optional[datetime.date]
     document_ids: Optional[List[int]] = None
+
+    @classmethod
+    def base_query_0(cls, session: Session) -> Query:
+        return session.query(
+            OwnershipRequest.request_id.label("id"),
+            OwnershipRequest.user_id,
+            OwnershipRequest.endorsement_request_id,
+            OwnershipRequest.workflow_status)
 
     @classmethod
     def base_query(cls, session: Session) -> Query:
@@ -46,7 +54,12 @@ class OwnershipRequestModel(BaseModel):
             OwnershipRequest.request_id.label("id"),
             OwnershipRequest.user_id,
             OwnershipRequest.endorsement_request_id,
-            OwnershipRequest.workflow_status)
+            OwnershipRequest.workflow_status,
+            OwnershipRequestsAudit.date
+            ).join(
+                OwnershipRequestsAudit, OwnershipRequest.request_id == OwnershipRequestsAudit.request_id
+            )
+
 
     @classmethod
     def from_record(cls, record: OwnershipRequest, session: Session) -> 'OwnershipRequestModel':
@@ -72,11 +85,15 @@ def list_ownership_requests(
         _order: Optional[str] = Query("ASC", description="sort order"),
         _start: Optional[int] = Query(0, alias="_start"),
         _end: Optional[int] = Query(100, alias="_end"),
+        preset: Optional[str] = Query(None),
+        start_date: Optional[datetime.date] = Query(None, description="Start date for filtering"),
+        end_date: Optional[datetime.date] = Query(None, description="End date for filtering"),
         id: Optional[List[int]] = Query(None, description="List of ownership request IDs to filter by"),
         user_id: Optional[int] = Query(None),
         endorsement_request_id: Optional[int] = Query(None),
         workflow_status: Optional[Literal['pending', 'accepted', 'rejected']] = Query(None),
         session: Session = Depends(get_db),
+
     ) -> List[OwnershipRequestModel]:
     query = OwnershipRequestModel.base_query(session)
     if id is not None:
@@ -84,6 +101,23 @@ def list_ownership_requests(
         _start = None
         _end = None
     else:
+        if preset is not None or start_date is not None or end_date is not None:
+            t0 = datetime.datetime.now(datetime.UTC)
+            if preset is not None:
+                matched = re.search(r"last_(\d+)_days", preset)
+                if matched:
+                    t_begin = datetime_to_epoch(None, t0 - datetime.timedelta(days=int(matched.group(1))))
+                    t_end = datetime_to_epoch(None, t0)
+                    query = query.filter(OwnershipRequestsAudit.date.between(t_begin, t_end))
+                else:
+                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                        detail="Invalid preset format")
+            else:
+                if start_date or end_date:
+                    t_begin = datetime_to_epoch(start_date, VERY_OLDE)
+                    t_end = datetime_to_epoch(end_date, datetime.date.today(), hour=23, minute=59, second=59)
+                    query = query.filter(OwnershipRequestsAudit.date.between(t_begin, t_end))
+
         if user_id:
             query = query.filter(OwnershipRequest.user_id == user_id)
 
