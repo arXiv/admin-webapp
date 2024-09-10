@@ -23,22 +23,16 @@ RUN $VIRTUAL_ENV/bin/python -m pip install -U pip
 
 WORKDIR /opt/arxiv/
 RUN $VIRTUAL_ENV/bin/pip install poetry
-
-ADD poetry.lock /opt/arxiv/
-ADD pyproject.toml /opt/arxiv/
-
 RUN $VIRTUAL_ENV/bin/poetry config virtualenvs.create false ; exit 0
+
+COPY poetry.lock pyproject.toml main.py app-logging.conf app_logging.py hypercorn-config.toml /opt/arxiv/
+
 RUN $VIRTUAL_ENV/bin/poetry lock --no-update ; exit 0
 RUN $VIRTUAL_ENV/bin/poetry install --no-dev --no-interaction --no-ansi ; exit 0
+RUN $VIRTUAL_ENV/bin/pip install hypercorn
 RUN $VIRTUAL_ENV/bin/pip uninstall -y poetry
 
-ADD admin_api_routes /opt/arxiv/admin_api_routes
-ADD main.py /opt/arxiv/
-ADD app-logging.conf /opt/arxiv/
-ADD app_logging.py /opt/arxiv/
-ADD hypercorn-config.toml /opt/arxiv/
-
-RUN $VIRTUAL_ENV/bin/pip install hypercorn
+COPY admin_api_routes /opt/arxiv/admin_api_routes
 
 ENV WORKERS 8
 ENV SQLALCHEMY_TRACK_MODIFICATIONS False
