@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Callable
 from fastapi import FastAPI, Request, status
@@ -8,7 +9,7 @@ from fastapi.responses import Response, RedirectResponse
 
 from arxiv.base.globals import get_application_config
 
-from admin_api_routes import AccessTokenExpired
+from admin_api_routes import AccessTokenExpired, LoginRequired, BadCookie
 # from admin_api_routes.authentication import router as auth_router
 from admin_api_routes.categories import router as categories_router
 from admin_api_routes.email_template import router as email_template_router
@@ -60,14 +61,12 @@ CLASSIC_COOKIE_NAME = os.environ.get("CLASSIC_COOKIE_NAME", "tapir_session")
 # No need for keycloak URL, etc.
 
 origins = [
-    "http://localhost.arxiv.org",
-    "http://localhost.arxiv.org/",
-    "https://localhost.arxiv.org",
-    "https://localhost.arxiv.org/",
-    "http://localhost.arxiv.org:5000",
-    "http://localhost.arxiv.org:5000/",
-    "http://localhost.arxiv.org:5000/admin-console",
-    "http://localhost.arxiv.org:5000/admin-console/",
+    "http://localhost",
+    "http://localhost/",
+    "http://localhost:5000",
+    "http://localhost:5000/",
+    "http://localhost:5000/admin-console",
+    "http://localhost:5000/admin-console/",
     "https://dev3.arxiv.org",
     "https://dev3.arxiv.org/",
     "https://dev.arxiv.org",
@@ -168,8 +167,62 @@ def create_app(*args, **kwargs) -> FastAPI:
     @app.exception_handler(AccessTokenExpired)
     async def user_not_authenticated_exception_handler(request: Request,
                                                        _exc: AccessTokenExpired):
+        logger = logging.getLogger(__name__)
         original_url = str(request.url)
-        redirect_url = f"{AAA_TOKEN_REFRESH_URL}?next_page={original_url}"
-        return RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
+        logger.info('Access token expired %s', original_url)
+        cookie_name = request.app.extra['AUTH_SESSION_COOKIE_NAME']
+        classic_cookie_name = request.app.extra['CLASSIC_COOKIE_NAME']
+
+        cookies = request.cookies
+        async with httpx.AsyncClient() as client:
+            refresh_response = await client.post(
+                AAA_TOKEN_REFRESH_URL,
+                data={
+                    "session": cookies.get(cookie_name),
+                    "classic": cookies.get(classic_cookie_name),
+                },
+                cookies=cookies)
+
+        if refresh_response.status_code != 200:
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={"message": "Failed to refresh access token"}
+            )
+
+        # Extract the new token from the response
+        new_session_cookie = refreshed_tokens.get("session")
+        new_classic_cookie = refreshed_tokens.get("classic")
+        max_age = refreshed_tokens.get("max_age")
+        domain = refreshed_tokens.get("domain")
+        secure = refreshed_tokens.get("secure")
+        samesite = refreshed_tokens.get("samesite")
+
+        # Step 3: Redirect back to the original URL and set the new cookie
+        response = RedirectResponse(url=original_url, status_code=status.HTTP_302_FOUND)
+        response.set_cookie(cookie_name, new_session_cookie,
+                            max_age=max_age, domain=domain, secure=secure, samesite=samesite)
+        response.set_cookie(classic_cookie_name, new_classic_cookie,
+                            max_age=max_age, domain=domain, secure=secure, samesite=samesite)
+        return response
+
+
+    @app.exception_handler(LoginRequired)
+    async def login_required_exception_handler(request: Request,
+                                               _exc: LoginRequired):
+        logger = logging.getLogger(__name__)
+        original_url = str(request.url)
+        login_url = f"{AAA_LOGIN_REDIRECT_URL}?next_page={original_url}"
+        logger.info('Login required %s -> %s ', original_url, login_url)
+        #return RedirectResponse(url=login_url, status_code=status.HTTP_302_FOUND)
+        return Response(status_code=status.HTTP_401_UNAUTHORIZED)
+
+    @app.exception_handler(BadCookie)
+    async def bad_cookie_exception_handler(request: Request,
+                                           _exc: BadCookie):
+        logger = logging.getLogger(__name__)
+        original_url = str(request.url)
+        login_url = f"{AAA_LOGIN_REDIRECT_URL}?next_page={original_url}"
+        logger.info('Bad cookie %s -> %s ', original_url, login_url)
+        return RedirectResponse(url=login_url, status_code=status.HTTP_302_FOUND)
 
     return app

@@ -23,6 +23,13 @@ class AccessTokenExpired(Exception):
     pass
 
 
+class BadCookie(Exception):
+    pass
+
+class LoginRequired(Exception):
+    pass
+
+
 async def is_admin_user(request: Request) -> bool:
     # temporary - use user claims in base
 
@@ -45,11 +52,12 @@ async def get_current_user(request: Request) -> ArxivUserClaims | None:
     token = request.cookies.get(session_cookie_key)
     if not token:
         logger.debug(f"There is no cookie '{session_cookie_key}'")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        raise LoginRequired()
+
     secret = request.app.extra['JWT_SECRET']
     if not secret:
         logger.error("The app is misconfigured or no JWT secret has been set")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     tokens, jwt_payload = ArxivUserClaims.unpack_token(token)
     while True:
@@ -63,16 +71,19 @@ async def get_current_user(request: Request) -> ArxivUserClaims | None:
                 #return claims
                 raise AccessTokenExpired()
 
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+            raise LoginRequired()
+
         except jwcrypto.jwt.JWTInvalidClaimFormat:
             logger.warning(f"Chowed cookie '{token}'")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+            raise BadCookie()
+
         except jwt.DecodeError:
             logger.warning(f"Chowed cookie '{token}'")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+            raise BadCookie()
+
         except Exception as exc:
             logger.warning(f"token {token} is wrong?", exc_info=exc)
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def get_db():

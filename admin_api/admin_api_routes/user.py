@@ -1,23 +1,21 @@
 """arXiv user routes."""
 from http.client import HTTPException
-from typing import Optional, List, Any
-from datetime import datetime
+from typing import Optional, List
+from datetime import datetime, date, timedelta
 
 from fastapi import APIRouter, Query, HTTPException, status, Depends, Request
 from fastapi.responses import Response
 
-from sqlalchemy import select, update, func, case, Select, distinct, exists
+from sqlalchemy import select, case, distinct, exists, text
 from sqlalchemy.orm import Session, aliased
 
 from pydantic import BaseModel
 
 from arxiv.db import transaction
-from arxiv.db.models import TapirUser, TapirNickname, t_arXiv_moderators, Demographic, TapirCountry
+from arxiv.db.models import (TapirUser, TapirNickname, t_arXiv_moderators, Demographic, TapirCountry,
+                             t_arXiv_black_email, t_arXiv_white_email)
 
-
-from .models import DemographicModel
-
-from . import is_admin_user, get_db
+from . import is_admin_user, get_db, VERY_OLDE, datetime_to_epoch
 
 router = APIRouter(dependencies=[Depends(is_admin_user)], prefix="/users")
 
@@ -47,8 +45,6 @@ class UserModel(BaseModel):
     flag_can_lock:  Optional[bool]
     flag_is_mod: Optional[bool]
 
-    flag_suspect: Optional[bool]
-    dirty: Optional[int]  # 0, 1, 2
     moderator_id: Optional[str]
 
     # From Demographic
@@ -146,6 +142,7 @@ class UserModel(BaseModel):
 
 @router.get("/{user_id:int}")
 def get_one_user(user_id:int, db: Session = Depends(get_db)) -> UserModel:
+    # @ignore-types
     user = UserModel.base_select(db).filter(TapirUser.user_id == user_id).one_or_none()
     if user:
         return UserModel.from_orm(user)
@@ -170,6 +167,8 @@ async def list_users(
         flag_email_verified: Optional[bool] = Query(None),
         email_bouncing: Optional[bool] = Query(None),
         suspect: Optional[bool] = Query(None),
+        start_joined_date: Optional[date] = Query(None, description="Start date for filtering"),
+        end_joined_date: Optional[date] = Query(None, description="End date for filtering"),
         id: Optional[List[int]] = Query(None, description="List of user IDs to filter by"),
         db: Session = Depends(get_db)
 ) -> List[UserModel]:
@@ -198,46 +197,61 @@ async def list_users(
     if id is not None:
         query = query.filter(TapirUser.user_id.in_(id))
 
-    if suspect:
-        dgfx = aliased(Demographic)
-        query = query.join(dgfx, dgfx.user_id == TapirUser.user_id)
-        query = query.filter(dgfx.flag_suspect == suspect)
+    else:
+        if suspect:
+            dgfx = aliased(Demographic)
+            query = query.join(dgfx, dgfx.user_id == TapirUser.user_id)
+            query = query.filter(dgfx.flag_suspect == suspect)
 
-    if user_class in ["owner", "admin"]:
-        query = query.filter(TapirUser.policy_class == False)
+        if user_class in ["owner", "admin"]:
+            query = query.filter(TapirUser.policy_class == False)
 
-    if user_class in ["owner"]:
-        query = query.filter(TapirUser.flag_edit_system == True)
+        if user_class in ["owner"]:
+            query = query.filter(TapirUser.flag_edit_system == True)
 
-    if flag_edit_users is not None:
-        query = query.filter(TapirUser.flag_edit_users == flag_edit_users)
+        if flag_edit_users is not None:
+            query = query.filter(TapirUser.flag_edit_users == flag_edit_users)
 
-    if flag_is_mod is not None:
-        subquery = select(distinct(t_arXiv_moderators.c.user_id))
-        if flag_is_mod:
-            # I think this is faster but I cannot make it work...
-            # query = query.join(t_arXiv_moderators, TapirUser.user_id == t_arXiv_moderators.c.user_id)
-            query = query.filter(TapirUser.user_id.in_(subquery))
-        else:
-            query = query.filter(~TapirUser.user_id.in_(subquery))
+        if flag_is_mod is not None:
+            subquery = select(distinct(t_arXiv_moderators.c.user_id))
+            if flag_is_mod:
+                # I think this is faster but I cannot make it work...
+                # query = query.join(t_arXiv_moderators, TapirUser.user_id == t_arXiv_moderators.c.user_id)
+                query = query.filter(TapirUser.user_id.in_(subquery))
+            else:
+                query = query.filter(~TapirUser.user_id.in_(subquery))
 
-    if username:
-        query = query.filter(TapirUser.tapir_nicknames.contains(username))
+        if username:
+            query = query.filter(TapirUser.tapir_nicknames.contains(username))
 
-    if first_name:
-        query = query.filter(TapirUser.first_name.contains(first_name))
+        if first_name:
+            query = query.filter(TapirUser.first_name.contains(first_name))
 
-    if last_name:
-        query = query.filter(TapirUser.last_name.contains(last_name))
+        if last_name:
+            query = query.filter(TapirUser.last_name.contains(last_name))
 
-    if email:
-        query = query.filter(TapirUser.email.contains(email))
+        if email:
+            query = query.filter(TapirUser.email.contains(email))
 
-    if flag_email_verified is not None:
-        query = query.filter(TapirUser.flag_email_verified == flag_email_verified)
+        if flag_email_verified is not None:
+            query = query.filter(TapirUser.flag_email_verified == flag_email_verified)
 
-    if email_bouncing is not None:
-        query = query.filter(TapirUser.email_bouncing == email_bouncing)
+        if email_bouncing is not None:
+            query = query.filter(TapirUser.email_bouncing == email_bouncing)
+
+        # This is how Tapir limits the search
+        if is_non_academic and start_joined_date is None:
+            start_joined_date = date.today() - timedelta(days=90)
+
+        if start_joined_date or end_joined_date:
+            t_begin = datetime_to_epoch(start_joined_date, VERY_OLDE)
+            t_end = datetime_to_epoch(end_joined_date, date.today(), hour=23, minute=59, second=59)
+            query = query.filter(TapirUser.joined_date.between(t_begin, t_end))
+
+        if is_non_academic:
+            # Inner join with arxiv_black_email on pattern match with email
+            query = query.join(t_arXiv_black_email, TapirUser.email.like(t_arXiv_black_email.c.pattern))
+
 
     for column in order_columns:
         if _order == "DESC":

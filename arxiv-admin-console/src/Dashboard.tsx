@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import {Card, CardContent, CardHeader, Grid, Button} from '@mui/material';
 import {useDataProvider} from "react-admin";
 import Typography from "@mui/material/Typography";
-import {EndorsementRequestEdit} from "./endorsementRequests";
 
 
 interface SummaryProps {
@@ -156,6 +155,11 @@ export const Dashboard = () => {
                                     </Button>
                                     <Button component={Link} to={{ pathname: '/users', search: '?filter={"suspect":true}' }}>
                                         Suspect Users
+                                    </Button>
+                                </Grid>
+                                <Grid item container xs={12}>
+                                    <Button component={Link} to={{ pathname: '/users', search: '?filter={"is_non_academic":true}' }}>
+                                        Non academic emails for last 90 days
                                     </Button>
                                 </Grid>
                             </Grid>

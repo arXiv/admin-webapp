@@ -8,7 +8,7 @@ from typing import Optional, List, Any
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request, Response
 
 from sqlalchemy import select, update, func, case, Select, distinct, exists, and_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, Query as SAQuery
 
 from pydantic import BaseModel, Field
 from arxiv.base import logging
@@ -37,7 +37,7 @@ class ModeratorModel(BaseModel):
         orm_mode = True
 
     @classmethod
-    def base_query(cls, db: Session) -> Query:
+    def base_query(cls, db: Session) -> SAQuery:
         return db.query(
             func.concat(t_arXiv_moderators.c.user_id, "+",
                         t_arXiv_moderators.c.archive, "+",

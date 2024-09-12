@@ -3,14 +3,14 @@ import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request, Response
 from typing import Optional, List
-from arxiv.base import logging
-from arxiv.db.models import TapirEmailTemplate, TapirUser, TapirNickname
-from arxiv.db import transaction
-from sqlalchemy import select
 from sqlalchemy.orm import Session, aliased
 from pydantic import BaseModel
 
-from . import is_admin_user, get_db
+from arxiv.base import logging
+from arxiv.db.models import TapirEmailTemplate, TapirUser, TapirNickname
+from arxiv.auth.user_claims import ArxivUserClaims
+
+from . import is_admin_user, get_db, get_current_user, transaction
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +124,7 @@ async def update_template(request: Request,
                           session: Session = Depends(transaction)) -> EmailTemplateModel:
     body = await request.json()
 
-    item = session.query(TapirEmailTemplate).filter(TapirEmailTemplate.template_id == id).first()
+    item = session.query(TapirEmailTemplate).filter(TapirEmailTemplate.template_id == id).one_or_none()
     if item is None:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -135,15 +135,41 @@ async def update_template(request: Request,
 
     session.commit()
     session.refresh(item)  # Refresh the instance with the updated data
-    return EmailTemplateModel.from_orm(item)
+    mint = EmailTemplateModel.base_select(session).filter(TapirEmailTemplate.template_id == item.template_id).one_or_none()
+    return EmailTemplateModel.from_orm(mint)
 
 
 @router.post('/')
-async def create_email_template(request: Request, db: Session = Depends(transaction)) -> EmailTemplateModel:
+async def create_email_template(request: Request,
+                                user: ArxivUserClaims = Depends(get_current_user),
+                                session: Session = Depends(transaction)) -> EmailTemplateModel:
     body = await request.json()
 
+    body['lang'] = 'en'
+    body['sql_statement'] = ''
+    body['update_date'] = datetime.datetime.now()
+    body['created_by'] = user.user_id
+    body['updated_by'] = user.user_id
+    body['workflow_status'] = 2
+    body['flag_system'] = 0
+
     item = TapirEmailTemplate(**body)
-    db.add(item)
+    session.add(item)
+    session.commit()
+    session.refresh(item)
+    mint = EmailTemplateModel.base_select(session).filter(TapirEmailTemplate.template_id == item.template_id).one_or_none()
+    return EmailTemplateModel.from_orm(mint)
+
+
+@router.delete('/{id:int}', status_code=status.HTTP_204_NO_CONTENT)
+async def delete_email_template(id: int,
+                                user: ArxivUserClaims = Depends(get_current_user),
+                                db: Session = Depends(transaction)) -> None:
+    item = db.query(TapirEmailTemplate).filter(TapirEmailTemplate.template_id == id).one_or_none()
+    if item is None:
+        raise HTTPException(status_code=404, detail=f"Item {id} not found")
+    if item.flag_system == 1:
+        raise HTTPException(status_code=404, detail=f"System email template {id} shall not be deleted.")
+    db.delete(item)
     db.commit()
-    db.refresh(item)
-    return EmailTemplateModel.from_orm(item)
+    return

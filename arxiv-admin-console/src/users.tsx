@@ -28,6 +28,7 @@ import {
     DateField,
     ReferenceField,
     SelectInput,
+    DateInput,
     RecordContextProvider,
     useDataProvider, IconButtonWithTooltip, useListContext, useRedirect
 } from 'react-admin';
@@ -47,10 +48,13 @@ const UserFilter = (props: any) => (
         <TextInput label="Search by Last Name" source="last_name"/>
         <BooleanInput label="Email bouncing" source="email_bouncing" defaultValue={false} />
         <BooleanInput label="Suspect" source="suspect" defaultValue={true} />
+        <BooleanInput label="Non-academit email" source="is_non_academic" defaultValue={true} />
+        <DateInput label="Start joined date" source="start_joined_date" />
+        <DateInput label="End joined date" source="end_joined_date" />
     </Filter>
 );
 
-export default UserFilter;
+// export default UserFilter;
 
 interface VisibleColumns {
     email: boolean,
