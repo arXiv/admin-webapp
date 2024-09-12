@@ -20,23 +20,7 @@ export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => 
     // called when the user clicks on the logout button
     logout: () => {
         console.log("auth: /logout");
-        /* document.cookie = `${cookie_name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`; */
-        return fetch(`${runtimeProps.AAA_URL}/logout?next=${runtimeProps.ADMIN_APP_ROOT}`, {
-            method: "GET",
-            credentials: "include",
-        }).then(response => {
-            console.log("auth: response");
-            if (response.ok) {
-                console.log("auth: response ok");
-                window.location.href = '/';
-                return Promise.resolve();
-            } else {
-                console.log("auth: response ng");
-                return Promise.reject();
-            }
-        }).catch(error => {
-            console.error(`error auth logout ${error}`);
-        });
+        return Promise.resolve();
     },
     // called when the API returns an error
     checkError: ({ status }: { status: number }) => {
