@@ -128,7 +128,6 @@ async def list_subject_classes(
     return [CategoryModel.from_orm(cat) for cat in query.offset(_start).limit(_end - _start).all()]
 
 
-
 @router.get('/{archive}/subject-class/{subject_class}')
 async def get_category(
         response: Response,
@@ -136,15 +135,17 @@ async def get_category(
         subject_class: str,
         db: Session = Depends(get_db)
     ) -> CategoryModel:
-    query = CategoryModel.base_query(db).filter(
+    if subject_class == "*":
+        subject_class = ""
+    category = CategoryModel.base_query(db).filter(
         and_(
             Category.archive == archive,
-            Category.subject_class == subject_class)).scalar()
-    count = query.count()
-    if count == 0:
+            Category.subject_class == subject_class
+        )).one_or_none()
+
+    if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,)
-    response.headers['X-Total-Count'] = "1"
-    return query.all()[0]
+    return CategoryModel.from_orm(category)
 
 
 @router.get('/{id:str}')

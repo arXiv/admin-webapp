@@ -73,6 +73,16 @@ async def get_current_user(request: Request) -> ArxivUserClaims | None:
 
             raise LoginRequired()
 
+        except jwt.ExpiredSignatureError:
+            if 'refresh' in tokens:
+                # idp: ArxivOidcIdpClient = request.app.extra['idp']
+                #  claims = idp.refresh_access_token(tokens['refresh'])
+                #return claims
+                raise AccessTokenExpired()
+
+            raise LoginRequired()
+
+
         except jwcrypto.jwt.JWTInvalidClaimFormat:
             logger.warning(f"Chowed cookie '{token}'")
             raise BadCookie()
