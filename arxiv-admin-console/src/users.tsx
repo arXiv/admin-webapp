@@ -223,6 +223,12 @@ function UserDemographic() {
                 <TextField source="url" />
             </TableCell>
         </TableRow>
+        <TableRow>
+            <TableCell>Default Category</TableCell>
+            <TableCell>
+                <CategoryField sourceCategory="archive" sourceClass="subject_class" source="id" />
+            </TableCell>
+        </TableRow>
     </Table>);
 }
 
