@@ -1,11 +1,12 @@
 import logging
 import os
+import httpx
 from typing import Callable
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.middleware.sessions import SessionMiddleware
-from fastapi.responses import Response, RedirectResponse
+from fastapi.responses import Response, RedirectResponse, JSONResponse
 
 from arxiv.base.globals import get_application_config
 
@@ -31,7 +32,6 @@ from admin_api_routes.frontend import router as frontend_router
 from arxiv.base.logging import getLogger
 
 from arxiv.config import Settings
-from arxiv.db.models import configure_db
 
 from app_logging import setup_logger
 
@@ -105,13 +105,14 @@ def create_app(*args, **kwargs) -> FastAPI:
         CLASSIC_DB_URI = DB_URI,
         LATEXML_DB_URI = None
     )
-    engine, _ = configure_db(settings)
+    from arxiv.db import init as arxiv_db_init, _classic_engine
+    arxiv_db_init(settings)
 
     jwt_secret = get_application_config().get('JWT_SECRET', settings.SECRET_KEY)
 
     app = FastAPI(
         root_path=ADMIN_API_ROOT_PATH,
-        arxiv_db_engine=engine,
+        arxiv_db_engine=_classic_engine,
         arxiv_settings=settings,
         JWT_SECRET=jwt_secret,
         LOGIN_REDIRECT_URL=AAA_LOGIN_REDIRECT_URL,
@@ -190,6 +191,7 @@ def create_app(*args, **kwargs) -> FastAPI:
             )
 
         # Extract the new token from the response
+        refreshed_tokens = await refresh_response.json()
         new_session_cookie = refreshed_tokens.get("session")
         new_classic_cookie = refreshed_tokens.get("classic")
         max_age = refreshed_tokens.get("max_age")

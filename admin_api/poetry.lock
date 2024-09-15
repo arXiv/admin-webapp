@@ -61,8 +61,8 @@ sphinx = ["sphinx", "sphinx-autodoc-typehints", "sphinxcontrib-websupport"]
 [package.source]
 type = "git"
 url = "https://github.com/arXiv/arxiv-base.git"
-reference = "4c6b9ac581a21a2302795363fcbdf4f6ad3a4e39"
-resolved_reference = "4c6b9ac581a21a2302795363fcbdf4f6ad3a4e39"
+reference = "df06d5a66a38b64414a45ae230490df8ba410a19"
+resolved_reference = "df06d5a66a38b64414a45ae230490df8ba410a19"
 
 [[package]]
 name = "async-property"
@@ -2731,4 +2731,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "eeeb96f33f29f5e8ae550ecfa17e6cca8d7062d49a945b72f72c7b39f5fbc6c8"
+content-hash = "04262fc9a0b980c707a395031286f7dee3321f1eac0e8f3849f35abc39b8a858"

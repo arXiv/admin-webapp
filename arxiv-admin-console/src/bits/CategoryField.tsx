@@ -23,11 +23,9 @@ const CategoryField: React.FC<CategoryFieldProps> = ({ sourceCategory, sourceCla
 
             const fetchCategory = async () => {
                 const url = `${runtimeProps.ADMIN_API_BACKEND_URL}/categories/${record[sourceCategory]}/subject-class/${record[sourceClass] || "*"}`;
-                console.log(url);
                 try {
                     const response = await fetch(url);
                     const text = await response.clone().text()
-                    console.log(text);
                     const data = await response.json();
                     setCategoryName(data?.category_name || 'No category name');
                 } catch (error) {
@@ -43,7 +41,6 @@ const CategoryField: React.FC<CategoryFieldProps> = ({ sourceCategory, sourceCla
     }, [hovered, categoryName, record, sourceCategory, sourceClass]);
 
     if (!record) return null;
-    console.log("CategoryField:", JSON.stringify(record));
 
     return (
         <Tooltip title={loading ? 'Loading...':  categoryName || 'No category name'}>

@@ -1,5 +1,9 @@
 
-default: /etc/nginx/sites-enabled/admin-console /var/www/html/arxiv
+default: /usr/sbin/nginx /etc/nginx/sites-enabled/admin-console /var/www/html/arxiv
+
+/usr/sbin/nginx:
+	sudo apt install -y nginx
+	sudo install -m 644 nginx/nginx.conf /etc/nginx/nginx.conf
 
 /var/log/nginx/admin-console/:
 	sudo mkdir -p /var/log/nginx/admin-console/
@@ -10,4 +14,4 @@ default: /etc/nginx/sites-enabled/admin-console /var/www/html/arxiv
 	sudo systemctl restart nginx
 
 /var/www/html/arxiv:
-	sudo ln -s ${HOME}/arxiv/admin-webapp/local-setup/htdoc/arxiv /var/www/html/arxiv
+	sudo rsync -av --delete ${HOME}/arxiv/admin-webapp/local-setup/htdoc/arxiv/ /var/www/html/arxiv/

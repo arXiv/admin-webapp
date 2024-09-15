@@ -37,6 +37,7 @@ import DoDisturbOnIcon from '@mui/icons-material/DoDisturbOn';
 import React, {useEffect, useState} from "react";
 import CategoryField from "./bits/CategoryField";
 import PersonNameField from "./bits/PersonNameField";
+import CareereStatusField from "./bits/CareereStatusField";
 
 const UserFilter = (props: any) => (
     <Filter {...props}>
@@ -227,6 +228,12 @@ function UserDemographic() {
             <TableCell>Default Category</TableCell>
             <TableCell>
                 <CategoryField sourceCategory="archive" sourceClass="subject_class" source="id" />
+            </TableCell>
+        </TableRow>
+        <TableRow>
+            <TableCell>Career Status</TableCell>
+            <TableCell>
+                <CareereStatusField source="type" />
             </TableCell>
         </TableRow>
     </Table>);

@@ -10,11 +10,13 @@ import os
 import jwt
 import jwcrypto
 import jwcrypto.jwt
+from sqlalchemy.orm import sessionmaker
 
 from .models import *
 from arxiv.auth.user_claims import ArxivUserClaims
-from arxiv.auth.openid.oidc_idp import ArxivOidcIdpClient
-from arxiv.db import SessionLocal
+# from arxiv.auth.openid.oidc_idp import ArxivOidcIdpClient
+from arxiv.db import Session
+
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
@@ -96,24 +98,46 @@ async def get_current_user(request: Request) -> ArxivUserClaims | None:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+SessionLocal = sessionmaker(autocommit=False, autoflush=False)
 def get_db():
     """Dependency for fastapi routes"""
-    db = SessionLocal()
+    logger = getLogger(__name__)
+    from arxiv.db import _classic_engine
+    db = SessionLocal(bind=_classic_engine)
     try:
         yield db
+        if db.new or db.dirty or db.deleted:
+            db.commit()
+    except Exception as e:
+        logger.warning(f'Commit failed, rolling back', exc_info=1)
+        db.rollback()
+        raise
     finally:
         db.close()
+
+    # with Session() as db:
+    #     try:
+    #         yield db
+    #         if db.new or db.dirty or db.deleted:
+    #             db.commit()
+    #     except Exception as e:
+    #         logger.warning(f'Commit failed, rolling back', exc_info=1)
+    #         db.rollback()
+    #         raise
+    #     finally:
+    #         db.close()
 
 
 def transaction():
     logger = getLogger(__name__)
-    db = SessionLocal()
+    from arxiv.db import _classic_engine
+    db = SessionLocal(bind=_classic_engine)
     try:
         yield db
-
         if db.new or db.dirty or db.deleted:
             db.commit()
     except Exception as e:
+        logger = getLogger(__name__)
         logger.warning(f'Commit failed, rolling back', exc_info=1)
         db.rollback()
         raise
