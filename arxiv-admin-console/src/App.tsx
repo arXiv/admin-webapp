@@ -43,6 +43,7 @@ const AdminConsole: React.FC = () => {
         authProvider={authProvider}
         dataProvider={dataProvider}
         dashboard={Dashboard}
+
         loginPage={(<RedirectComponent to={`${runtimeProps.AAA_URL}/login?next=${runtimeProps.ADMIN_APP_ROOT}`}/>)}
     >
         <Resource

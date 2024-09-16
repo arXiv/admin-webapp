@@ -103,17 +103,15 @@ def get_db():
     """Dependency for fastapi routes"""
     logger = getLogger(__name__)
     from arxiv.db import _classic_engine
-    db = SessionLocal(bind=_classic_engine)
-    try:
-        yield db
-        if db.new or db.dirty or db.deleted:
-            db.commit()
-    except Exception as e:
-        logger.warning(f'Commit failed, rolling back', exc_info=1)
-        db.rollback()
-        raise
-    finally:
-        db.close()
+    with SessionLocal(bind=_classic_engine) as session:
+        try:
+            yield session
+            if session.new or session.dirty or session.deleted:
+                session.commit()
+        except Exception as e:
+            logger.warning(f'Commit failed, rolling back', exc_info=1)
+            session.rollback()
+            raise
 
     # with Session() as db:
     #     try:
@@ -131,18 +129,16 @@ def get_db():
 def transaction():
     logger = getLogger(__name__)
     from arxiv.db import _classic_engine
-    db = SessionLocal(bind=_classic_engine)
-    try:
-        yield db
-        if db.new or db.dirty or db.deleted:
-            db.commit()
-    except Exception as e:
-        logger = getLogger(__name__)
-        logger.warning(f'Commit failed, rolling back', exc_info=1)
-        db.rollback()
-        raise
-    finally:
-        db.close()
+    with SessionLocal(bind=_classic_engine) as session:
+        try:
+            yield session
+            if session.new or session.dirty or session.deleted:
+                session.commit()
+        except Exception as e:
+            logger = getLogger(__name__)
+            logger.warning(f'Commit failed, rolling back', exc_info=1)
+            session.rollback()
+            raise
 
 
 def datetime_to_epoch(timestamp: datetime.datetime | datetime.date | None,

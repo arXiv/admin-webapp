@@ -14,12 +14,32 @@ const addTrailingSlash = (url: string) => {
     return url.endsWith('/') ? url : `${url}/`;
 };
 
+let retryCount = 0;
+
+interface HttpError extends Error {
+    status: number;
+    body?: any;
+}
+
+const retryHttpClient = (url: string, options: fetchUtils.Options = {}) => {
+    return fetchUtils.fetchJson(url, options).catch((error: HttpError) => {
+        if (error.status === 500 && retryCount < 3) {
+            retryCount += 1;
+            // Optionally retry the request or handle it gracefully
+            return fetchUtils.fetchJson(url, options);
+        } else {
+            retryCount = 0;
+            throw error;
+        }
+    });
+};
+
 class adminApiDataProvider implements DataProvider {
     private dataProvider: DataProvider;
     private api: string;
     constructor(api: string) {
         this.api = api;
-        this.dataProvider = jsonServerProvider(api);
+        this.dataProvider = jsonServerProvider(api, retryHttpClient);
     }
     async getList<T extends RaRecord>(resource: string, params: GetListParams): Promise<GetListResult<T>> {
 
@@ -28,7 +48,7 @@ class adminApiDataProvider implements DataProvider {
             const url = `${this.api}/categories/${archive}/subject-class/`;
             console.log("subject_class API " +  url);
             try {
-                const response = await fetchUtils.fetchJson(url);
+                const response = await retryHttpClient(url);
                 return {
                     data: response.json as T[],
                     total: response.json.length,
@@ -49,7 +69,7 @@ class adminApiDataProvider implements DataProvider {
             const { user_id } = params.filter;
             const url = `${this.api}/paper_owners/user/${user_id}`;
             try {
-                const response = await fetchUtils.fetchJson(url);
+                const response = await retryHttpClient(url);
                 return {
                     data: response.json as T[],
                     total: response.json.length,
