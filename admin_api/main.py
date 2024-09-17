@@ -23,6 +23,7 @@ from admin_api_routes.moderators import router as moderator_router
 from admin_api_routes.ownership_requests import router as ownership_request_router
 from admin_api_routes.ownership_requests_audit import router as ownership_request_audit_router
 from admin_api_routes.paper_owners import router as ownership_router
+from admin_api_routes.submissions import router as submission_router
 from admin_api_routes.user import router as user_router
 from admin_api_routes.tapir_sessions import router as tapir_session_router
 
@@ -56,6 +57,13 @@ LOGOUT_REDIRECT_URL = os.environ.get("LOGOUT_REDIRECT_URL", ADMIN_APP_URL)
 JWT_SECRET = os.environ.get("JWT_SECRET")
 AUTH_SESSION_COOKIE_NAME = os.environ.get("AUTH_SESSION_COOKIE_NAME", "arxiv_oidc_session")
 CLASSIC_COOKIE_NAME = os.environ.get("CLASSIC_COOKIE_NAME", "tapir_session")
+
+SQLALCHMEY_MAPPING = {
+    'pool_size': 8,
+    'max_overflow': 8,
+    'pool_timeout': 30,
+    'pool_recycle': 900
+}
 
 # Auth is now handled by auth service
 # No need for keycloak URL, etc.
@@ -148,6 +156,7 @@ def create_app(*args, **kwargs) -> FastAPI:
     app.include_router(moderator_router, prefix="/v1")
     app.include_router(document_router, prefix="/v1")
     app.include_router(ownership_router, prefix="/v1")
+    app.include_router(submission_router, prefix="/v1")
     app.include_router(tapir_session_router, prefix="/v1")
     app.include_router(frontend_router)
 

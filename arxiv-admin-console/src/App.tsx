@@ -9,6 +9,7 @@ import DocumentIcon from '@mui/icons-material/Book';
 import CategoryIcon from '@mui/icons-material/List';
 import ModeratorIcon from '@mui/icons-material/Policy';
 import OwnershipRequestIcon from '@mui/icons-material/Star';
+import SubmissionIcon from '@mui/icons-material/Draw';
 
 import {TemplateCreate, TemplateList, TemplateEdit} from './templates';
 import { UserList, UserEdit, UserCreate } from './users';
@@ -22,6 +23,7 @@ import {CategoryList, CategoryCreate, CategoryEdit} from "./categories";
 import {ModeratorCreate, ModeratorEdit, ModeratorList} from "./moderators";
 import {OwnershipRequestEdit, OwnershipRequestList} from "./ownershipRequests";
 import {RuntimeContext, RuntimeContextProvider} from "./RuntimeContext";
+import {SubmissionCreate, SubmissionEdit, SubmissionList} from "./submissions";
 
 
 const RedirectComponent: React.FC<{to: string}> = ({ to }) => {
@@ -123,6 +125,15 @@ const AdminConsole: React.FC = () => {
             show={ShowGuesser}
             icon={OwnershipRequestIcon}
             recordRepresentation="user_id"
+        />
+
+        <Resource
+            name="submissions"
+            list={SubmissionList}
+            edit={SubmissionEdit}
+            show={ShowGuesser}
+            icon={SubmissionIcon}
+            recordRepresentation="submission_id"
         />
 
         <Resource name="endorsement_requests_audit"/>

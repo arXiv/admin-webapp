@@ -132,7 +132,8 @@ async def list_submissions(
         preset: Optional[str] = Query(None),
         start_date: Optional[date] = Query(None, description="Start date for filtering"),
         end_date: Optional[date] = Query(None, description="End date for filtering"),
-        status: Optional[int] = Query(None, description="List of status"),
+        stage: Optional[List[int]] = Query(None, description="Stage"),
+        status: Optional[List[int]] = Query(None, description="Status"),
         id: Optional[List[int]] = Query(None, description="List of user IDs to filter by"),
         document_id: Optional[int] = Query(None, description="Document ID"),
         db: Session = Depends(get_db)
@@ -158,37 +159,43 @@ async def list_submissions(
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                     detail="Invalid start or end index")
 
-    if preset is not None:
-        matched = re.search(r"last_(\d+)_days", preset)
-        if matched:
-            t_begin = datetime_to_epoch(None, t0 - timedelta(days=int(matched.group(1))))
-            t_end = datetime_to_epoch(None, t0)
-            query = query.filter(Submission.dated.between(t_begin, t_end))
-        else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail="Invalid preset format")
-    else:
-        if start_date or end_date:
-            t_begin = datetime_to_epoch(start_date, VERY_OLDE)
-            t_end = datetime_to_epoch(end_date, date.today(), hour=23, minute=59, second=59)
-            query = query.filter(Submission.dated.between(t_begin, t_end))
-
     if id is not None:
         query = query.filter(Submission.submission_id.in_(id))
+    else:
+        if preset is not None:
+            matched = re.search(r"last_(\d+)_days", preset)
+            if matched:
+                t_begin = t0 - timedelta(days=int(matched.group(1)))
+                t_end = t0
+                query = query.filter(Submission.submit_time.between(t_begin, t_end))
+            else:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                    detail="Invalid preset format")
+        else:
+            if start_date or end_date:
+                t_begin = start_date if start_date else VERY_OLDE
+                # t_end = datetime_to_epoch(end_date, date.today(), hour=23, minute=59, second=59)
+                t_end = end_date if end_date else datetime.now()
+                query = query.filter(Submission.submit_time.between(t_begin, t_end))
 
-    if status is not None:
-        query = query.filter(Submission.status == status)
+        if stage is not None:
+            query = query.filter(Submission.stage.in_(stage))
 
-    if document_id is not None:
-        query = query.filter(Submission.document_id == document_id)
+        if status is not None:
+            value = 0
+            for bit in status:
+                value |= 1 << (bit - 1)
+            query = query.filter(Submission.status == value)
+
+        if document_id is not None:
+            query = query.filter(Submission.document_id == document_id)
+
 
     for column in order_columns:
         if _order == "DESC":
             query = query.order_by(column.desc())
         else:
             query = query.order_by(column.asc())
-
-
 
     count = query.count()
     response.headers['X-Total-Count'] = str(count)
