@@ -1,5 +1,5 @@
 import { AuthProvider } from 'react-admin';
-import {useEffect, useState, useContext} from "react";
+// import {useEffect, useState, useContext} from "react";
 import {RuntimeProps} from "./RuntimeContext";
 
 function getCookie(name: string): string | null {
@@ -38,9 +38,12 @@ export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => 
     },
     // called when the API returns an error
     checkError: ({ status }: { status: number }) => {
-        if (status === 401 || status === 403) {
+        if (status === 401 || status === 403 || status === undefined) {
             console.log("auth: checkError bad");
-            /* document.cookie = `${cookie_name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`; */
+            const nextPage = encodeURIComponent(window.location.href);
+            const token = getCookie(runtimeProps.ARXIV_COOKIE_NAME);
+            const action = token && token.length > 0 ? "refresh" : "login";
+            window.location.href = `${runtimeProps.AAA_URL}/${action}?next_page=${nextPage}`;
             return Promise.reject();
         }
         console.log(`auth: good - checkError status=${status} `);

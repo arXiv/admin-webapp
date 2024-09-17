@@ -29,8 +29,8 @@ const ResourceSummary: React.FC<SummaryProps> = ({ resource, title, filter, link
             }
         };
 
-        fetchData();
-    }, [filter, dataProvider]);
+        fetchData().then(_ => null);
+    }, [filter, dataProvider, resource]);
 
     return (
         <Grid container item xs={12}>
@@ -64,7 +64,7 @@ const ResourceDateRangeSummary: React.FC<DateRangeSummaryProps> = ({ resource, t
 
 
 export const Dashboard = () => {
-    const dataProvider = useDataProvider();
+    // const dataProvider = useDataProvider();
 
     return (
         <Grid container>
@@ -141,6 +141,7 @@ export const Dashboard = () => {
         </Card>
         </Grid>
             <Grid item xs={5}>
+                <a href={"http://localhost:5000/aaa/refresh?next_page=/admin-console/"}>Refresh Token</a>
                 <Card>
                     <CardHeader title="Users" />
                     <CardContent>
