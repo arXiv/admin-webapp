@@ -1,4 +1,4 @@
-import { Admin, Resource, ShowGuesser } from 'react-admin';
+import {Admin, EditGuesser, Resource, ShowGuesser} from 'react-admin';
 import React, {useContext, useEffect, useState} from 'react';
 
 import UserIcon from '@mui/icons-material/Group';

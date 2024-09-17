@@ -1,27 +1,29 @@
-import { useMediaQuery } from '@mui/material';
+import {Grid, useMediaQuery} from '@mui/material';
 import {
-    List,
-    SimpleList,
-    Datagrid,
-    TextField,
-    EmailField,
     BooleanField,
-    SortPayload,
-    NumberInput,
-    useRecordContext,
-    Edit,
-    SimpleForm,
-    TextInput,
-    ReferenceInput,
-    Create,
-    Filter,
     BooleanInput,
+    Create,
+    Datagrid,
     DateField,
-    ReferenceField,
+    DateInput,
+    Edit,
+    EmailField,
+    Filter,
+    List,
     NumberField,
-    DateInput, useListContext, SelectInput,
-    AutocompleteArrayInput
+    NumberInput,
+    ReferenceField,
+    ReferenceInput,
+    SelectInput,
+    SimpleForm,
+    SimpleList,
+    SortPayload,
+    TextField,
+    TextInput,
+    useListContext,
+    useRecordContext,
 } from 'react-admin';
+
 
 import LinkIcon from '@mui/icons-material/Link';
 
@@ -29,6 +31,7 @@ import LinkIcon from '@mui/icons-material/Link';
 import { addDays } from 'date-fns';
 
 import React from "react";
+import SubmissionStateField, {submissionStatusOptions} from "./bits/SubmissionStateField";
 
 const presetOptions = [
     { id: 'last_1_day', name: 'Last 1 Day' },
@@ -61,15 +64,6 @@ const SubmissionFilter = (props: any) => {
         });
     };
 
-    const statusChoices = [
-        { id: 1, name: 'Status 1' },
-        { id: 2, name: 'Status 2' },
-        { id: 3, name: 'Status 3' },
-        { id: 4, name: 'Status 4' },
-        { id: 5, name: 'Status 5' },
-    ];
-
-
     return (
         <Filter {...props}>
             <SelectInput
@@ -83,12 +77,10 @@ const SubmissionFilter = (props: any) => {
             <DateInput label="End Date" source="end_date" />
             <BooleanInput label="Valid" source="flag_valid" />
 
-            <AutocompleteArrayInput
+            <SelectInput
                 label="Status"
                 source="status"
-                choices={statusChoices}
-                optionText="name"
-                optionValue="id"
+                choices={submissionStatusOptions}
             />
         </Filter>
     );
@@ -121,6 +113,7 @@ export const SubmissionList = () => {
                         <TextField source={"first_name"} />
                     </ReferenceField>
                     <DateField source="submit_time" label={"When"}/>
+                    <SubmissionStateField source="status"/>
                 </Datagrid>
             )}
         </List>
@@ -133,35 +126,69 @@ const SubmissionTitle = () => {
     return <span>Submission {record ? `"${record.last_name}, ${record.first_name}" - ${record.email}` : ''}</span>;
 };
 
+
 export const SubmissionEdit = () => (
-    <Edit title={<SubmissionTitle />}>
+    <Edit>
         <SimpleForm>
-            <ReferenceField source="endorsee_id" reference="users" label={"Endorsee"}
+            <TextField source="id" />
+            <ReferenceField source="document_id" reference="documents" label={"Document"}
+                            link={(record, reference) => `/${reference}/${record.id}`} >
+                <LinkIcon>Document</LinkIcon>
+            </ReferenceField>
+            <TextField source="doc_paper_id" label="Paper ID" />
+            <ReferenceInput source="sword_id" reference="swords" />
+            <NumberInput source="userinfo" />
+            <BooleanInput source="is_author" />
+            <NumberInput source="agree_policy" />
+            <BooleanInput source="viewed" />
+            <NumberInput source="stage" />
+            <ReferenceField source="submitter_id" reference="users" label={"Submitter"}
                             link={(record, reference) => `/${reference}/${record.id}`} >
                 <TextField source={"last_name"} />
                 {", "}
                 <TextField source={"first_name"} />
             </ReferenceField>
-
-            <ReferenceField source="endorser_id" reference="users" label={"Endorser"}
-                            link={(record, reference) => `/${reference}/${record.id}`} >
-                <TextField source={"last_name"} />
-                {", "}
-                <TextField source={"first_name"} />
-            </ReferenceField>
-
-            <TextInput source="archive" />
-
-            <TextInput source="subject_class" />
-            <BooleanInput source="flag_valid" label={"Valid"} />
-
+            <TextInput source="submitter_name" />
+            <TextInput source="submitter_email" />
+            <Grid>
+                {"Created: "}
+            <DateField source="created" label="Created"/>
+                {", Updated: "}
+            <DateField source="updated" />
+            </Grid>
+            <SelectInput source="status" choices={submissionStatusOptions} />
+            <TextInput source="sticky_status" />
+            <DateInput source="must_process" />
+            <DateInput source="submit_time" />
+            <TextInput source="release_time" />
+            <NumberInput source="source_size" />
+            <TextInput source="source_format" />
+            <TextInput source="source_flags" />
+            <DateInput source="has_pilot_data" />
+            <DateInput source="is_withdrawn" />
+            <TextInput source="title" />
+            <TextInput source="authors" />
+            <TextInput source="comments" />
+            <TextInput source="proxy" />
+            <TextInput source="report_num" />
+            <TextInput source="msc_class" />
+            <TextInput source="acm_class" />
+            <TextInput source="journal_ref" />
+            <TextInput source="doi" />
+            <TextInput source="abstract" />
+            <TextInput source="license" />
+            <NumberInput source="version" />
             <TextInput source="type" />
-            <NumberInput source="point_value" label={"Point"} />
-            <DateInput source="issued_when" label={"Issued"} />
-
-            <ReferenceField source="request_id" reference="submission_request" label={"Request"}
-                            link={(record, reference) => `/${reference}/${record.id}`} >
-            </ReferenceField>
+            <TextInput source="is_ok" />
+            <TextInput source="admin_ok" />
+            <DateInput source="allow_tex_produced" />
+            <TextInput source="is_oversize" />
+            <DateInput source="remote_addr" />
+            <DateInput source="remote_host" />
+            <TextInput source="package" />
+            <ReferenceInput source="rt_ticket_id" reference="rt_tickets" />
+            <DateInput source="auto_hold" />
+            <DateInput source="is_locked" />
         </SimpleForm>
     </Edit>
 );
