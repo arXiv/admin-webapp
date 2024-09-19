@@ -166,6 +166,7 @@ async def list_users(
         flag_edit_users: Optional[bool] = Query(None),
         flag_email_verified: Optional[bool] = Query(None),
         email_bouncing: Optional[bool] = Query(None),
+        clue: Optional[str] = Query(None),
         suspect: Optional[bool] = Query(None),
         start_joined_date: Optional[date] = Query(None, description="Start date for filtering"),
         end_joined_date: Optional[date] = Query(None, description="End date for filtering"),
@@ -252,6 +253,19 @@ async def list_users(
             # Inner join with arxiv_black_email on pattern match with email
             query = query.join(t_arXiv_black_email, TapirUser.email.like(t_arXiv_black_email.c.pattern))
 
+        if clue is not None:
+            if len(clue) > 0 and clue[0] in "0123456789":
+                query = query.filter(TapirUser.user_id.like(clue + "%"))
+            elif "@" in clue:
+                query = query.filter(TapirUser.email.like(clue + "%"))
+            elif len(clue) >= 2:
+                names = clue.split(",")
+                if len(names) > 0:
+                    query = query.filter(TapirUser.last_name.like(names[0] + "%"))
+                if len(names) > 1:
+                    query = query.filter(TapirUser.first_name.like(names[1] + "%"))
+                if len(names) > 2:
+                    query = query.filter(TapirUser.suffix_name.like(names[2] + "%"))
 
     for column in order_columns:
         if _order == "DESC":

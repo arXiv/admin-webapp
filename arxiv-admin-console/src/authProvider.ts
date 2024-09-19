@@ -26,11 +26,13 @@ export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => 
             return Promise.resolve();
         }
         logoutInProgress = true;
-        console.log("auth: /logout");
-        return fetch(`${runtimeProps.AAA_URL}/logout`, {
+        console.log("auth: /logout in progress");
+
+        return fetch(`${runtimeProps.AAA_URL}/logout?next_page=/`, {
             method: 'GET',
             credentials: 'include',
         }).then(() => {
+            console.log("auth: logout fetch success");
             window.location.href = '/'; // Redirect to login page
         }).finally(() => {
             logoutInProgress = false;
@@ -54,6 +56,18 @@ export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => 
         const token = getCookie(runtimeProps.ARXIV_COOKIE_NAME);
         console.log(`checkAuth: ${token?.length}`);
         return token ? Promise.resolve() : Promise.reject();
+    },
+
+    refreshToken: () => {
+        fetch(`${runtimeProps.AAA_URL}/refresh`, {
+            method: 'GET',
+            credentials: 'include',
+        }).then(() => {
+            const token = getCookie(runtimeProps.ARXIV_COOKIE_NAME);
+            console.log("auth: logout refresh success: " + token?.slice(0,40) );
+        });
+
+        return;
     },
     // called when the user navigates to a new location, to check for permissions / roles
     getPermissions: () => Promise.resolve(),

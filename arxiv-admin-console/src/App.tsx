@@ -10,6 +10,7 @@ import CategoryIcon from '@mui/icons-material/List';
 import ModeratorIcon from '@mui/icons-material/Policy';
 import OwnershipRequestIcon from '@mui/icons-material/Star';
 import SubmissionIcon from '@mui/icons-material/Draw';
+import TapirSessionIcon from '@mui/icons-material/ConfirmationNumberSharp';
 
 import {TemplateCreate, TemplateList, TemplateEdit} from './templates';
 import { UserList, UserEdit, UserCreate } from './users';
@@ -24,6 +25,7 @@ import {ModeratorCreate, ModeratorEdit, ModeratorList} from "./moderators";
 import {OwnershipRequestEdit, OwnershipRequestList} from "./ownershipRequests";
 import {RuntimeContext, RuntimeContextProvider} from "./RuntimeContext";
 import {SubmissionCreate, SubmissionEdit, SubmissionList} from "./submissions";
+import {TapirSessionEdit, TapirSessionList} from "./tapirSessions";
 
 
 const RedirectComponent: React.FC<{to: string}> = ({ to }) => {
@@ -133,6 +135,15 @@ const AdminConsole: React.FC = () => {
             edit={SubmissionEdit}
             show={ShowGuesser}
             icon={SubmissionIcon}
+            recordRepresentation="submission_id"
+        />
+
+        <Resource
+            name="tapir_sessions"
+            list={TapirSessionList}
+            edit={TapirSessionEdit}
+            show={ShowGuesser}
+            icon={TapirSessionIcon}
             recordRepresentation="submission_id"
         />
 

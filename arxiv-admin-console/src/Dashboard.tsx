@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from "react";
 import { Link } from 'react-router-dom';
 import {Card, CardContent, CardHeader, Grid, Button} from '@mui/material';
-import {useDataProvider} from "react-admin";
+import {useDataProvider, useAuthProvider} from "react-admin";
 import Typography from "@mui/material/Typography";
-
+import { useNavigate } from 'react-router-dom';
 
 interface SummaryProps {
     resource: string;
@@ -65,7 +65,20 @@ const ResourceDateRangeSummary: React.FC<DateRangeSummaryProps> = ({ resource, t
 
 export const Dashboard = () => {
     // const dataProvider = useDataProvider();
+    const navigate = useNavigate();
+    const authProvider = useAuthProvider();
 
+    const handleRefreshToken = () => {
+
+        if (!authProvider)
+            return;
+        authProvider.refreshToken().then(() => {
+            // Optionally, navigate to a different page after refreshing the token
+            navigate('/admin-console/');
+        }).catch((error: any) => {
+            console.error("Failed to refresh token", error);
+        });
+    };
     return (
         <Grid container>
             <Grid item xs={5}>
@@ -141,7 +154,9 @@ export const Dashboard = () => {
         </Card>
         </Grid>
             <Grid item xs={5}>
-                <a href={"http://localhost:5000/aaa/refresh?next_page=/admin-console/"}>Refresh Token</a>
+                <Button onClick={handleRefreshToken}>
+                    Refresh Token
+                </Button>
                 <Card>
                     <CardHeader title="Users" />
                     <CardContent>

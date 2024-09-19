@@ -65,4 +65,4 @@ PaperOwnerModel = sqlalchemy_to_pydantic(PaperOwner, id_key="document_id")
 
 CrossControlModel = sqlalchemy_to_pydantic(CrossControl)
 
-TapirSessionModel = sqlalchemy_to_pydantic(TapirSession, id_key="session_id")
+# TapirSessionModel = sqlalchemy_to_pydantic(TapirSession, id_key="session_id")

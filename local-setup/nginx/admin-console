@@ -12,15 +12,15 @@ map $http_upgrade $connection_upgrade {
 }
 
 upstream backend {
-  server localhost:4041 fail_timeout=10000; # local backend
+  server localhost:4041 fail_timeout=2s; # local backend
 }
 
 upstream ui {
-  server localhost:4042 fail_timeout=1000; # local react yarn
+  server localhost:4042 fail_timeout=2s; # local react yarn
 }
 
 upstream authserver {
-  server localhost:20241 fail_timeout=10000; # local backend
+  server localhost:20241 fail_timeout=2s; # local backend
 }
 
 server {
