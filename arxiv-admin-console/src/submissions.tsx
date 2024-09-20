@@ -1,4 +1,4 @@
-import {Grid, useMediaQuery} from '@mui/material';
+import {Grid, ToggleButton, useMediaQuery} from '@mui/material';
 import {
     BooleanField,
     BooleanInput,
@@ -30,7 +30,7 @@ import LinkIcon from '@mui/icons-material/Link';
 
 import { addDays } from 'date-fns';
 
-import React from "react";
+import React, {useState} from "react";
 import SubmissionStateField, {submissionStatusOptions} from "./bits/SubmissionStateField";
 
 const presetOptions = [
@@ -81,6 +81,7 @@ const SubmissionFilter = (props: any) => {
                 label="Status"
                 source="status"
                 choices={submissionStatusOptions}
+                alwaysOn
             />
         </Filter>
     );
@@ -90,8 +91,16 @@ const SubmissionFilter = (props: any) => {
 export const SubmissionList = () => {
     const sorter: SortPayload = {field: 'submission_id', order: 'ASC'};
     const isSmall = useMediaQuery<any>(theme => theme.breakpoints.down('sm'));
+    const defaultDates = calculatePresetDates('last_28_days');
+
     return (
-        <List filters={<SubmissionFilter />}>
+        <List filters={<SubmissionFilter />}
+              filterDefaultValues={{
+                  start_date: defaultDates.startDate ? defaultDates.startDate.toISOString().split('T')[0] : '',
+                  end_date: defaultDates.endDate ? defaultDates.endDate.toISOString().split('T')[0] : '',
+                  status: 1,
+              }}
+        >
             {isSmall ? (
                 <SimpleList
                     primaryText={record => record.name}
@@ -127,71 +136,124 @@ const SubmissionTitle = () => {
 };
 
 
-export const SubmissionEdit = () => (
-    <Edit>
-        <SimpleForm>
-            <TextField source="id" />
-            <ReferenceField source="document_id" reference="documents" label={"Document"}
-                            link={(record, reference) => `/${reference}/${record.id}`} >
-                <LinkIcon>Document</LinkIcon>
-            </ReferenceField>
-            <TextField source="doc_paper_id" label="Paper ID" />
-            <ReferenceInput source="sword_id" reference="swords" />
-            <NumberInput source="userinfo" />
-            <BooleanInput source="is_author" />
-            <NumberInput source="agree_policy" />
-            <BooleanInput source="viewed" />
-            <NumberInput source="stage" />
-            <ReferenceField source="submitter_id" reference="users" label={"Submitter"}
-                            link={(record, reference) => `/${reference}/${record.id}`} >
-                <TextField source={"last_name"} />
-                {", "}
-                <TextField source={"first_name"} />
-            </ReferenceField>
-            <TextInput source="submitter_name" />
-            <TextInput source="submitter_email" />
-            <Grid>
-                {"Created: "}
-            <DateField source="created" label="Created"/>
-                {", Updated: "}
-            <DateField source="updated" />
+export const SubmissionEdit = () => {
+    const [showLogs, setShowLogs] = useState<boolean>(false);
+
+    return(
+<Grid container>
+        <Grid item xs={ showLogs ? 9 : 12}>
+            <Grid item xs={2} alignItems={"center"}>
+                <ToggleButton value="showAdminLogs" selected={showLogs} onClick={() => setShowLogs(!showLogs)} >
+                    {showLogs ? "Hide Admin Logs" : "Show Admin Logs"}
+                </ToggleButton>
             </Grid>
-            <SelectInput source="status" choices={submissionStatusOptions} />
-            <TextInput source="sticky_status" />
-            <DateInput source="must_process" />
-            <DateInput source="submit_time" />
-            <TextInput source="release_time" />
-            <NumberInput source="source_size" />
-            <TextInput source="source_format" />
-            <TextInput source="source_flags" />
-            <DateInput source="has_pilot_data" />
-            <DateInput source="is_withdrawn" />
-            <TextInput source="title" />
-            <TextInput source="authors" />
-            <TextInput source="comments" />
-            <TextInput source="proxy" />
-            <TextInput source="report_num" />
-            <TextInput source="msc_class" />
-            <TextInput source="acm_class" />
-            <TextInput source="journal_ref" />
-            <TextInput source="doi" />
-            <TextInput source="abstract" />
-            <TextInput source="license" />
-            <NumberInput source="version" />
-            <TextInput source="type" />
-            <TextInput source="is_ok" />
-            <TextInput source="admin_ok" />
-            <DateInput source="allow_tex_produced" />
-            <TextInput source="is_oversize" />
-            <DateInput source="remote_addr" />
-            <DateInput source="remote_host" />
-            <TextInput source="package" />
-            <ReferenceInput source="rt_ticket_id" reference="rt_tickets" />
-            <DateInput source="auto_hold" />
-            <DateInput source="is_locked" />
-        </SimpleForm>
-    </Edit>
-);
+        <Edit>
+            <SimpleForm>
+                <Grid container>
+                    <Grid item xs={3}>
+                        {"submit/"}
+                        <TextField source="id" />
+                    </Grid>
+                    <Grid item xs={3}>
+                        {"source format: "}
+                        <TextField source="source_format" />
+                        {" - "}
+                        <NumberField source="source_size" />
+                        {" bytes"}
+
+                    </Grid>
+                    <Grid item xs={2}>
+                        <SelectInput source="status" choices={submissionStatusOptions} />
+                    </Grid>
+                    <Grid container item xs={12}>
+                        <Grid item xs={2}>
+                            From
+                        </Grid>
+                        <Grid item xs={10}>
+                            <ReferenceField source="submitter_id" reference="users" label={"Submitter"}
+                                            link={(record, reference) => `/${reference}/${record.id}`} >
+                                <TextField source={"last_name"} />
+                                {", "}
+                                <TextField source={"first_name"} />
+                            </ReferenceField>
+                            {" Email: "}
+                            <ReferenceField source="submitter_id" reference="users" label={"Submitter"}>
+                                <EmailField source={"email"} />
+                            </ReferenceField>
+                        </Grid>
+                    </Grid>
+
+                    <Grid container item xs={12}>
+                        <Grid item xs={2}>
+                            Date created:
+                        </Grid>
+                        <Grid item xs={2}>
+                            <DateInput source="created" label="Created"/>
+                        </Grid>
+                        <Grid item xs={2}>
+                            Date updated:
+                        </Grid>
+                        <Grid item xs={2}>
+                            <DateInput source="updated" />
+                        </Grid>
+                    </Grid>
+
+                    <Grid container item xs={12}>
+                        <Grid item xs={2}>
+                            Title
+                        </Grid>
+                        <Grid item xs={10}>
+                            <TextInput source="title" />
+                        </Grid>
+
+                    </Grid>
+                    <Grid container item xs={12}>
+                        <Grid item xs={2}>
+                            Authors
+                        </Grid>
+                        <Grid item xs={10}>
+                            <TextInput source="authors" />
+                        </Grid>
+
+                    </Grid>
+
+                    <Grid container item xs={12}>
+                        <Grid item xs={2}>
+                            Comments
+                        </Grid>
+                        <Grid item xs={10}>
+                            <TextInput source="comments" />
+                        </Grid>
+
+                    </Grid>
+                    <Grid container item xs={12}>
+                        <Grid item xs={2}>
+                            License
+                        </Grid>
+                        <Grid item xs={10}>
+                            <TextInput source="license" />
+                        </Grid>
+
+                    </Grid>
+                    <Grid container item xs={12}>
+                        <Grid item xs={2}>
+                            Abstract
+                        </Grid>
+                        <Grid item xs={10}>
+                            <TextField source="abstract" />
+                        </Grid>
+
+                    </Grid>
+                </Grid>
+            </SimpleForm>
+        </Edit>
+        </Grid>
+    <Grid xs={3} hidden={!showLogs}>
+        Admin logs
+    </Grid>
+</Grid>
+    );
+}
 
 export const SubmissionCreate = () => (
     <Create>

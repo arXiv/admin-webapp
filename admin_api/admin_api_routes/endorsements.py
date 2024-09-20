@@ -71,6 +71,7 @@ async def list_endorsements(
         endorsee_id: Optional[int] = Query(None),
         endorser_id: Optional[int] = Query(None),
         id: Optional[List[int]] = Query(None, description="List of user IDs to filter by"),
+        request_id: Optional[int] = Query(None),
         db: Session = Depends(get_db)
     ) -> List[EndorsementModel]:
     query = EndorsementModel.base_select(db)
@@ -102,30 +103,32 @@ async def list_endorsements(
             query = query.filter(Endorsement.endorsee_id == endorsee_id)
         if endorser_id is not None:
             query = query.filter(Endorsement.endorser_id == endorser_id)
+        if request_id is not None:
+            query = query.filter(Endorsement.request_id == request_id)
 
-    if preset is not None:
-        matched = re.search(r"last_(\d+)_days", preset)
-        if matched:
-            t_begin = datetime_to_epoch(None, t0 - timedelta(days=int(matched.group(1))))
-            t_end = datetime_to_epoch(None, t0)
-            query = query.filter(Endorsement.issued_when.between(t_begin, t_end))
+        if preset is not None:
+            matched = re.search(r"last_(\d+)_days", preset)
+            if matched:
+                t_begin = datetime_to_epoch(None, t0 - timedelta(days=int(matched.group(1))))
+                t_end = datetime_to_epoch(None, t0)
+                query = query.filter(Endorsement.issued_when.between(t_begin, t_end))
+            else:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                    detail="Invalid preset format")
         else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail="Invalid preset format")
-    else:
-        if start_date or end_date:
-            t_begin = datetime_to_epoch(start_date, VERY_OLDE)
-            t_end = datetime_to_epoch(end_date, date.today(), hour=23, minute=59, second=59)
-            query = query.filter(Endorsement.issued_when.between(t_begin, t_end))
+            if start_date or end_date:
+                t_begin = datetime_to_epoch(start_date, VERY_OLDE)
+                t_end = datetime_to_epoch(end_date, date.today(), hour=23, minute=59, second=59)
+                query = query.filter(Endorsement.issued_when.between(t_begin, t_end))
 
-    if flag_valid is not None:
-        query = query.filter(Endorsement.flag_valid == flag_valid)
+        if flag_valid is not None:
+            query = query.filter(Endorsement.flag_valid == flag_valid)
 
-    for column in order_columns:
-        if _order == "DESC":
-            query = query.order_by(column.desc())
-        else:
-            query = query.order_by(column.asc())
+        for column in order_columns:
+            if _order == "DESC":
+                query = query.order_by(column.desc())
+            else:
+                query = query.order_by(column.asc())
 
 
     count = query.count()

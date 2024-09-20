@@ -33,6 +33,7 @@ class EndorsementRequestModel(BaseModel):
     subject_class: str
     secret: str
     flag_valid: bool
+    flag_open: bool
     issued_when: datetime
     point_value: int
     flag_suspect: bool
@@ -47,6 +48,10 @@ class EndorsementRequestModel(BaseModel):
             EndorsementRequest.subject_class,
             EndorsementRequest.secret,
             EndorsementRequest.flag_valid,
+            case(
+                (EndorsementRequest.point_value == 0, True),
+                else_=False
+            ).label("flag_open"),
             EndorsementRequest.issued_when,
             EndorsementRequest.point_value,
             Demographic.flag_suspect.label("flag_suspect"),
@@ -174,16 +179,16 @@ async def update_endorsement_request(
     if current_user.user_id != item.endorsee_id and (not (current_user.is_admin or current_user.is_mod)):
         return Response(status_code=status.HTTP_403_FORBIDDEN)
 
-    # Verify?
-    for key, value in body.items():
-        if key == "id":
-            continue
-        if key in item.__dict__:
-            setattr(item, key, value)
+    #
+    flag_open = body.gep("flag_open")
+    if flag_open == False and item.point_value == 0:
+        item.point_value = 10
 
+    item.flag_valid = body.gep("flag_valid", item.flag_valid)
     session.commit()
     session.refresh(item)  # Refresh the instance with the updated data
-    return EndorsementRequestModel.from_orm(item)
+    updated = EndorsementRequestModel.base_select(session).filter(EndorsementRequest.request_id == id).one_or_none()
+    return EndorsementRequestModel.from_orm(updated)
 
 
 @router.post('/')

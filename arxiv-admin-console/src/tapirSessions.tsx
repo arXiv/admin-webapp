@@ -100,7 +100,6 @@ export const TapirSessionList = () => {
     return (
         <List filters={<TapirSessionFilter />}
               filterDefaultValues={{
-                  preset: 'last_28_days',
                   start_date: defaultDates.startDate ? defaultDates.startDate.toISOString().split('T')[0] : '',
                   end_date: defaultDates.endDate ? defaultDates.endDate.toISOString().split('T')[0] : '',
               }}

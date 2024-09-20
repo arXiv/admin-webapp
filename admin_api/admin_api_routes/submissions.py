@@ -1,6 +1,5 @@
 """arXiv paper display routes."""
-
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Query, Response
 from typing import Optional, List
 from arxiv.base import logging
 from arxiv.db.models import Submission
@@ -15,6 +14,35 @@ from . import is_admin_user, get_db, datetime_to_epoch, VERY_OLDE
 logger = logging.getLogger(__name__)
 
 router = APIRouter(dependencies=[Depends(is_admin_user)], prefix="/submissions")
+
+class SubmissionStatusModel(BaseModel):
+    id: int
+    name: str
+
+_VALID_STATUS_LIST: List[SubmissionStatusModel] = [
+    SubmissionStatusModel(id=0, name="Working"),
+    SubmissionStatusModel(id=1, name="Submitted"),
+    SubmissionStatusModel(id=2, name="On hold"),
+    SubmissionStatusModel(id=3, name="Unused"),
+    SubmissionStatusModel(id=4, name="Next"),
+    SubmissionStatusModel(id=5, name="Processing"),
+    SubmissionStatusModel(id=6, name="Needs_email"),
+    SubmissionStatusModel(id=7, name="Published"),
+    SubmissionStatusModel(id=8, name="Processing(submitting)"),
+    SubmissionStatusModel(id=9, name="Removed"),
+    SubmissionStatusModel(id=10, name="User deleted"),
+    SubmissionStatusModel(id=19, name="Error state"),
+    SubmissionStatusModel(id=20, name='Deleted(working)'),
+    SubmissionStatusModel(id=22, name='Deleted(on hold)'),
+    SubmissionStatusModel(id=25, name='Deleted(processing)'),
+    SubmissionStatusModel(id=27, name='Deleted(published)'),
+    SubmissionStatusModel(id=29, name="Deleted(removed)"),
+    SubmissionStatusModel(id=30, name='Deleted(user deleted)'),
+]
+
+
+VALID_STATUS_LIST = {entry.id : entry.name for entry in _VALID_STATUS_LIST}
+
 
 class SubmissionModel(BaseModel):
     id: int  # submission_id: intpk]
@@ -122,6 +150,7 @@ class SubmissionModel(BaseModel):
             Submission.agreement_id
         )
 
+
 @router.get('/')
 async def list_submissions(
         response: Response,
@@ -204,8 +233,9 @@ async def list_submissions(
 
 
 @router.get("/paper_id/{paper_id:str}")
-def get_submission(paper_id:str,
-                   session: Session = Depends(get_db)) -> SubmissionModel:
+async def get_submission_by_paper_id(
+        paper_id:str,
+        session: Session = Depends(get_db)) -> SubmissionModel:
     """Display a paper."""
     query = SubmissionModel.base_select(session).filter(Submission.doc_paper_id == paper_id)
     doc = query.all()
@@ -213,13 +243,37 @@ def get_submission(paper_id:str,
         raise HTTPException(status_code=404, detail="Paper not found")
     return doc[0]
 
+
+
+
 @router.get("/{id:int}")
-def get_submission(id:int,
+async def get_submission(id:int,
                    session: Session = Depends(get_db)) -> SubmissionModel:
     """Display a paper."""
-    query = SubmissionModel.base_select(session).filter(Submission.submission_id == id)
-    doc = query.all()
-    if not doc:
+    sub = SubmissionModel.base_select(session).filter(Submission.submission_id == id).one_or_none()
+    if not sub:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    return SubmissionModel.from_orm(sub)
+
+
+@router.put("/{id:int}", response_model=SubmissionModel)
+async def update_submission(
+        request: Request,
+        id: int,
+        session: Session = Depends(get_db)):
+    """Display a paper."""
+    sub = SubmissionModel.base_select(session).filter(Submission.submission_id == id).one_or_none()
+    if not sub:
         raise HTTPException(status_code=404, detail="Paper not found")
-    return doc[0]
+    body = await request.body()
+    status = body.get("status")
+    if status in VALID_STATUS_LIST:
+        sub.status = status
+
+    return SubmissionModel.from_orm(sub)
+
+
+@router.get("/status-list")
+async def list_submission_status() -> List[SubmissionStatusModel]:
+    return _VALID_STATUS_LIST
 

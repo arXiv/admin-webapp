@@ -72,13 +72,14 @@ export const Dashboard = () => {
 
         if (!authProvider)
             return;
-        authProvider.refreshToken().then(() => {
+        authProvider.login({refresh: true}).then(() => {
             // Optionally, navigate to a different page after refreshing the token
             navigate('/admin-console/');
         }).catch((error: any) => {
             console.error("Failed to refresh token", error);
         });
     };
+
     return (
         <Grid container>
             <Grid item xs={5}>

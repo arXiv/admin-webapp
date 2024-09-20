@@ -1,11 +1,12 @@
 import { AuthProvider } from 'react-admin';
 // import {useEffect, useState, useContext} from "react";
 import {RuntimeProps} from "./RuntimeContext";
+import {getRemainingTimeInSeconds} from "./helpers/timeDiff";
 
 function getCookie(name: string): string | null {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()!.split(';').shift()!;
+    if (parts.length === 2) return parts.pop()!.split(';').shift()!.replace(/\\(\d{3})/g, (_match, octalCode) => String.fromCharCode(parseInt(octalCode, 8)))!;
     return null;
 }
 
@@ -14,10 +15,16 @@ let logoutInProgress = false;
 export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => ({
 
     // called when the user attempts to log in
-    login: () => {
-        console.log("auth: /login");
-        window.location.href = `${runtimeProps.AAA_URL}/login`;
-        return Promise.resolve();
+    login: (props) => {
+        const {refresh} = props;
+        console.log("auth: /login " + JSON.stringify(props));
+        if (refresh) {
+            return Promise.resolve();
+        }
+        else {
+            window.location.href = `${runtimeProps.AAA_URL}/login`;
+            return Promise.resolve();
+        }
     },
     // called when the user clicks on the logout button
     logout: () => {
@@ -54,7 +61,25 @@ export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => 
     // called when the user navigates to a new location, to check for authentication
     checkAuth: () => {
         const token = getCookie(runtimeProps.ARXIV_COOKIE_NAME);
-        console.log(`checkAuth: ${token?.length}`);
+        const utc_expire = token?.split(",")[1];
+        if (utc_expire) {
+            const timeLeft = getRemainingTimeInSeconds(utc_expire);
+            if (timeLeft < 120) {
+                console.log("refresh token started " + token?.slice(0,40) )
+                fetch(`${runtimeProps.AAA_URL}/refresh`, {
+                    method: 'GET',
+                    credentials: 'include',
+                }).then(() => {
+                    const token = getCookie(runtimeProps.ARXIV_COOKIE_NAME);
+                    console.log("auth: logout refresh success: " + token?.slice(0,40) );
+                }).finally(() => {
+                    console.log("auth: logout refresh ended" );
+
+                    }
+                );
+
+            }
+        }
         return token ? Promise.resolve() : Promise.reject();
     },
 
