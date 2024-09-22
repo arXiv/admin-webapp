@@ -19,6 +19,18 @@ export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => 
         const {refresh} = props;
         console.log("auth: /login " + JSON.stringify(props));
         if (refresh) {
+            fetch(`${runtimeProps.AAA_URL}/refresh?next_page=`,
+                {
+                    method: "GET",
+                    credentials: "include",
+                }
+                ).then(
+                () => {
+                    console.log("login Did it work?");
+                }
+                ).finally(() => {
+                    console.log("login finallly ");
+            });
             return Promise.resolve();
         }
         else {

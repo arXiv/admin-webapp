@@ -98,11 +98,8 @@ export const Dashboard = () => {
                                     resource={"endorsement_requests"} days={7} title={"Last 7 days"}
                                                  link={`/endorsement_requests?displayedFilters={}&filter={"not_positive"%3Atrue%2C"preset"%3A"7"}&order=DESC&page=1&perPage=25`}/>
                                 <ResourceDateRangeSummary
-                                    resource={"endorsement_requests"} days={60} title={"Last 60 days"}
+                                    resource={"endorsement_requests"} days={30} title={"Last 30 days"}
                                                  link={`/endorsement_requests?displayedFilters={}&filter={"not_positive"%3Atrue%2C"preset"%3A"60"}&order=DESC&page=1&perPage=25`}/>
-                                <ResourceDateRangeSummary
-                                    resource={"endorsement_requests"} days={365} title={"Last 365 days"}
-                                                 link={`/endorsement_requests?displayedFilters={}&filter={"not_positive"%3Atrue%2C"preset"%3A"365"}&order=DESC&page=1&perPage=25`}/>
                             </Grid>
                         </Grid>
 

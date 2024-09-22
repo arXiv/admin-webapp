@@ -149,6 +149,66 @@ def get_one_user(user_id:int, db: Session = Depends(get_db)) -> UserModel:
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
+@router.get("/username/")
+def list_user_by_username(response: Response,
+                          _sort: Optional[str] = Query("last_name,first_name", description="sort by"),
+                          _order: Optional[str] = Query("ASC", description="sort order"),
+                          _start: Optional[int] = Query(0, alias="_start"),
+                          _end: Optional[int] = Query(100, alias="_end"),
+                          id: Optional[List[str]] = Query(None, description="List of user IDs to filter by"),
+                          db: Session = Depends(get_db)
+                          ) -> List[UserModel]:
+    """
+    List users by username
+    """
+    query = UserModel.base_select(db)
+    if _start < 0 or _end < _start:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Invalid start or end index")
+
+    order_columns = []
+    if _sort:
+        keys = _sort.split(",")
+        for key in keys:
+            if key == "id":
+                key = "user_id"
+            try:
+                order_column = getattr(TapirUser, key)
+                order_columns.append(order_column)
+            except AttributeError:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                    detail="Invalid start or end index")
+
+
+    if id is not None:
+        user_ids = select(TapirNickname.user_id).where(TapirNickname.nickname.in_(id))
+        query = query.filter(TapirUser.user_id.in_(user_ids))
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Invalid start or end index")
+
+    count = query.count()
+    response.headers['X-Total-Count'] = str(count)
+    result = [UserModel.from_orm(user) for user in query.offset(_start).limit(_end - _start).all()]
+    return result
+
+
+@router.get("/username/{username:str}")
+def get_user_by_username(username: str,
+                          db: Session = Depends(get_db)
+                          ) -> UserModel:
+    """
+    List users by username
+    """
+    query = UserModel.base_select(db)
+    query = query.join(TapirNickname, TapirUser.user_id == TapirNickname.user_id)
+    query = query.filter(TapirNickname.nickname == username)
+    user = query.one_or_none()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,)
+    return UserModel.from_orm(user)
+
+
 @router.get("/")
 async def list_users(
         response: Response,

@@ -1,5 +1,6 @@
 """arXiv paper display routes."""
-from fastapi import APIRouter, Depends, HTTPException, Request, Query, Response
+from arxiv.auth.user_claims import ArxivUserClaims
+from fastapi import APIRouter, Depends, HTTPException, Request, Query, Response, status
 from typing import Optional, List
 from arxiv.base import logging
 from arxiv.db.models import Submission
@@ -9,11 +10,12 @@ from datetime import datetime, date, timedelta
 from .models import CrossControlModel
 import re
 
-from . import is_admin_user, get_db, datetime_to_epoch, VERY_OLDE
+from . import is_admin_user, get_db, datetime_to_epoch, VERY_OLDE, get_current_user
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(dependencies=[Depends(is_admin_user)], prefix="/submissions")
+router = APIRouter(prefix="/submissions", dependencies=[Depends(is_admin_user)])
+meta_router = APIRouter(prefix="/submissions/metadata")
 
 class SubmissionStatusModel(BaseModel):
     id: int
@@ -162,7 +164,7 @@ async def list_submissions(
         start_date: Optional[date] = Query(None, description="Start date for filtering"),
         end_date: Optional[date] = Query(None, description="End date for filtering"),
         stage: Optional[List[int]] = Query(None, description="Stage"),
-        status: Optional[List[int]] = Query(None, description="Status"),
+        submission_status: Optional[List[int]] = Query(None, description="Submission status"),
         id: Optional[List[int]] = Query(None, description="List of user IDs to filter by"),
         document_id: Optional[int] = Query(None, description="Document ID"),
         db: Session = Depends(get_db)
@@ -210,11 +212,8 @@ async def list_submissions(
         if stage is not None:
             query = query.filter(Submission.stage.in_(stage))
 
-        if status is not None:
-            value = 0
-            for bit in status:
-                value |= 1 << (bit - 1)
-            query = query.filter(Submission.status == value)
+        if submission_status is not None:
+            query = query.filter(Submission.status == submission_status)
 
         if document_id is not None:
             query = query.filter(Submission.document_id == document_id)
@@ -243,12 +242,10 @@ async def get_submission_by_paper_id(
         raise HTTPException(status_code=404, detail="Paper not found")
     return doc[0]
 
-
-
-
 @router.get("/{id:int}")
-async def get_submission(id:int,
-                   session: Session = Depends(get_db)) -> SubmissionModel:
+async def get_submission(
+        id:int,
+        session: Session = Depends(get_db)) -> SubmissionModel:
     """Display a paper."""
     sub = SubmissionModel.base_select(session).filter(Submission.submission_id == id).one_or_none()
     if not sub:
@@ -272,8 +269,10 @@ async def update_submission(
 
     return SubmissionModel.from_orm(sub)
 
+def is_good():
+    return True
 
-@router.get("/status-list")
+@meta_router.get("/status-list")
 async def list_submission_status() -> List[SubmissionStatusModel]:
     return _VALID_STATUS_LIST
 

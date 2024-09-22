@@ -26,7 +26,7 @@ import {
     ReferenceField,
     NumberInput,
     Show,
-    SimpleShowLayout, useGetOne, RecordContextProvider,
+    SimpleShowLayout, useGetOne, RecordContextProvider, Identifier,
 } from 'react-admin';
 
 import CategoryField from "./bits/CategoryField";
@@ -110,7 +110,7 @@ export const EndorsementRequestList = () => {
                     tertiaryText={record => record.email}
                 />
             ) : (
-                <Datagrid rowClick="show" sort={sorter} >
+                <Datagrid rowClick="edit" sort={sorter} >
                     <NumberField source="id" label={"ID"}/>
                     <ReferenceField source="endorsee_id" reference="users"
                                     link={(record, reference) => `/${reference}/${record.id}`} >
@@ -170,7 +170,6 @@ export const ShowDemographic = () => {
             try {
                 const response = await dataProvider.getOne('demographics', {id: userId});
                 setDemographic(response.data);
-                console.log("demo: " + JSON.stringify(response.data));
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching demographic data:", error);
@@ -179,7 +178,6 @@ export const ShowDemographic = () => {
         };
 
         if (record) {
-            console.log("show-demo: " + JSON.stringify(record));
             fetchDemographic(record.endorsee_id);
         }
     }, [dataProvider, record]);
@@ -244,6 +242,76 @@ export const ShowDemographic = () => {
 }
 
 
+export const ListEndorsements = () => {
+    const record = useRecordContext();
+    const dataProvider = useDataProvider();
+    const [endorsements, setEndorsements] = useState<any[] | undefined>(undefined);
+    const [loadingEndorsements, setLoadingEndorsements] = useState(true);
+
+    useEffect(() => {
+        const fetchEndorsements = async (requestId: Identifier) => {
+            try {
+                const response = await dataProvider.getList('endorsements',
+                    {
+                        filter: {request_id: requestId, _start: 0, _end: 10},
+                    });
+                const data = response.data;
+                setEndorsements(data);
+                setLoadingEndorsements(false);
+            } catch (error) {
+                console.error("Error fetching demographic data:", error);
+                setLoadingEndorsements(false);
+            }
+        };
+
+        if (record) {
+            console.log(JSON.stringify(record));
+            fetchEndorsements(record.id);
+        }
+    }, [dataProvider, record]);
+
+    const Endorsement = (endorsement: any) => {
+        return (
+            <RecordContextProvider value={endorsement.endorsement}>
+                <TableRow>
+                    <TableCell>
+                        <ReferenceField reference={"endorsements"} source={"id"}
+                                        link={(record, reference) => `/${reference}/${record.id}`} >
+                            <NumberField source={"id"} />
+                        </ReferenceField>
+                    </TableCell>
+                    <TableCell><CategoryField sourceCategory={"archive"} sourceClass={"subject_class"} source={"id"} /> </TableCell>
+                    <TableCell>
+                        <ReferenceField reference={"users"} source={"endorser_id"}
+                            link={(record, reference) => `/${reference}/${record.id}`} >
+                            <TextField source={"last_name"} fontStyle={{fontSize: '1rem'}} />
+                            {", "}
+                            <TextField source={"first_name"} fontStyle={{fontSize: '1rem'}} />
+
+                        </ReferenceField>
+                    </TableCell>
+                    <TableCell>
+                        <ReferenceField reference={"users"} source={"endorsee_id"}
+                                        link={(record, reference) => `/${reference}/${record.id}`} >
+                            <TextField source={"last_name"} fontStyle={{fontSize: '1rem'}} />
+                            {", "}
+                            <TextField source={"first_name"} fontStyle={{fontSize: '1rem'}} />
+                        </ReferenceField>
+                    </TableCell>
+                </TableRow>
+            </RecordContextProvider>
+        );
+    }
+
+    return (
+        <Table >
+            {endorsements?.map((endorsement: any) => <Endorsement endorsement={endorsement} />)}
+        </Table>
+    );
+}
+
+
+
 export const EndorsementRequestEdit = () => {
     const record = useRecordContext();
     const dataProvider = useDataProvider();
@@ -299,6 +367,7 @@ export const EndorsementRequestEdit = () => {
     }, [dataProvider, record]);
 
 
+
     const handleCategoryChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
         const categoryId = event.target.value;
         setCategoryChoice(categoryChoices.find((c) => c.id === categoryId));
@@ -310,7 +379,14 @@ export const EndorsementRequestEdit = () => {
             <Grid container>
                 <Grid item xs={6}>
                     <SimpleForm>
-                        <BooleanInput name={"Valid"} source={"flag_valid"} label={"Valid"} />
+                        <Grid container>
+                            <Grid item xs={4}>
+                                <BooleanInput name={"Valid"} source={"flag_valid"} label={"Valid"} />
+                            </Grid>
+                            <Grid item xs={4}>
+                                <BooleanInput name={"Valid"} source={"flag_open"} label={"Open"} />
+                            </Grid>
+                        </Grid>
                         <span>ID: <TextField source="id" />  Category:
                             <CategoryField sourceCategory={"archive"} sourceClass={"subject_class"} source={"id"} label={"Category"}/>
                         </span>
@@ -331,8 +407,10 @@ export const EndorsementRequestEdit = () => {
                         <span>
                             Issued when: <DateField source="issued_when"  label={"Issued"}/>
                         </span>
-                        <NumberInput source="point_value"  label={"Point"} />
                     </SimpleForm>
+                    <Grid >
+                        <ListEndorsements />
+                    </Grid>
                 </Grid>
                 <Grid item xs={6}>
                     <ShowDemographic />

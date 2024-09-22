@@ -32,6 +32,7 @@ import { addDays } from 'date-fns';
 
 import React, {useState} from "react";
 import SubmissionStateField, {submissionStatusOptions} from "./bits/SubmissionStateField";
+import {AdminLogs} from "./AdminLogs";
 
 const presetOptions = [
     { id: 'last_1_day', name: 'Last 1 Day' },
@@ -141,13 +142,13 @@ export const SubmissionEdit = () => {
 
     return(
 <Grid container>
-        <Grid item xs={ showLogs ? 9 : 12}>
+        <Grid item xs={12}>
             <Grid item xs={2} alignItems={"center"}>
                 <ToggleButton value="showAdminLogs" selected={showLogs} onClick={() => setShowLogs(!showLogs)} >
                     {showLogs ? "Hide Admin Logs" : "Show Admin Logs"}
                 </ToggleButton>
             </Grid>
-        <Edit>
+        <Edit aside={<AdminLogs showLogs={showLogs} />}>
             <SimpleForm>
                 <Grid container>
                     <Grid item xs={3}>
@@ -248,9 +249,6 @@ export const SubmissionEdit = () => {
             </SimpleForm>
         </Edit>
         </Grid>
-    <Grid xs={3} hidden={!showLogs}>
-        Admin logs
-    </Grid>
 </Grid>
     );
 }
