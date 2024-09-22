@@ -15,22 +15,21 @@ KEYCLOAK_SERVER_URL := ${shell cat ${HOME}/.arxiv/keycloak-url-dev}
 KEYCLOAK_CLIENT_SECRET := $(shell cat ${HOME}/.arxiv/keycloak-secret-dev)
 CLASSIC_DB_URI := $(shell cat ${HOME}/.arxiv/arxiv-db-dev)
 
-AAA_CALLBACK_URL := $(shell echo $${AAA_CALLBACK_URL:-https://dev3.arxiv.org/aaa/callback})
+AAA_TOKEN_REFRESH_URL := $(shell echo $${AAA_TOKEN_REFRESH_URL:-https://dev3.arxiv.org/aaa/refresh})
 AAA_LOGIN_REDIRECT_URL := $(shell echo $${AAA_LOGIN_REDIRECT_URL:-https://dev3.arxiv.org/aaa/login})
 
 ADMIN_CONSOLE_URL := $(shell echo $${ADMIN_CONSOLE_URL:-https://dev3.arxiv.org/admin-console})
 
 JWT_SECRET := $(shell cat ${HOME}/.arxiv/jwt-secret)
 AUTH_SESSION_COOKIE_NAME := arxiv_oidc_session
-CLASSIC_COOKIE_NAME := arxiv_oidc_session
-
+CLASSIC_COOKIE_NAME := tapir_session
 
 APP_DOCKER_RUN := docker run --cpus ${ADMINAPI_CPUS} --rm -p ${app_port}:${dockerport} \
 -e PORT=${dockerport} -e WORKERS=${ADMINAPI_WORKERS} \
 -e ADMIN_API_ROOT_PATH=/adminapi \
 -e ADMIN_APP_URL=${ADMIN_CONSOLE_URL} \
 -e CLASSIC_DB_URI=${CLASSIC_DB_URI} \
--e AAA_CALLBACK_URL=${AAA_CALLBACK_URL} \
+-e AAA_TOKEN_REFRESH_URL=${AAA_TOKEN_REFRESH_URL} \
 -e AAA_LOGIN_REDIRECT_URL=${AAA_LOGIN_REDIRECT_URL} \
 -e JWT_SECRET=${JWT_SECRET} \
 -e AUTH_SESSION_COOKIE_NAME=${AUTH_SESSION_COOKIE_NAME} \
