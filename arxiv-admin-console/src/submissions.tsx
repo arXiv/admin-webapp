@@ -99,7 +99,7 @@ export const SubmissionList = () => {
               filterDefaultValues={{
                   start_date: defaultDates.startDate ? defaultDates.startDate.toISOString().split('T')[0] : '',
                   end_date: defaultDates.endDate ? defaultDates.endDate.toISOString().split('T')[0] : '',
-                  status: 1,
+                  submission_status: 1,
               }}
         >
             {isSmall ? (
