@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from arxiv.auth.openid.oidc_idp import ArxivOidcIdpClient
 from arxiv.auth.user_claims import ArxivUserClaims
 from fastapi import FastAPI, Request, Response
-from mypy.dmypy.client import request
 from starlette.middleware.base import BaseHTTPMiddleware
 
 import jwcrypto.jwt
