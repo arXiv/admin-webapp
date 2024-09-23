@@ -20,7 +20,7 @@ APP_DOCKER_RUN := docker run --cpus ${WEBAPP_CPUS} --rm -p ${app_port}:${dockerp
 -e WORKERS=4 \
 -e PORT=${dockerport} \
 -e AAA_URL=${RUN_HOST}/aaa \
--e ADMIN_API_BACKEND_URL=${RUN_HOST}/adminapi/v1 \
+-e ADMIN_API_BACKEND_URL=${RUN_HOST}/admin-api/v1 \
 -e ADMIN_APP_ROOT=${RUN_HOST}/admin-console/ \
 --name ${app_name} --security-opt="no-new-privileges=true" 
 
