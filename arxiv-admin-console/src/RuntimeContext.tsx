@@ -13,7 +13,7 @@ export interface RuntimeProps
 
 const defaultRuntimeProps : RuntimeProps = {
     AAA_URL: 'http://localhost.arxiv.org:5000/aaa',
-    ADMIN_API_BACKEND_URL: 'http://localhost.arxiv.org:5000/adminapi/v1',
+    ADMIN_API_BACKEND_URL: 'http://localhost.arxiv.org:5000/admin-api/v1',
     ADMIN_APP_ROOT: 'http://localhost.arxiv.org:5000/admin-console/',
     ARXIV_COOKIE_NAME: "arxiv_session_cookie",
     TAPIR_COOKIE_NAME: "tapir_session_cookie",
@@ -38,7 +38,7 @@ export const RuntimeContextProvider = ({ children } : RuntimeContextProviderProp
                 baseUrl = baseUrl + "/";
                 const runtime1: RuntimeProps = {
                     AAA_URL: baseUrl + "aaa",
-                    ADMIN_API_BACKEND_URL: baseUrl + "adminapi/v1",
+                    ADMIN_API_BACKEND_URL: baseUrl + "admin-api/v1",
                     ADMIN_APP_ROOT: baseUrl + "admin-console/",
                     ARXIV_COOKIE_NAME: defaultRuntimeProps.ARXIV_COOKIE_NAME,
                     TAPIR_COOKIE_NAME: defaultRuntimeProps.TAPIR_COOKIE_NAME,
@@ -51,7 +51,7 @@ export const RuntimeContextProvider = ({ children } : RuntimeContextProviderProp
 
                 const runtime2: RuntimeProps = {
                     AAA_URL: baseUrl + "aaa",
-                    ADMIN_API_BACKEND_URL: baseUrl + "adminapi/v1",
+                    ADMIN_API_BACKEND_URL: baseUrl + "admin-api/v1",
                     ADMIN_APP_ROOT: baseUrl + "admin-console/",
                     ARXIV_COOKIE_NAME: cookie_names.session,
                     TAPIR_COOKIE_NAME: cookie_names.classic,
