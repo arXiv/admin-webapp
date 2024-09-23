@@ -15,33 +15,34 @@ class SessionCookieMiddleware(BaseHTTPMiddleware):
         session_cookie_name = request.app.extra['AUTH_SESSION_COOKIE_NAME']
         classic_cookie_name = request.app.extra['CLASSIC_COOKIE_NAME']
         token = request.cookies.get(session_cookie_name)
-        tokens, jwt_payload = ArxivUserClaims.unpack_token(token)
         refreshed_tokens = None
-        expires_at = datetime.strptime(tokens['expires_at'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
-        remain = expires_at - datetime.now(timezone.utc)
-        need_token_refresh = remain.total_seconds() < 180
+        if token is not None:
+            tokens, jwt_payload = ArxivUserClaims.unpack_token(token)
+            expires_at = datetime.strptime(tokens['expires_at'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
+            remain = expires_at - datetime.now(timezone.utc)
+            need_token_refresh = remain.total_seconds() < 180
 
-        if need_token_refresh and 'refresh' in tokens:
-            AAA_TOKEN_REFRESH_URL = request.app.extra['AAA_TOKEN_REFRESH_URL']
-            cookies = request.cookies
-            try:
-                async with httpx.AsyncClient() as client:
-                    refresh_response = await client.post(
-                        AAA_TOKEN_REFRESH_URL,
-                        json={
-                            "session": cookies.get(session_cookie_name),
-                            "classic": cookies.get(classic_cookie_name),
-                        },
-                        cookies=cookies)
+            if need_token_refresh and 'refresh' in tokens:
+                AAA_TOKEN_REFRESH_URL = request.app.extra['AAA_TOKEN_REFRESH_URL']
+                cookies = request.cookies
+                try:
+                    async with httpx.AsyncClient() as client:
+                        refresh_response = await client.post(
+                            AAA_TOKEN_REFRESH_URL,
+                            json={
+                                "session": cookies.get(session_cookie_name),
+                                "classic": cookies.get(classic_cookie_name),
+                            },
+                            cookies=cookies)
 
-                if refresh_response.status_code == 200:
-                    # Extract the new token from the response
-                    refreshed_tokens = await refresh_response.json()
-                else:
-                    logger.warning("calling /fefresh failed. status = %s", refresh_response.status_code)
-            except Exception as exc:
-                logger.warning("calling /fefresh failed.", exc_info=exc)
-                pass
+                    if refresh_response.status_code == 200:
+                        # Extract the new token from the response
+                        refreshed_tokens = await refresh_response.json()
+                    else:
+                        logger.warning("calling /fefresh failed. status = %s", refresh_response.status_code)
+                except Exception as exc:
+                    logger.warning("calling /fefresh failed.", exc_info=exc)
+                    pass
 
         response = await call_next(request)
         if refreshed_tokens:
