@@ -167,6 +167,7 @@ async def list_submissions(
         submission_status: Optional[List[int]] = Query(None, description="Submission status"),
         id: Optional[List[int]] = Query(None, description="List of user IDs to filter by"),
         document_id: Optional[int] = Query(None, description="Document ID"),
+        submitter_id: Optional[int] = Query(None, description="Submitter ID"),
         db: Session = Depends(get_db)
     ) -> List[SubmissionModel]:
     query = SubmissionModel.base_select(db)
@@ -193,6 +194,18 @@ async def list_submissions(
     if id is not None:
         query = query.filter(Submission.submission_id.in_(id))
     else:
+        if stage is not None:
+            query = query.filter(Submission.stage.in_(stage))
+
+        if submission_status is not None:
+            query = query.filter(Submission.status == submission_status)
+
+        if document_id is not None:
+            query = query.filter(Submission.document_id == document_id)
+
+        if submitter_id is not None:
+            query = query.filter(Submission.submitter_id == submitter_id)
+
         if preset is not None:
             matched = re.search(r"last_(\d+)_days", preset)
             if matched:
@@ -208,15 +221,6 @@ async def list_submissions(
                 # t_end = datetime_to_epoch(end_date, date.today(), hour=23, minute=59, second=59)
                 t_end = end_date if end_date else datetime.now()
                 query = query.filter(Submission.submit_time.between(t_begin, t_end))
-
-        if stage is not None:
-            query = query.filter(Submission.stage.in_(stage))
-
-        if submission_status is not None:
-            query = query.filter(Submission.status == submission_status)
-
-        if document_id is not None:
-            query = query.filter(Submission.document_id == document_id)
 
 
     for column in order_columns:

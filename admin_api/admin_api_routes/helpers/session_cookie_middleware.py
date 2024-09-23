@@ -17,18 +17,18 @@ class SessionCookieMiddleware(BaseHTTPMiddleware):
         token = request.cookies.get(session_cookie_name)
         tokens, jwt_payload = ArxivUserClaims.unpack_token(token)
         refreshed_tokens = None
-        expires_at = datetime.strptime(tokens['expires_at'], '%Y-%m-%dT%H:%M:%SZ')
+        expires_at = datetime.strptime(tokens['expires_at'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
         remain = expires_at - datetime.now(timezone.utc)
-        need_token_refresh = remain.total_seconds() < 1800
+        need_token_refresh = remain.total_seconds() < 180
 
         if need_token_refresh and 'refresh' in tokens:
-            AAA_TOKEN_REFRESH_URL = request.app.exta['AAA_TOKEN_REFRESH_URL']
+            AAA_TOKEN_REFRESH_URL = request.app.extra['AAA_TOKEN_REFRESH_URL']
             cookies = request.cookies
             try:
                 async with httpx.AsyncClient() as client:
                     refresh_response = await client.post(
                         AAA_TOKEN_REFRESH_URL,
-                        data={
+                        json={
                             "session": cookies.get(session_cookie_name),
                             "classic": cookies.get(classic_cookie_name),
                         },

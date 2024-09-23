@@ -193,7 +193,7 @@ def create_app(*args, **kwargs) -> FastAPI:
             async with httpx.AsyncClient() as client:
                 refresh_response = await client.post(
                     AAA_TOKEN_REFRESH_URL,
-                    data={
+                    json={
                         "session": cookies.get(cookie_name),
                         "classic": cookies.get(classic_cookie_name),
                     },

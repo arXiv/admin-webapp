@@ -80,7 +80,7 @@ const SubmissionFilter = (props: any) => {
 
             <SelectInput
                 label="Status"
-                source="status"
+                source="submission_status"
                 choices={submissionStatusOptions}
                 alwaysOn
             />
