@@ -26,7 +26,7 @@ CLASSIC_COOKIE_NAME := tapir_session
 
 APP_DOCKER_RUN := docker run --cpus ${ADMINAPI_CPUS} --rm -p ${app_port}:${dockerport} \
 -e PORT=${dockerport} -e WORKERS=${ADMINAPI_WORKERS} \
--e ADMIN_API_ROOT_PATH=/adminapi \
+-e ADMIN_API_ROOT_PATH=/admin-api \
 -e ADMIN_APP_URL=${ADMIN_CONSOLE_URL} \
 -e CLASSIC_DB_URI=${CLASSIC_DB_URI} \
 -e AAA_TOKEN_REFRESH_URL=${AAA_TOKEN_REFRESH_URL} \

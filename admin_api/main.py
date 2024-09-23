@@ -29,7 +29,7 @@ from admin_api_routes.user import router as user_router
 from admin_api_routes.tapir_sessions import router as tapir_session_router
 
 from admin_api_routes.frontend import router as frontend_router
-
+from admin_api_routes.helpers.session_cookie_middleware import SessionCookieMiddleware
 
 from arxiv.base.logging import getLogger
 
@@ -38,7 +38,7 @@ from arxiv.config import Settings
 from app_logging import setup_logger
 
 # API root path (excluding the host)
-ADMIN_API_ROOT_PATH = os.environ.get('ADMIN_API_ROOT_PATH', '/adminapi')
+ADMIN_API_ROOT_PATH = os.environ.get('ADMIN_API_ROOT_PATH', '/admin-api')
 
 # Admin app URL
 #
@@ -128,6 +128,7 @@ def create_app(*args, **kwargs) -> FastAPI:
         LOGOUT_REDIRECT_URL=LOGOUT_REDIRECT_URL,
         AUTH_SESSION_COOKIE_NAME=AUTH_SESSION_COOKIE_NAME,
         CLASSIC_COOKIE_NAME=CLASSIC_COOKIE_NAME,
+        AAA_TOKEN_REFRESH_URL=AAA_TOKEN_REFRESH_URL,
     )
 
     if ADMIN_APP_URL not in origins:
@@ -142,7 +143,8 @@ def create_app(*args, **kwargs) -> FastAPI:
     )
 
     # app.add_middleware(LogMiddleware)
-    app.add_middleware(SessionMiddleware, secret_key="SECRET_KEY")
+    # app.add_middleware(SessionMiddleware, secret_key="SECRET_KEY")
+    app.add_middleware(SessionCookieMiddleware)
 
     # app.include_router(auth_router)
     app.include_router(admin_log_router, prefix="/v1")

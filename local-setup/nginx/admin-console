@@ -62,9 +62,9 @@ server {
   }
 
   # route to my backend
-  location ^~ /adminapi {
+  location ^~ /admin-api {
     # Remove /api from the URL if needed
-    # rewrite ^/adminapi(.*)$ $1 break;
+    # rewrite ^/admin-api(.*)$ $1 break;
 
     # Proxy to the backend server
     proxy_pass http://backend;

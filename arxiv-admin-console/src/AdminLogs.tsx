@@ -75,12 +75,7 @@ export const AdminLogs = (props: AdminLogsProps) => {
         <List filters={<AdminLogFilter />} resource="admin_logs" filter={{submission_id: record.id}} >
             <Datagrid size="small" bulkActionButtons={false}>
                 <DateField source="created" />
-
-                <ReferenceField source="username" reference="users/username" label={"Admin"}
-                                link={(record, reference) => `/users/${record.id}`} >
-                    <TextField source={"id"} />
-                    <TextField source={"username"} />
-                </ReferenceField>
+                <TextField source="username" />
                 <TextField source="logtext" />
             </Datagrid>
         </List>
