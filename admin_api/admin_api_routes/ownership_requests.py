@@ -6,14 +6,14 @@ from typing import Optional, Literal, List
 
 from arxiv.auth.user_claims import ArxivUserClaims
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response, Request
-from sqlalchemy import insert
+from sqlalchemy import insert, select
 
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.operators import and_
 from pydantic import BaseModel
 
 from arxiv.base import logging
-from arxiv.db.models import OwnershipRequest, t_arXiv_ownership_requests_papers, PaperOwner, OwnershipRequestsAudit
+from arxiv.db.models import OwnershipRequest, t_arXiv_ownership_requests_papers, PaperOwner, OwnershipRequestsAudit, \
+    TapirUser
 
 from . import is_admin_user, get_db, is_any_user, get_current_user, transaction, datetime_to_epoch, VERY_OLDE
 from .models import PaperOwnerModel
@@ -67,6 +67,11 @@ class OwnershipRequestModel(BaseModel):
         populate_document_ids(data, record, session)
         return data
 
+
+class PaperOwnershipDecisionModel(BaseModel):
+    workflow_status: WorkflowStatus # Literal['pending', 'accepted', 'rejected']
+    rejected_document_ids: List[int]
+    accepted_document_ids: List[int]
 
 
 def populate_document_ids(data: OwnershipRequestModel, record: OwnershipRequest, session: Session):
@@ -155,57 +160,69 @@ async def update_ownership_request(
 {'flag_author_docid_NNNNN': True, 'document_ids': [2213327], 'endorsement_request_id': None, 'id': 54819, 'user_id': 499594, 'workflow_status': 'accepted'}
 
     """
-    body = await request.json()
+    # body = await request.json()
     row = session.query(OwnershipRequest).filter(OwnershipRequest.request_id == id).one_or_none()
     if row is None:
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND,)
 
-    workflow_status = body.get('workflow_status', row.workflow_status)
-    if workflow_status not in [ws.value for ws in WorkflowStatus]:
-        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"workflow_status {workflow_status} is invalid")
+    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
-    # ownreq = OwnershipRequest.from_record(row, session)
-    user_id = row.user_id
+
+@router.post('/{request_id:int}/documents/')
+async def create_paper_ownership_decision(
+        request: Request,
+        request_id: int,
+        decision: PaperOwnershipDecisionModel,
+        current_user: ArxivUserClaims = Depends(get_current_user),
+        session: Session = Depends(transaction)) -> OwnershipRequestModel:
+    """Ownership creation
+
+    """
+    ownership_request = OwnershipRequestModel.base_query(session).filter(OwnershipRequest.request_id == request_id).one_or_none()
+
+    if ownership_request is None:
+        return HTTPException(status_code=status.HTTP_404_NOT_FOUND,)
+
+    if ownership_request.workflow_status not in [ws.value for ws in WorkflowStatus]:
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"workflow_status {ownership_request.workflow_status} is invalid")
+
+    if ownership_request.workflow_status != WorkflowStatus.pending:
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"workflow_status {ownership_request.workflow_status} is not pending")
+
+    user_id = ownership_request.user_id
     admin_id = current_user.user_id
 
-    match workflow_status:
-        case WorkflowStatus.accepted:
-            doc_ids = body.get('document_ids', [])
+    current_request: OwnershipRequestModel = OwnershipRequestModel.from_record(ownership_request)
+    docs = set(current_request.document_ids)
+    decided_docs = set(decision.accepted_document_ids) | set(decision.rejected_document_ids)
+    if docs != decided_docs:
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Not all papers decided")
 
-            already_owns = session.query(PaperOwner.document_id).filter(and_(
-                PaperOwner.user_id == user_id,
-                PaperOwner.document_id.in_(doc_ids),
-                PaperOwner.flag_author == 1)).all()
+    if decision.workflow_status == WorkflowStatus.accepted and not decision.accepted_document_ids:
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"No accepted documents")
 
-            accepting = set(doc_ids).remove(set([doc.document_id for doc in already_owns]))
-            cookie_name = request.app.extra['settings'].config['CLASSIC_TRACKING_COOKIE']
-            cookie = request.cookies.get(cookie_name)
-            t_now = datetime.utcnow()
-            for doc_id in accepting:
-                marker = f"flag_author_doc_{doc_id}"
-                if marker not in body:
-                    return HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                         detail=f"flag_author_doc_{doc_id} is not in the body")
-                value = body.get(marker)
-                stmt = insert(PaperOwner).values(
-                    document_id = doc_id,
-                    user_id = user_id,
-                    date = t_now,
-                    added_by = admin_id,
-                    remote_addr = request.client.host,
-                    tracking_cookie = cookie,
-                    flag_auto = 0,
-                    flag_author = value)
-                session.execute(stmt)
-            pass
+    ownership_request.workflow_status = decision.workflow_status
 
-        case WorkflowStatus.rejected:
-            pass
+    already_owns = select(PaperOwner.document_id).where(PaperOwner.user_id == user_id).scalar()
 
-        case WorkflowStatus.pending:
-            pass
+    accepting = set(decision.accepted_document_ids).remove(set(already_owns))
 
-    row.workflow_status = workflow_status
+    user = select(TapirUser).where(TapirUser.user_id == user_id).one_or_none()
+
+    t_now = datetime.utcnow()
+    for doc_id in accepting:
+        stmt = insert(PaperOwner).values(
+            document_id = doc_id,
+            user_id = user_id,
+            date = t_now,
+            added_by = admin_id,
+            remote_addr = user.remote_addr,
+            tracking_cookie = user.tracking_cookie,
+            valid = True,
+            flag_auto = False,
+            flag_author = True)
+        session.execute(stmt)
+
     session.commit()
-    session.refresh(row)
-    return OwnershipRequestModel.from_record(row, session)
+    session.refresh(ownership_request)
+    return OwnershipRequestModel.from_record(ownership_request, session)

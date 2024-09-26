@@ -1,12 +1,15 @@
+import json
 from datetime import datetime, timezone
 
 import httpx
+from cachetools import TTLCache
 from arxiv.auth.user_claims import ArxivUserClaims
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from admin_api_routes.authentication import logger
 
+_token_cache = TTLCache(maxsize=100, ttl=10)
 
 # Define custom middleware to add a cookie to the response
 class SessionCookieMiddleware(BaseHTTPMiddleware):
@@ -20,29 +23,36 @@ class SessionCookieMiddleware(BaseHTTPMiddleware):
             tokens, jwt_payload = ArxivUserClaims.unpack_token(token)
             expires_at = datetime.strptime(tokens['expires_at'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
             remain = expires_at - datetime.now(timezone.utc)
-            need_token_refresh = remain.total_seconds() < 180
+            need_token_refresh = remain.total_seconds() < 60
 
             if need_token_refresh and 'refresh' in tokens:
-                AAA_TOKEN_REFRESH_URL = request.app.extra['AAA_TOKEN_REFRESH_URL']
                 cookies = request.cookies
-                try:
-                    async with httpx.AsyncClient() as client:
-                        refresh_response = await client.post(
-                            AAA_TOKEN_REFRESH_URL,
-                            json={
-                                "session": cookies.get(session_cookie_name),
-                                "classic": cookies.get(classic_cookie_name),
-                            },
-                            cookies=cookies)
+                session_cookie = cookies.get(session_cookie_name)
+                refreshed_tokens = _token_cache.get(session_cookie) if session_cookie else None
+                if refreshed_tokens is None:
+                    AAA_TOKEN_REFRESH_URL = request.app.extra['AAA_TOKEN_REFRESH_URL']
+                    try:
+                        async with httpx.AsyncClient() as client:
+                            refresh_response = await client.post(
+                                AAA_TOKEN_REFRESH_URL,
+                                json={
+                                    "session": session_cookie,
+                                    "classic": cookies.get(classic_cookie_name),
+                                },
+                                cookies=cookies)
 
-                    if refresh_response.status_code == 200:
-                        # Extract the new token from the response
-                        refreshed_tokens = await refresh_response.json()
-                    else:
-                        logger.warning("calling /fefresh failed. status = %s", refresh_response.status_code)
-                except Exception as exc:
-                    logger.warning("calling /fefresh failed.", exc_info=exc)
-                    pass
+                        if refresh_response.status_code == 200:
+                            # Extract the new token from the response
+                            refreshed_tokens = refresh_response.json()
+                            _token_cache[session_cookie] = refreshed_tokens
+                            logger.debug("refreshed_tokens: %s", json.dumps(refreshed_tokens))
+                        else:
+                            logger.warning("calling /fefresh failed. status = %s", refresh_response.status_code)
+                    except Exception as exc:
+                        logger.warning("calling /fefresh failed.", exc_info=exc)
+                        pass
+                else:
+                    logger.debug("refreshed_tokens from cache")
 
         response = await call_next(request)
         if refreshed_tokens:

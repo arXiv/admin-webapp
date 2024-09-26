@@ -63,10 +63,9 @@ async def list_tapir_sessions(
         preset: Optional[str] = Query(None),
         start_date: Optional[datetime.date] = Query(None, description="Start date for filtering"),
         end_date: Optional[datetime.date] = Query(None, description="End date for filtering"),
-
-        db: Session = Depends(get_db)
+        session: Session = Depends(get_db)
     ) -> List[TapirSessionModel]:
-    query = TapirSessionModel.base_query(db)
+    query = TapirSessionModel.base_query(session)
 
     if id is not None:
         query = query.filter(TapirSession.user_id.in_(id))
@@ -128,15 +127,19 @@ async def get_tapir_session(
     return tapir_session
 
 
-@router.get("/user/{id:int}")
+@router.get("/user/{user_id:int}")
 async def get_tapir_session_for_user(
         response: Response,
-        id:int, session: Session = Depends(get_db)) -> List[TapirSessionModel]:
-    """Display a paper."""
-    tapir_session = TapirSessionModel.base_query(session).filter(TapirSession.session_id == id).all()
-    count = tapir_session.count()
-    response.headers['X-Total-Count'] = str(count)
-    return tapir_session
+        user_id:int,
+        _sort: Optional[str] = Query("id", description="sort by"),
+        _order: Optional[str] = Query("ASC", description="sort order"),
+        _start: Optional[int] = Query(0, alias="_start"),
+        _end: Optional[int] = Query(100, alias="_end"),
+        session: Session = Depends(get_db)) -> List[TapirSessionModel]:
+    """List tapir sessions for a user"""
+    return list_tapir_sessions(response, _sort, _order, _start, _end, user_id=user_id, session=session)
+
+
 
 @router.put("/{id:int}")
 async def close_tapir_session(
@@ -178,3 +181,4 @@ async def close_tapir_session(
         session.refresh(tapir_session)
 
     return TapirSessionModel.from_orm(TapirSessionModel.base_query(session).filter(TapirSession.session_id == id).one_or_none())
+

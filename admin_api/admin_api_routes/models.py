@@ -10,7 +10,6 @@ from arxiv.db.models import Document, Metadata, PaperPw, TapirUser, Demographic,
     EndorsementRequestsAudit, TapirSession, \
     OwnershipRequestsAudit, PaperOwner, Category, CrossControl
 
-
 class OrmConfig(BaseConfig):
     orm_mode = True
 

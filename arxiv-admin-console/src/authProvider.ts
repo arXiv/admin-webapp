@@ -86,7 +86,6 @@ export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => 
                     console.log("auth: logout refresh success: " + token?.slice(0,40) );
                 }).finally(() => {
                     console.log("auth: logout refresh ended" );
-
                     }
                 );
 

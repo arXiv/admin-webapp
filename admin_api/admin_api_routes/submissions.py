@@ -3,11 +3,12 @@ from arxiv.auth.user_claims import ArxivUserClaims
 from fastapi import APIRouter, Depends, HTTPException, Request, Query, Response, status
 from typing import Optional, List
 from arxiv.base import logging
-from arxiv.db.models import Submission
+from arxiv.db.models import Submission, SubmissionCategory
 from sqlalchemy.orm import Session
+from sqlalchemy import select, update, func, case, Select, distinct, exists, and_
 from pydantic import BaseModel
 from datetime import datetime, date, timedelta
-from .models import CrossControlModel
+from .submission_categories import SubmissionCategoryModel
 import re
 
 from . import is_admin_user, get_db, datetime_to_epoch, VERY_OLDE, get_current_user
@@ -94,7 +95,8 @@ class SubmissionModel(BaseModel):
     rt_ticket_id: Optional[int] # = mapped_column(Integer, index=True)
     auto_hold: Optional[int] # = mapped_column(Integer, server_default=FetchedValue())
     is_locked: int # = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
-    agreement_id = int # mapped_column(ForeignKey('arXiv_submission_agreements.agreement_id'), index=True)
+    agreement_id: Optional[int] # mapped_column(ForeignKey('arXiv_submission_agreements.agreement_id'), index=True)
+    submission_categories: Optional[List[SubmissionCategoryModel]]
 
     class Config:
         orm_mode = True
@@ -254,7 +256,9 @@ async def get_submission(
     sub = SubmissionModel.base_select(session).filter(Submission.submission_id == id).one_or_none()
     if not sub:
         raise HTTPException(status_code=404, detail="Submission not found")
-    return SubmissionModel.from_orm(sub)
+    submission: SubmissionModel = SubmissionModel.from_orm(sub)
+    submission.submission_categories = [SubmissionCategoryModel.from_orm(cat) for cat in SubmissionCategoryModel.base_select(session).filter(SubmissionCategory.submission_id == id).all()]
+    return submission
 
 
 @router.put("/{id:int}", response_model=SubmissionModel)

@@ -33,6 +33,7 @@ import { addDays } from 'date-fns';
 import React, {useState} from "react";
 import SubmissionStateField, {submissionStatusOptions} from "./bits/SubmissionStateField";
 import {AdminLogs} from "./AdminLogs";
+import CategoryInputField from "./bits/CategoryInputField";
 
 const presetOptions = [
     { id: 'last_1_day', name: 'Last 1 Day' },
@@ -67,6 +68,7 @@ const SubmissionFilter = (props: any) => {
 
     return (
         <Filter {...props}>
+            <TextInput label="Submission ID" source="id" alwaysOn />
             <SelectInput
                 label="Preset Date Range"
                 source="preset"
@@ -110,7 +112,7 @@ export const SubmissionList = () => {
                 />
             ) : (
                 <Datagrid rowClick="edit" sort={sorter}>
-                    <NumberField source="id" label="Submission ID" />
+                    <TextField source="id" label="Submission ID"  textAlign="right" />
                     <TextField source="title" />
                     <ReferenceField source="document_id" reference="documents" label={"Document"}
                                     link={(record, reference) => `/${reference}/${record.id}`} >
@@ -168,19 +170,31 @@ export const SubmissionEdit = () => {
                     </Grid>
                     <Grid container item xs={12}>
                         <Grid item xs={2}>
-                            From
+                            User Identity
                         </Grid>
-                        <Grid item xs={10}>
+                        <Grid item xs={4}>
                             <ReferenceField source="submitter_id" reference="users" label={"Submitter"}
                                             link={(record, reference) => `/${reference}/${record.id}`} >
                                 <TextField source={"last_name"} />
                                 {", "}
                                 <TextField source={"first_name"} />
                             </ReferenceField>
-                            {" Email: "}
+                        </Grid>
+                        <Grid item xs={4}>
                             <ReferenceField source="submitter_id" reference="users" label={"Submitter"}>
                                 <EmailField source={"email"} />
                             </ReferenceField>
+                        </Grid>
+                    </Grid>
+                    <Grid container item xs={12}>
+                        <Grid item xs={2}>
+                            From
+                        </Grid>
+                        <Grid item xs={4}>
+                            <TextInput source="submitter_name" />
+                        </Grid>
+                        <Grid item xs={4}>
+                            <TextInput source="submitter_email" />
                         </Grid>
                     </Grid>
 
@@ -189,13 +203,22 @@ export const SubmissionEdit = () => {
                             Date created:
                         </Grid>
                         <Grid item xs={2}>
-                            <DateInput source="created" label="Created"/>
+                            <DateField source="created" label="Created"/>
                         </Grid>
                         <Grid item xs={2}>
                             Date updated:
                         </Grid>
                         <Grid item xs={2}>
-                            <DateInput source="updated" />
+                            <DateField source="updated" />
+                        </Grid>
+                    </Grid>
+
+                    <Grid container item xs={12}>
+                        <Grid item xs={2}>
+                            Categories:
+                        </Grid>
+                        <Grid item xs={10}>
+                            <CategoryInputField source="id" sourceCategory="archive" sourceClass="subject_class" />
                         </Grid>
                     </Grid>
 
@@ -232,7 +255,7 @@ export const SubmissionEdit = () => {
                             License
                         </Grid>
                         <Grid item xs={10}>
-                            <TextInput source="license" />
+                            <TextField source="license" />
                         </Grid>
 
                     </Grid>
@@ -241,7 +264,7 @@ export const SubmissionEdit = () => {
                             Abstract
                         </Grid>
                         <Grid item xs={10}>
-                            <TextField source="abstract" />
+                            <TextInput source="abstract" multiline rows={20} />
                         </Grid>
 
                     </Grid>

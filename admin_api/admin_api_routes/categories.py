@@ -53,7 +53,7 @@ class CategoryModel(BaseModel):
     @classmethod
     def base_query(cls, db: Session) -> Query:
         return db.query(
-            func.concat(Category.archive, "+", Category.subject_class).label("id"),
+            func.concat(Category.archive, ".", Category.subject_class).label("id"),
             Category.archive,
             Category.subject_class,
             Category.definitive,
@@ -150,7 +150,7 @@ async def get_category(
 
 @router.get('/{id:str}')
 async def get_category(id: str, db: Session = Depends(get_db)) -> CategoryModel:
-    [archive, subject_class] = id.split("+")
+    [archive, subject_class] = id.split(".")
     item = db.query(Category).filter(
         and_(
             Category.archive == archive,
@@ -166,7 +166,7 @@ async def update_category(
         id: str,
         session: Session = Depends(transaction)) -> CategoryModel:
     body = await request.json()
-    [archive, subject_class] = id.split("+")
+    [archive, subject_class] = id.split(".")
     item = session.query(Category).filter(
         and_(
             Category.archive == archive,
@@ -202,7 +202,7 @@ async def delete_category(
         id: str,
         session: Session = Depends(transaction)) -> Response:
 
-    [archive, subject_class] = id.split("+")
+    [archive, subject_class] = id.split(".")
     item = session.query(Category).filter(
         and_(
             Category.archive == archive,

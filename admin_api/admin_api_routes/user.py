@@ -6,71 +6,80 @@ from datetime import datetime, date, timedelta
 from fastapi import APIRouter, Query, HTTPException, status, Depends, Request
 from fastapi.responses import Response
 
-from sqlalchemy import select, case, distinct, exists, text
+from sqlalchemy import select, case, distinct, exists, text, and_
 from sqlalchemy.orm import Session, aliased
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from arxiv.db import transaction
 from arxiv.db.models import (TapirUser, TapirNickname, t_arXiv_moderators, Demographic, TapirCountry,
-                             t_arXiv_black_email, t_arXiv_white_email)
+                             t_arXiv_black_email, t_arXiv_white_email, Category)
 
 from . import is_admin_user, get_db, VERY_OLDE, datetime_to_epoch
 
 router = APIRouter(dependencies=[Depends(is_admin_user)], prefix="/users")
 
-class UserModel(BaseModel):
-    class Config:
-        orm_mode = True
-    id: int
+class UserBaseModel(BaseModel):
     email: str
     first_name: str
     last_name: str
     suffix_name: str
     username: str
     email_bouncing: bool
-    policy_class:  int
-    joined_date:  datetime
+    policy_class: int
+    joined_date: datetime
     joined_remote_host: str
-    flag_internal:  bool
+    flag_internal: bool
     flag_edit_users: bool
-    flag_edit_system:  bool
-    flag_email_verified:  bool
-    flag_approved:  bool
-    flag_deleted:  bool
-    flag_banned:  bool
-    flag_wants_email:  Optional[bool]
-    flag_html_email:  Optional[bool]
-    flag_allow_tex_produced:  Optional[bool]
-    flag_can_lock:  Optional[bool]
-    flag_is_mod: Optional[bool]
-
-    moderator_id: Optional[str]
+    flag_edit_system: bool
+    flag_email_verified: bool
+    flag_approved: bool
+    flag_deleted: bool
+    flag_banned: bool
+    flag_wants_email: Optional[bool]
+    flag_html_email: Optional[bool]
+    flag_allow_tex_produced: Optional[bool]
+    flag_can_lock: Optional[bool]
 
     # From Demographic
-    country: Optional[str] # = mapped_column(String(2), nullable=False, index=True, server_default=FetchedValue())
-    affiliation: Optional[str] # = mapped_column(String(255), nullable=False, server_default=FetchedValue())
-    url: Optional[str] # = mapped_column(String(255), nullable=False, server_default=FetchedValue())
-    type: Optional[int] # = mapped_column(SmallInteger, index=True)
-    archive: Optional[str] # = mapped_column(String(16))
-    subject_class: Optional[str] # = mapped_column(String(16))
-    original_subject_classes: str # = mapped_column(String(255), nullable=False, server_default=FetchedValue())
-    flag_group_physics: Optional[int] # = mapped_column(Integer, index=True)
-    flag_group_math: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
-    flag_group_cs: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
-    flag_group_nlin: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
-    flag_proxy: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
-    flag_journal: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
-    flag_xml: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
-    dirty: Optional[int] #  = mapped_column(Integer, nullable=False, server_default=text("'0'"))
-    flag_group_test: Optional[int] #  = mapped_column(Integer, nullable=False, server_default=text("'0'"))
-    flag_suspect: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
-    flag_group_q_bio: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
-    flag_group_q_fin: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
-    flag_group_stat: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
-    flag_group_eess: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
-    flag_group_econ: Optional[int] #  = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
-    veto_status: Optional[str] # Mapped[Literal['ok', 'no-endorse', 'no-upload', 'no-replace']] = mapped_column(Enum('ok', 'no-endorse', 'no-upload', 'no-replace'), nullable=False, server_default=text("'ok'"))
+    country: Optional[str]  # = mapped_column(String(2), nullable=False, index=True, server_default=FetchedValue())
+    affiliation: Optional[str]  # = mapped_column(String(255), nullable=False, server_default=FetchedValue())
+    url: Optional[str]  # = mapped_column(String(255), nullable=False, server_default=FetchedValue())
+    type: Optional[int]  # = mapped_column(SmallInteger, index=True)
+    archive: Optional[str]  # = mapped_column(String(16))
+    subject_class: Optional[str]  # = mapped_column(String(16))
+    original_subject_classes: str  # = mapped_column(String(255), nullable=False, server_default=FetchedValue())
+    flag_group_physics: Optional[int]  # = mapped_column(Integer, index=True)
+    flag_group_math: Optional[
+        int]  # = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_group_cs: Optional[int]  # = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_group_nlin: Optional[
+        int]  # = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_proxy: Optional[int]  # = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_journal: Optional[int]  # = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_xml: Optional[int]  # = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    dirty: Optional[int]  # = mapped_column(Integer, nullable=False, server_default=text("'0'"))
+    flag_group_test: Optional[int]  # = mapped_column(Integer, nullable=False, server_default=text("'0'"))
+    flag_suspect: Optional[int]  # = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_group_q_bio: Optional[
+        int]  # = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_group_q_fin: Optional[
+        int]  # = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_group_stat: Optional[
+        int]  # = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_group_eess: Optional[
+        int]  # = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    flag_group_econ: Optional[
+        int]  # = mapped_column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    veto_status: Optional[
+        str]  # Mapped[Literal['ok', 'no-endorse', 'no-upload', 'no-replace']] = mapped_column(Enum('ok', 'no-endorse', 'no-upload', 'no-replace'), nullable=False, server_default=text("'ok'"))
+
+
+class UserModel(UserBaseModel):
+    class Config:
+        orm_mode = True
+    id: int
+    flag_is_mod: Optional[bool]
 
     @staticmethod
     def base_select(db: Session):
@@ -137,6 +146,10 @@ class UserModel(BaseModel):
         ).outerjoin(Demographic, TapirUser.user_id == Demographic.user_id)
         )
 
+    pass
+
+
+class UserUpdateModel(UserBaseModel):
     pass
 
 
@@ -340,18 +353,40 @@ async def list_users(
 
 
 @router.put('/{user_id:int}')
-async def update_user(request: Request, user_id: int, session: Session = Depends(transaction)) -> UserModel:
+async def update_user(request: Request,
+                      user_id: int,
+                      user_update: UserUpdateModel,
+                      session: Session = Depends(transaction)) -> UserModel:
     """Update user - by PUT"""
-    body = await request.json()
-
     user = session.query(TapirUser).filter(TapirUser.user_id == user_id).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Verify?
-    for key, value in body.items():
-        if key in user.__dict__:
-            setattr(user, key, value)
+    demographic = session.query(Demographic).filter(Demographic.user_id == user_id).first()
+
+    update_data = user_update.dict(exclude_unset=True)  # Exclude fields that were not provided
+
+    # check new category
+    if hasattr(update_data, 'archive'):
+        if hasattr(update_data, 'subject_class'):
+            new_category = session.query(Category).filter(and_(
+                Category.archive == update_data.archive,
+                Category.subject_class == update_data.subject_class
+            )).one_or_none()
+            if new_category is None:
+                raise HTTPException(status_code=404, detail="Category not found")
+        else:
+            raise HTTPException(status_code=404, detail="Need archive and subject_class")
+    elif hasattr(update_data, 'subject_class'):
+        raise HTTPException(status_code=404, detail="Need archive and subject_class")
+
+    for key, value in update_data.items():
+        if hasattr(user, key):
+            setattr(user, key, value)  # Update the user's fields
+        elif demographic and hasattr(demographic, key):
+            setattr(demographic, key, value)
+        else:
+            raise HTTPException(status_code=404, detail="Bad update data")
 
     session.commit()
     session.refresh(user)  # Refresh the instance with the updated data
