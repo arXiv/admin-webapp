@@ -38,6 +38,7 @@ import React, {useEffect, useState} from "react";
 import CategoryField from "./bits/CategoryField";
 import PersonNameField from "./bits/PersonNameField";
 import CareereStatusField from "./bits/CareereStatusField";
+import LastLoginField from "./bits/LastLoginField";
 
 const UserFilter = (props: any) => (
     <Filter {...props}>
@@ -203,7 +204,7 @@ function UserDemographic() {
                 Last login
             </TableCell>
             <TableCell>
-                <TextField source="id" />
+                <LastLoginField source={"id"} />
             </TableCell>
         </TableRow>
         <TableRow>
@@ -352,36 +353,54 @@ export const UserEdit = () => {
 
                         <TableRow>
                             <TableCell>
-                                policy class
+                                Permissions
                             </TableCell>
                             <TableCell>
-                                <SelectInput source="policy_class" choices={policyClassChoices} />
                                 <Grid container>
-                                    <Grid item xs={12}>
+                                    <Grid item xs={3}>
                                         <BooleanInput source="flag_veto_status" label={"Veto status"}/>
                                     </Grid>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={3}>
                                         <BooleanInput source="flag_edit_users" label={"Edit Users"}/>
                                     </Grid>
-                                    <Grid item xs={4}>
-                                <BooleanInput source="flag_edit_system" label={"Edit System"}/>
+                                    <Grid item xs={3}>
+                                        <BooleanInput source="flag_edit_system" label={"Edit System"}/>
                                     </Grid>
-                                    <Grid item xs={4}>
-                                <BooleanInput source="flag_banned" label={"Suspended"}/>
+                                    <Grid item xs={3}>
+                                        <BooleanInput source="flag_banned" label={"Suspended"}/>
                                     </Grid>
-                                    <Grid item xs={4}>
-                                <BooleanInput source="flag_proxy" label={"Proxy"}/>
+                                    <Grid item xs={3}>
+                                        <BooleanInput source="flag_proxy" label={"Proxy"}/>
                                     </Grid>
-                                    <Grid item xs={4}>
+                                    <Grid item xs={3}>
                                         <BooleanInput source="flag_suspect" label={"Suspect"}/>
                                     </Grid>
-                                    <Grid item xs={4}>
-                                <BooleanInput source="flag_xml" label={"XML"}/>
+                                    <Grid item xs={3}>
+                                        <BooleanInput source="flag_xml" label={"XML"}/>
                                     </Grid>
-                                    <Grid item xs={4}>
-                                <BooleanInput source="flag_group_test" label={"Test"}/>
+                                    <Grid item xs={3}>
+                                        <BooleanInput source="flag_group_test" label={"Test"}/>
+                                    </Grid>
+                                    <Grid item xs={3}>
+                                        <BooleanInput source="flag_internal"/>
+                                    </Grid>
+                                    <Grid item xs={3}>
+                                        <BooleanInput source="flag_approved"/>
+                                    </Grid>
+                                    <Grid item xs={3}>
+                                        <BooleanInput source="flag_deleted"/>
+                                    </Grid>
+                                    <Grid item xs={3}>
+                                        <BooleanInput source="flag_allow_tex_produced"/>
+                                    </Grid>
+                                    <Grid item xs={3}>
+                                        <BooleanInput source="flag_can_lock"/>
+                                    </Grid>
+                                    <Grid item xs={3}>
+                                        <BooleanField source="flag_is_mod"/>
                                     </Grid>
                                 </Grid>
+                                <SelectInput source="policy_class" choices={policyClassChoices} />
                             </TableCell>
                         </TableRow>
                     </Table>
