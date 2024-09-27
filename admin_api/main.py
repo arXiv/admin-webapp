@@ -1,16 +1,22 @@
+import json
 import logging
 import os
+from datetime import timezone, datetime
+from sys import exc_info
+
 import httpx
-from typing import Callable
-from fastapi import FastAPI, Request, status
+from typing import Callable, Optional
+from fastapi import FastAPI, Request, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import Response, RedirectResponse, JSONResponse
 
-from arxiv.base.globals import get_application_config
 
-from admin_api_routes import AccessTokenExpired, LoginRequired, BadCookie
+from arxiv.base.globals import get_application_config
+from arxiv.auth.user_claims import ArxivUserClaims
+
+from admin_api_routes import AccessTokenExpired, LoginRequired, BadCookie, get_current_user, get_session_cookie
 # from admin_api_routes.authentication import router as auth_router
 from admin_api_routes.admin_logs import router as admin_log_router
 from admin_api_routes.categories import router as categories_router
@@ -164,6 +170,7 @@ def create_app(*args, **kwargs) -> FastAPI:
     app.include_router(submission_meta_router, prefix="/v1")
     app.include_router(tapir_session_router, prefix="/v1")
     app.include_router(frontend_router)
+    app.include_router(tapir_session_router, prefix="/v1")
 
     @app.middleware("http")
     async def apply_response_headers(request: Request, call_next: Callable) -> Response:
@@ -173,6 +180,56 @@ def create_app(*args, **kwargs) -> FastAPI:
         response: Response = await call_next(request)
         response.headers['Content-Security-Policy'] = "frame-ancestors 'none'"
         response.headers['X-Frame-Options'] = 'DENY'
+        return response
+
+    @app.get("/v1/ping")
+    async def ping(request: Request,
+                   response: Response,
+                   token: Optional[str] = Depends(get_session_cookie)):
+        logger = getLogger(__name__)
+        logger.debug(f"Ping: {token}")
+        response.status_code = status.HTTP_200_OK
+        try:
+            secret = request.app.extra['JWT_SECRET']
+            if secret and token:
+                tokens, jwt_payload = ArxivUserClaims.unpack_token(token)
+                expires_at = datetime.strptime(tokens['expires_at'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
+                remain = expires_at - datetime.now(timezone.utc)
+                need_token_refresh = remain.total_seconds() < 60
+                if need_token_refresh and 'refresh' in tokens:
+                    logger.debug(f"Ping: refresh {token}")
+                    cookies = request.cookies
+                    AAA_TOKEN_REFRESH_URL = request.app.extra['AAA_TOKEN_REFRESH_URL']
+                    session_cookie_name = request.app.extra['AUTH_SESSION_COOKIE_NAME']
+                    classic_cookie_name = request.app.extra['CLASSIC_COOKIE_NAME']
+                    async with httpx.AsyncClient() as client:
+                        refresh_response = await client.post(
+                            AAA_TOKEN_REFRESH_URL,
+                            json={
+                                "session": token,
+                                "classic": cookies.get(classic_cookie_name),
+                            },
+                            cookies=cookies)
+
+                        if refresh_response.status_code == 200:
+                            refreshed_tokens = refresh_response.json()
+                            # Extract the new token from the response
+                            new_session_cookie = refreshed_tokens.get("session")
+                            new_classic_cookie = refreshed_tokens.get("classic")
+                            max_age = refreshed_tokens.get("max_age")
+                            domain = refreshed_tokens.get("domain")
+                            secure = refreshed_tokens.get("secure")
+                            samesite = refreshed_tokens.get("samesite")
+                            response.set_cookie(session_cookie_name, new_session_cookie,
+                                                max_age=max_age, domain=domain, secure=secure, samesite=samesite)
+                            response.set_cookie(classic_cookie_name, new_classic_cookie,
+                                                max_age=max_age, domain=domain, secure=secure, samesite=samesite)
+                        else:
+                            logger.warning("calling /fefresh failed. status = %s", refresh_response.status_code)
+        except Exception as _exc:
+            logger.debug("ping", exc_info=True)
+            pass
+
         return response
 
     @app.get("/")

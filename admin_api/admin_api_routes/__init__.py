@@ -48,6 +48,11 @@ async def is_any_user(request: Request) -> bool:
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 
+async def get_session_cookie(request: Request) -> str | None:
+    session_cookie_key = request.app.extra['AUTH_SESSION_COOKIE_NAME']
+    return request.cookies.get(session_cookie_key)
+
+
 async def get_current_user(request: Request) -> ArxivUserClaims | None:
     logger = getLogger(__name__)
     session_cookie_key = request.app.extra['AUTH_SESSION_COOKIE_NAME']
@@ -108,6 +113,9 @@ def get_db():
             yield session
             if session.new or session.dirty or session.deleted:
                 session.commit()
+        except HTTPException:  # HTTP exception is a normal business
+            session.rollback()
+            raise
         except Exception as e:
             logger.warning(f'Commit failed, rolling back', exc_info=1)
             session.rollback()
@@ -134,6 +142,9 @@ def transaction():
             yield session
             if session.new or session.dirty or session.deleted:
                 session.commit()
+        except HTTPException:  # HTTP exception is a normal business
+            session.rollback()
+            raise
         except Exception as e:
             logger = getLogger(__name__)
             logger.warning(f'Commit failed, rolling back', exc_info=1)

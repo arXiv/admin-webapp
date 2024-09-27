@@ -23,7 +23,7 @@ class SessionCookieMiddleware(BaseHTTPMiddleware):
             tokens, jwt_payload = ArxivUserClaims.unpack_token(token)
             expires_at = datetime.strptime(tokens['expires_at'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
             remain = expires_at - datetime.now(timezone.utc)
-            need_token_refresh = remain.total_seconds() < 60
+            need_token_refresh = remain.total_seconds() < 30
 
             if need_token_refresh and 'refresh' in tokens:
                 cookies = request.cookies
@@ -47,9 +47,9 @@ class SessionCookieMiddleware(BaseHTTPMiddleware):
                             _token_cache[session_cookie] = refreshed_tokens
                             logger.debug("refreshed_tokens: %s", json.dumps(refreshed_tokens))
                         else:
-                            logger.warning("calling /fefresh failed. status = %s", refresh_response.status_code)
+                            logger.warning("calling /refresh failed. status = %s", refresh_response.status_code)
                     except Exception as exc:
-                        logger.warning("calling /fefresh failed.", exc_info=exc)
+                        logger.warning("calling /refresh failed.", exc_info=exc)
                         pass
                 else:
                     logger.debug("refreshed_tokens from cache")

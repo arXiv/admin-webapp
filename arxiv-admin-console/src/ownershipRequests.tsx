@@ -54,7 +54,9 @@ import {
 import { addDays } from 'date-fns';
 import {json} from "node:stream/consumers";
 
-const workflowStatus = [
+type WorkflowStatusType = 'pending' | 'accepted' | 'rejected';
+
+const workflowStatus : {id: WorkflowStatusType, name: string}[]  = [
     { id: 'pending', name: 'Pending' },
     { id: 'accepted', name: 'Accepted' },
     { id: 'rejected', name: 'Rejected' },
@@ -304,8 +306,11 @@ const PaperOwnerList: React.FC = () => {
     );
 };
 
+interface RequestedPaperListProps {
+    workflowStatus: WorkflowStatusType; // Expecting a string prop for workflowStatus
+}
 
-const RequestedPaperList: React.FC = () => {
+const RequestedPaperList: React.FC<RequestedPaperListProps> = ({workflowStatus}) => {
     const record = useRecordContext<{
         id: number,
         document_ids: number[],
@@ -339,15 +344,20 @@ const RequestedPaperList: React.FC = () => {
                     const fake_id = `user_${record.user_id}-doc_${doc.id}`;
                     try {
                         const response = await dataProvider.getOne('paper_owners', { id: fake_id });
-                        return response.data;
+                        const data = {...response.data,
+                            user_id: record.user_id,
+                            document_id: doc.id,
+                        };
+                        console.log("paper-owner: " + data);
+                        return data;
                     } catch (error) {
                         return {
                             id: fake_id,
-                            document_id: doc.document_id,
-                            user_id: doc.user_id,
+                            document_id: doc.id,
+                            user_id: record.user_id,
                             valid: false,
                             flag_author: false,
-                            falg_auto: false
+                            flag_auto: false,
                         };
                     }
                 });
@@ -359,6 +369,16 @@ const RequestedPaperList: React.FC = () => {
             fetchOwnership();
         }
     }, [record, documents, dataProvider]);
+
+    useEffect(() => {
+        if (paperOwners) {
+            if (workflowStatus === "accepted") {
+                const accepted = paperOwners.map( (paperOwner) => ({...paperOwner, flag_author: true}));
+                console.log(accepted);
+                setPaperOwners(accepted);
+            }
+        }
+    }, [workflowStatus]);
 
     if (paperOwners === undefined || documents === undefined) {
         return (<Typography>
@@ -382,7 +402,7 @@ const RequestedPaperList: React.FC = () => {
                     <TableCell>Date</TableCell>
                 </TableHead>
                 {documents.map((document, index) => (
-                    <TableRow>
+                    <TableRow key={document.id}>
                         <TableCell>
                             <RecordContextProvider key={document.id} value={paperOwners[index]} >
                                 <BooleanInput name={`flag_author_doc_${document.id}`} source="flag_author" label=""/>
@@ -412,6 +432,11 @@ const RequestedPaperList: React.FC = () => {
 
 export const OwnershipRequestEdit = () => {
     const dataProvider = useDataProvider();
+    const [workflowStatus, setWorkflowStatus] = useState<'pending' | 'accepted' | 'rejected'>('pending'); // State to hold workflow_status
+
+    const handleWorkflowStatusChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+        setWorkflowStatus(event.target.value as any);
+    };
 
     return (
         <Edit title={<OwnershipRequestTitle />}>
@@ -424,6 +449,7 @@ export const OwnershipRequestEdit = () => {
                         { id: 'pending', name: 'Pending' },
                     ]}
                     label="Workflow Status"
+                    onChange={handleWorkflowStatusChange}
                 />
                 <Card >
                     <CardContent>
@@ -458,7 +484,7 @@ export const OwnershipRequestEdit = () => {
                                 </TableCell>
                             </TableRow>
                         </Table>
-                        <RequestedPaperList />
+                        <RequestedPaperList workflowStatus={workflowStatus} />
                     </CardContent>
                 </Card>
             </SimpleForm>

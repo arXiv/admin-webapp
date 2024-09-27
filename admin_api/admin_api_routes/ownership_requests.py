@@ -3,6 +3,7 @@ import re
 import datetime
 from enum import Enum
 from typing import Optional, Literal, List
+from xml.dom.minidom import Document
 
 from arxiv.auth.user_claims import ArxivUserClaims
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response, Request
@@ -16,7 +17,9 @@ from arxiv.db.models import OwnershipRequest, t_arXiv_ownership_requests_papers,
     TapirUser
 
 from . import is_admin_user, get_db, is_any_user, get_current_user, transaction, datetime_to_epoch, VERY_OLDE
+from .documents import DocumentModel
 from .models import PaperOwnerModel
+from .paper_owners import OwnershipModel
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +75,13 @@ class PaperOwnershipDecisionModel(BaseModel):
     workflow_status: WorkflowStatus # Literal['pending', 'accepted', 'rejected']
     rejected_document_ids: List[int]
     accepted_document_ids: List[int]
+
+
+class OwnershipRequestModel(BaseModel):
+    user_id: Optional[int] = None
+    document_ids: List[int]
+    endorsement_request_id: Optional[int] = None
+    request_date: Optional[datetime.date]
 
 
 def populate_document_ids(data: OwnershipRequestModel, record: OwnershipRequest, session: Session):
@@ -156,7 +166,7 @@ async def update_ownership_request(
         id: int,
         current_user: ArxivUserClaims = Depends(get_current_user),
         session: Session = Depends(transaction)) -> OwnershipRequestModel:
-    """Uptade ownership request.
+    """Update ownership request.
 {'flag_author_docid_NNNNN': True, 'document_ids': [2213327], 'endorsement_request_id': None, 'id': 54819, 'user_id': 499594, 'workflow_status': 'accepted'}
 
     """
@@ -166,6 +176,54 @@ async def update_ownership_request(
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND,)
 
     raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+
+
+
+@router.get("/{id:int}")
+async def get_ownership_request(
+        id: int,
+        session: Session = Depends(get_db),
+    ) ->OwnershipRequestModel:
+    oreq = OwnershipRequestModel.base_query(session).filter(OwnershipRequest.request_id == id).one_or_none()
+    if oreq is None:
+        return Response(status_code=404)
+    return OwnershipRequestModel.from_record(oreq, session)
+    return oreq
+
+
+@router.post('/')
+async def create_ownership_request(
+        request: Request,
+        ownership_request: OwnershipRequestModel,
+        current_user: ArxivUserClaims = Depends(get_current_user),
+        session: Session = Depends(transaction)) -> OwnershipRequestModel:
+    """Create ownership request.
+
+    """
+    documents = DocumentModel.base_select(session).filter(Document.document_id.in_(ownership_request.document_ids)).all()
+
+    if len(documents) != len(ownership_request.document_ids):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+
+    user_id = ownership_request.user_id if ownership_request.user_id else current_user.user_id
+
+    # ownerships = [OwnershipModel.from_orm(paper) for paper in OwnershipModel.base_select(session).filter(PaperOwner.document_id.in_(ownership_request.document_ids)).filter(PaperOwner.user_id == user_id).all()]
+    # ids = [ownerhip.id for ownerhip in ownerships]
+
+    req = OwnershipRequest(
+        user_id = user_id,
+        endorsement_request_id = ownership_request.endorsement_request_id,
+        workflow_status = 'pending',
+        date = ownership_request.request_date,
+        document_ids = ownership_request.document_ids
+    )
+    session.add(req)
+    session.commit()
+    session.refresh(req)
+    just_created = OwnershipRequestModel.base_query(session).filter(req.request_id).one_or_none()
+    return OwnershipRequestModel.from_record(just_created, session)
+
+
 
 
 @router.post('/{request_id:int}/documents/')

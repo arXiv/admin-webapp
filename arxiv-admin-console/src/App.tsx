@@ -1,5 +1,5 @@
 import {Admin, EditGuesser, Resource, ShowGuesser} from 'react-admin';
-import React, {useContext, useEffect, useState} from 'react';
+import React, {ReactNode, useContext, useEffect, useState} from 'react';
 
 import UserIcon from '@mui/icons-material/Group';
 import EmailIcon from '@mui/icons-material/EmailOutlined';
@@ -37,123 +37,163 @@ const RedirectComponent: React.FC<{to: string}> = ({ to }) => {
     return null;
 };
 
+interface PingBackendProps {
+    children: ReactNode;
+}
+
+// Custom component to ping the backend periodically
+const PingBackend: React.FC<PingBackendProps> = ({ children }) => {
+    const runtimeProps = useContext(RuntimeContext);
+    const [serverStatus, setServerStatus] = useState<string | null>(null);
+
+    useEffect(() => {
+        const pingBackend = async () => {
+            try {
+                const response = await fetch(`${runtimeProps.ADMIN_API_BACKEND_URL}/ping`);
+                if (response.ok) {
+                    setServerStatus('Online');
+                } else {
+                    setServerStatus('Offline');
+                }
+            } catch (error) {
+                console.error('Error pinging the backend:', error);
+                setServerStatus('Offline');
+            }
+        };
+
+        // Ping the backend every 10 seconds (10000 milliseconds)
+        const intervalId = setInterval(pingBackend, 120000);
+
+        // Cleanup interval on component unmount
+        return () => clearInterval(intervalId);
+    }, []);
+
+    return (
+        <>
+            {children}
+        </>
+    );
+};
+
 const AdminConsole: React.FC = () => {
     const runtimeProps = useContext(RuntimeContext);
     const dataProvider = new adminApiDataProvider(runtimeProps.ADMIN_API_BACKEND_URL);
     const authProvider = createAuthProvider(runtimeProps);
 
     return (
-    <Admin
-        authProvider={authProvider}
-        dataProvider={dataProvider}
-        dashboard={Dashboard}
+        <PingBackend>
+            <Admin
+                authProvider={authProvider}
+                dataProvider={dataProvider}
+                dashboard={Dashboard}
 
-        loginPage={(<RedirectComponent to={`${runtimeProps.AAA_URL}/login?next=${runtimeProps.ADMIN_APP_ROOT}`}/>)}
-    >
-        <Resource
-            name="users"
-            list={UserList}
-            show={ShowGuesser}
-            icon={UserIcon}
-            recordRepresentation="name"
-            edit={UserEdit}
-            create={UserCreate}
-        />
+                loginPage={(<RedirectComponent to={`${runtimeProps.AAA_URL}/login?next=${runtimeProps.ADMIN_APP_ROOT}`}/>)}
+            >
+                <Resource
+                    name="users"
+                    list={UserList}
+                    show={ShowGuesser}
+                    icon={UserIcon}
+                    recordRepresentation="name"
+                    edit={UserEdit}
+                    create={UserCreate}
+                />
 
-        <Resource
-            name="email_templates"
-            list={TemplateList}
-            show={ShowGuesser}
-            icon={EmailIcon}
-            recordRepresentation="short_name"
-            edit={TemplateEdit}
-            create={TemplateCreate}
-        />
+                <Resource
+                    name="email_templates"
+                    list={TemplateList}
+                    show={ShowGuesser}
+                    icon={EmailIcon}
+                    recordRepresentation="short_name"
+                    edit={TemplateEdit}
+                    create={TemplateCreate}
+                />
 
-        <Resource
-            name="endorsements"
-            list={EndorsementList}
-            show={ShowGuesser}
-            icon={EndorsedEcon}
-            recordRepresentation="name"
-            edit={EndorsementEdit}
-            create={EndorsementCreate}
-        />
+                <Resource
+                    name="endorsements"
+                    list={EndorsementList}
+                    show={ShowGuesser}
+                    icon={EndorsedEcon}
+                    recordRepresentation="name"
+                    edit={EndorsementEdit}
+                    create={EndorsementCreate}
+                />
 
-        <Resource
-            name="endorsement_requests"
-            list={EndorsementRequestList}
-            show={EndorsementRequestShow}
-            icon={RequestIcon}
-            recordRepresentation="name"
-            edit={EndorsementRequestEdit}
-            create={EndorsementRequestCreate}
-        />
+                <Resource
+                    name="endorsement_requests"
+                    list={EndorsementRequestList}
+                    show={EndorsementRequestShow}
+                    icon={RequestIcon}
+                    recordRepresentation="name"
+                    edit={EndorsementRequestEdit}
+                    create={EndorsementRequestCreate}
+                />
 
-        <Resource
-            name="documents"
-            list={DocumentList}
-            show={ShowGuesser}
-            icon={DocumentIcon}
-            recordRepresentation="name"
-            edit={DocumentEdit}
-            create={DocumentCreate}
-        />
+                <Resource
+                    name="documents"
+                    list={DocumentList}
+                    show={ShowGuesser}
+                    icon={DocumentIcon}
+                    recordRepresentation="name"
+                    edit={DocumentEdit}
+                    create={DocumentCreate}
+                />
 
-        <Resource
-            name="categories"
-            list={CategoryList}
-            show={ShowGuesser}
-            icon={CategoryIcon}
-            recordRepresentation="name"
-            edit={CategoryEdit}
-            create={CategoryCreate}
-        />
+                <Resource
+                    name="categories"
+                    list={CategoryList}
+                    show={ShowGuesser}
+                    icon={CategoryIcon}
+                    recordRepresentation="name"
+                    edit={CategoryEdit}
+                    create={CategoryCreate}
+                />
 
-        <Resource
-            name="moderators"
-            list={ModeratorList}
-            show={ShowGuesser}
-            icon={ModeratorIcon}
-            recordRepresentation="archive"
-            edit={ModeratorEdit}
-            create={ModeratorCreate}
-        />
+                <Resource
+                    name="moderators"
+                    list={ModeratorList}
+                    show={ShowGuesser}
+                    icon={ModeratorIcon}
+                    recordRepresentation="archive"
+                    edit={ModeratorEdit}
+                    create={ModeratorCreate}
+                />
 
-        <Resource
-            name="ownership_requests"
-            list={OwnershipRequestList}
-            edit={OwnershipRequestEdit}
-            show={ShowGuesser}
-            icon={OwnershipRequestIcon}
-            recordRepresentation="user_id"
-        />
+                <Resource
+                    name="ownership_requests"
+                    list={OwnershipRequestList}
+                    edit={OwnershipRequestEdit}
+                    show={ShowGuesser}
+                    icon={OwnershipRequestIcon}
+                    recordRepresentation="user_id"
+                />
 
-        <Resource
-            name="submissions"
-            list={SubmissionList}
-            edit={SubmissionEdit}
-            show={ShowGuesser}
-            icon={SubmissionIcon}
-            recordRepresentation="submission_id"
-        />
+                <Resource
+                    name="submissions"
+                    list={SubmissionList}
+                    edit={SubmissionEdit}
+                    show={ShowGuesser}
+                    icon={SubmissionIcon}
+                    recordRepresentation="submission_id"
+                />
 
-        <Resource
-            name="tapir_sessions"
-            list={TapirSessionList}
-            edit={TapirSessionEdit}
-            show={ShowGuesser}
-            icon={TapirSessionIcon}
-            recordRepresentation="submission_id"
-        />
+                <Resource
+                    name="tapir_sessions"
+                    list={TapirSessionList}
+                    edit={TapirSessionEdit}
+                    show={ShowGuesser}
+                    icon={TapirSessionIcon}
+                    recordRepresentation="submission_id"
+                />
 
-        <Resource name="endorsement_requests_audit"/>
-        <Resource name="ownership_requests_audit"/>
-        <Resource name="paper_owners"/>
-        <Resource name="demographics"/>
-        <Resource name="admin_logs"/>
+                <Resource name="endorsement_requests_audit"/>
+                <Resource name="ownership_requests_audit"/>
+                <Resource name="paper_owners"/>
+                <Resource name="demographics"/>
+                <Resource name="admin_logs"/>
 
-    </Admin>
+            </Admin>
+        </PingBackend>
     )
 }
 
