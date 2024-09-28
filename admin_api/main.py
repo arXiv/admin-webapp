@@ -222,8 +222,9 @@ def create_app(*args, **kwargs) -> FastAPI:
                             samesite = refreshed_tokens.get("samesite")
                             response.set_cookie(session_cookie_name, new_session_cookie,
                                                 max_age=max_age, domain=domain, secure=secure, samesite=samesite)
-                            response.set_cookie(classic_cookie_name, new_classic_cookie,
-                                                max_age=max_age, domain=domain, secure=secure, samesite=samesite)
+                            if new_classic_cookie:
+                                response.set_cookie(classic_cookie_name, new_classic_cookie,
+                                                    max_age=max_age, domain=domain, secure=secure, samesite=samesite)
                         else:
                             logger.warning("calling /fefresh failed. status = %s", refresh_response.status_code)
         except Exception as _exc:
