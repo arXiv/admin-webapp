@@ -56,7 +56,6 @@ DemographicModel = sqlalchemy_to_pydantic(Demographic)
 # EndorsementRequestModel = sqlalchemy_to_pydantic(EndorsementRequest)
 EndorsementRequestsAuditModel = sqlalchemy_to_pydantic(EndorsementRequestsAudit)
 
-# OwnershipRequestModel = sqlalchemy_to_pydantic(OwnershipRequest)
 OwnershipRequestsAuditModel = sqlalchemy_to_pydantic(OwnershipRequestsAudit)
 PaperOwnerModel = sqlalchemy_to_pydantic(PaperOwner, id_key="document_id")
 

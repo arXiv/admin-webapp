@@ -3,7 +3,6 @@ import re
 import datetime
 from enum import Enum
 from typing import Optional, Literal, List
-from xml.dom.minidom import Document
 
 from arxiv.auth.user_claims import ArxivUserClaims
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response, Request
@@ -14,12 +13,11 @@ from pydantic import BaseModel
 
 from arxiv.base import logging
 from arxiv.db.models import OwnershipRequest, t_arXiv_ownership_requests_papers, PaperOwner, OwnershipRequestsAudit, \
-    TapirUser
+    TapirUser, Document
 
-from . import is_admin_user, get_db, is_any_user, get_current_user, transaction, datetime_to_epoch, VERY_OLDE
+from . import get_db, is_any_user, get_current_user, transaction, datetime_to_epoch, VERY_OLDE
 from .documents import DocumentModel
-from .models import PaperOwnerModel
-from .paper_owners import OwnershipModel
+
 
 logger = logging.getLogger(__name__)
 
@@ -71,17 +69,17 @@ class OwnershipRequestModel(BaseModel):
         return data
 
 
+class CreateOwnershipRequestModel(BaseModel):
+    user_id: Optional[int] = None
+    endorsement_request_id: Optional[int] = None
+    document_ids: Optional[List[int]] = None
+    remote_addr: Optional[str] = None
+
+
 class PaperOwnershipDecisionModel(BaseModel):
     workflow_status: WorkflowStatus # Literal['pending', 'accepted', 'rejected']
     rejected_document_ids: List[int]
     accepted_document_ids: List[int]
-
-
-class OwnershipRequestModel(BaseModel):
-    user_id: Optional[int] = None
-    document_ids: List[int]
-    endorsement_request_id: Optional[int] = None
-    request_date: Optional[datetime.date]
 
 
 def populate_document_ids(data: OwnershipRequestModel, record: OwnershipRequest, session: Session):
@@ -155,27 +153,8 @@ async def get_ownership_request(
     ) ->OwnershipRequestModel:
     oreq = OwnershipRequestModel.base_query(session).filter(OwnershipRequest.request_id == id).one_or_none()
     if oreq is None:
-        return Response(status_code=404)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return OwnershipRequestModel.from_record(oreq, session)
-    return oreq
-
-
-@router.put('/{id:int}')
-async def update_ownership_request(
-        request: Request,
-        id: int,
-        current_user: ArxivUserClaims = Depends(get_current_user),
-        session: Session = Depends(transaction)) -> OwnershipRequestModel:
-    """Update ownership request.
-{'flag_author_docid_NNNNN': True, 'document_ids': [2213327], 'endorsement_request_id': None, 'id': 54819, 'user_id': 499594, 'workflow_status': 'accepted'}
-
-    """
-    # body = await request.json()
-    row = session.query(OwnershipRequest).filter(OwnershipRequest.request_id == id).one_or_none()
-    if row is None:
-        return HTTPException(status_code=status.HTTP_404_NOT_FOUND,)
-
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
 
 
@@ -184,21 +163,35 @@ async def get_ownership_request(
         id: int,
         session: Session = Depends(get_db),
     ) ->OwnershipRequestModel:
+    # noinspection PyTypeChecker
     oreq = OwnershipRequestModel.base_query(session).filter(OwnershipRequest.request_id == id).one_or_none()
     if oreq is None:
-        return Response(status_code=404)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return OwnershipRequestModel.from_record(oreq, session)
-    return oreq
 
 
 @router.post('/')
 async def create_ownership_request(
         request: Request,
-        ownership_request: OwnershipRequestModel,
+        ownership_request: CreateOwnershipRequestModel,
         current_user: ArxivUserClaims = Depends(get_current_user),
         session: Session = Depends(transaction)) -> OwnershipRequestModel:
     """Create ownership request.
+   $auth->conn->begin();
 
+   $sql="INSERT INTO arXiv_ownership_requests (user_id,workflow_status,endorsement_request_id) VALUES ($auth->user_id,'pending',$_endorsement_request_id)";
+   $auth->conn->query($sql);
+
+   $sql="INSERT INTO arXiv_ownership_requests_audit (request_id,remote_addr,remote_host,session_id,tracking_cookie,date) VALUES (LAST_INSERT_ID(),'$_remote_addr','$_remote_host','$_session_id','$_tracking_cookie',{$auth->timestamp})";
+   $auth->conn->query($sql);
+
+   foreach($documents as $document_id) {
+      $sql="INSERT INTO arXiv_ownership_requests_papers (request_id,document_id) VALUES (LAST_INSERT_ID(),$document_id)";
+      $auth->conn->query($sql);
+   }
+
+   $request_id=$auth->conn->select_scalar("SELECT LAST_INSERT_ID()");
+   $auth->conn->commit();
     """
     documents = DocumentModel.base_select(session).filter(Document.document_id.in_(ownership_request.document_ids)).all()
 
@@ -210,20 +203,44 @@ async def create_ownership_request(
     # ownerships = [OwnershipModel.from_orm(paper) for paper in OwnershipModel.base_select(session).filter(PaperOwner.document_id.in_(ownership_request.document_ids)).filter(PaperOwner.user_id == user_id).all()]
     # ids = [ownerhip.id for ownerhip in ownerships]
 
+    request_date = datetime.date.today()
+    #     request_id: Mapped[intpk]
+    #     user_id: Mapped[int] = mapped_column(ForeignKey('tapir_users.user_id'), nullable=False, index=True, server_default=FetchedValue())
+    #     endorsement_request_id: Mapped[Optional[int]] = mapped_column(ForeignKey('arXiv_endorsement_requests.request_id'), index=True)
+    #     workflow_status: Mapped[Literal['pending', 'accepted', 'rejected']] = mapped_column(Enum('pending', 'accepted', 'rejected'), nullable=False, server_default=FetchedValue())
     req = OwnershipRequest(
         user_id = user_id,
         endorsement_request_id = ownership_request.endorsement_request_id,
-        workflow_status = 'pending',
-        date = ownership_request.request_date,
-        document_ids = ownership_request.document_ids
+        workflow_status = 'pending'
     )
     session.add(req)
-    session.commit()
     session.refresh(req)
     just_created = OwnershipRequestModel.base_query(session).filter(req.request_id).one_or_none()
+
+    #    $sql="INSERT INTO arXiv_ownership_requests_audit (request_id,remote_addr,remote_host,session_id,tracking_cookie,date) VALUES (LAST_INSERT_ID(),'$_remote_addr','$_remote_host','$_session_id','$_tracking_cookie',{$auth->timestamp})";
+
+    audit = OwnershipRequestsAudit(
+        request_id = just_created.request_id,
+        session_id = int(current_user.tapir_session_id),
+        remote_addr = ownership_request.remote_addr,
+        remote_host = "",
+        tracking_cookie = "",
+        date = datetime_to_epoch(request_date)
+    )
+    session.add(audit)
+    session.refresh(audit)
+
+    for doc_id in ownership_request.document_ids:
+        # $sql = "INSERT INTO arXiv_ownership_requests_papers (request_id,document_id) VALUES (LAST_INSERT_ID(),$document_id)";
+        a_o_r_p = t_arXiv_ownership_requests_papers(
+            request_id = just_created.request_id,
+            document_id = doc_id,
+        )
+        session.add(a_o_r_p)
+
+    session.commit()
+
     return OwnershipRequestModel.from_record(just_created, session)
-
-
 
 
 @router.post('/{request_id:int}/documents/')
