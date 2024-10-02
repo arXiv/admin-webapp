@@ -68,7 +68,7 @@ const SubmissionFilter = (props: any) => {
 
     return (
         <Filter {...props}>
-            <TextInput label="Submission ID" source="id" alwaysOn />
+            <NumberInput label="Submission ID" source="id" alwaysOn />
             <SelectInput
                 label="Preset Date Range"
                 source="preset"

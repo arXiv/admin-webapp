@@ -379,34 +379,40 @@ export const EndorsementRequestEdit = () => {
             <Grid container>
                 <Grid item xs={6}>
                     <SimpleForm>
-                        <Grid container>
+                        <Grid container item xs={12}>
                             <Grid item xs={4}>
-                                <BooleanInput name={"Valid"} source={"flag_valid"} label={"Valid"} />
+                                <BooleanInput name={"flag-Valid"} source={"flag_valid"} label={"Valid"} />
                             </Grid>
                             <Grid item xs={4}>
-                                <BooleanInput name={"Valid"} source={"flag_open"} label={"Open"} />
+                                <BooleanInput name={"flag-Open"} source={"flag_open"} label={"Open"} />
                             </Grid>
                         </Grid>
-                        <span>ID: <TextField source="id" />  Category:
-                            <CategoryField sourceCategory={"archive"} sourceClass={"subject_class"} source={"id"} label={"Category"}/>
-                        </span>
-                        <span>Endorsee:
-                        <ReferenceField source="endorsee_id" reference="users"
-                                        link={(record, reference) => `/${reference}/${record.id}`} >
-                            <TextField source={"last_name"} fontStyle={{fontSize: '1rem'}} />
-                            {", "}
-                            <TextField source={"first_name"} fontStyle={{fontSize: '1rem'}} />
-                        </ReferenceField>
-                            </span>
+                        <Grid container item xs={12}>
+                            <Grid item xs={2}>ID:</Grid>
+                            <Grid item xs={4}><TextField source="id" /></Grid>
+                            <Grid item xs={2}>Category:</Grid>
+                            <Grid item xs={4}>
+                                <CategoryField sourceCategory={"archive"} sourceClass={"subject_class"} source={"id"} label={"Category"}/>
+                            </Grid>
+                        </Grid>
+                        <Grid container item xs={12}>
+                            <ReferenceField source="endorsee_id" reference="users"
+                                            link={(record, reference) => `/${reference}/${record.id}`} >
+                                <TextField source={"last_name"} fontStyle={{fontSize: '1rem'}} />
+                                {", "}
+                                <TextField source={"first_name"} fontStyle={{fontSize: '1rem'}} />
+                            </ReferenceField>
+                        </Grid>
 
-                        <ReferenceInput source="endorser_id" reference="users">
-                            <TextField source={"last_name"} fontStyle={{fontSize: '1rem'}} />
-                            <TextField source={"first_name"} fontStyle={{fontSize: '1rem'}} />
-                        </ReferenceInput>
-
-                        <span>
+                        <Grid container item xs={12}>
+                            <ReferenceInput source="endorser_id" reference="users">
+                                <TextField source={"last_name"} fontStyle={{fontSize: '1rem'}} />
+                                <TextField source={"first_name"} fontStyle={{fontSize: '1rem'}} />
+                            </ReferenceInput>
+                        </Grid>
+                        <Grid container item xs={12}>
                             Issued when: <DateField source="issued_when"  label={"Issued"}/>
-                        </span>
+                        </Grid>
                     </SimpleForm>
                     <Grid >
                         <ListEndorsements />

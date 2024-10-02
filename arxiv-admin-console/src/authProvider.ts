@@ -18,7 +18,8 @@ export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => 
     login: (props) => {
         const {refresh} = props;
         console.log("auth: /login " + JSON.stringify(props));
-        if (refresh) {
+        const token = getCookie(runtimeProps.ARXIV_COOKIE_NAME);
+        if (refresh && token) {
             fetch(`${runtimeProps.AAA_URL}/refresh?next_page=`,
                 {
                     method: "GET",
@@ -34,7 +35,7 @@ export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => 
             return Promise.resolve();
         }
         else {
-            window.location.href = `${runtimeProps.AAA_URL}/login`;
+            window.location.href = `${runtimeProps.AAA_URL}/login?next_page=/admin-console/`;
             return Promise.resolve();
         }
     },
@@ -62,29 +63,27 @@ export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => 
     checkError: async ({ status }: { status: number }) => {
         if (status === 401) {
             console.log("auth: checkError - token expired, attempting refresh");
+            const token = getCookie(runtimeProps.ARXIV_COOKIE_NAME);
 
-            try {
-                const refreshResponse = await fetch(`${runtimeProps.AAA_URL}/refresh`, {
-                    method: 'GET',
-                    credentials: 'include',
-                });
+            if (token) {
+                try {
+                    const refreshResponse = await fetch(`${runtimeProps.AAA_URL}/refresh`, {
+                        method: 'GET',
+                        credentials: 'include',
+                    });
 
-                if (refreshResponse.ok) {
-                    console.log("auth: Token refreshed successfully");
-                    // Token refreshed successfully, retry the original request if needed
-                    return Promise.resolve();
-                } else {
-                    // Refresh failed, user must log in again
-                    // console.log("auth: Token refresh failed, logging out");
+                    if (refreshResponse.ok) {
+                        console.log("auth: Token refreshed successfully");
+                        // Token refreshed successfully, retry the original request if needed
+                        return Promise.resolve();
+                    }
+                } catch (error) {
+                    console.error("auth: Error during token refresh", error);
+                    // Handle fetch failure, logout the user
                     // await fetch(`${runtimeProps.AAA_URL}/logout`, { method: 'GET', credentials: 'include' });
-                    return Promise.reject();
                 }
-            } catch (error) {
-                console.error("auth: Error during token refresh", error);
-                // Handle fetch failure, logout the user
-                await fetch(`${runtimeProps.AAA_URL}/logout`, { method: 'GET', credentials: 'include' });
-                return Promise.reject();
             }
+            return Promise.reject();
         }
         else if (status === 403 || status === undefined) {
             console.log("auth: checkError 403");
@@ -98,34 +97,9 @@ export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => 
     // called when the user navigates to a new location, to check for authentication
     checkAuth: async () => {
         const token = getCookie(runtimeProps.ARXIV_COOKIE_NAME);
-        const utc_expire = token?.split(",")[1];
-        if (utc_expire) {
-            const timeLeft = getRemainingTimeInSeconds(utc_expire);
-            if (timeLeft < 60) {
-                const url = `${runtimeProps.AAA_URL}/refresh`;
-                console.log(`${url} refresh token started ` + token?.slice(0,40) )
-                try {
-                    const refreshed = await fetch(url, {
-                        method: 'GET',
-                        credentials: 'include',
-                    });
-                    if (refreshed.status === 200) {
-                        console.log("checkAuth: Token refreshed");
-                        return Promise.resolve();
-                    }
-                    console.log("checkAuth: Token refresh status " + refreshed.status);
-                    return Promise.reject();
-                }
-                catch (error) {
-                    console.log("auth: refresh error: " + error );
-                    return Promise.reject();
-                }
-            }
-            return Promise.resolve();
-        }
         return token ? Promise.resolve() : Promise.reject();
     },
 
     // called when the user navigates to a new location, to check for permissions / roles
-    getPermissions: () => Promise.resolve(),
+    getPermissions: async () => Promise.resolve(),
 });
