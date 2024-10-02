@@ -21,9 +21,15 @@ class SessionCookieMiddleware(BaseHTTPMiddleware):
         refreshed_tokens = None
         if token is not None:
             tokens, jwt_payload = ArxivUserClaims.unpack_token(token)
-            expires_at = datetime.strptime(tokens['expires_at'], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
-            remain = expires_at - datetime.now(timezone.utc)
-            need_token_refresh = remain.total_seconds() < 30
+            expires_at = tokens.get('expires_at')
+            # if there is no expires_at, the token format is too old and needs a new token
+            if expires_at is not None:
+                expires_at_value = datetime.strptime(expires_at, '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
+                remain = expires_at_value - datetime.now(timezone.utc)
+                need_token_refresh = remain.total_seconds() < 30
+            else:
+                need_token_refresh = True
+                pass
 
             if need_token_refresh and 'refresh' in tokens:
                 cookies = request.cookies
