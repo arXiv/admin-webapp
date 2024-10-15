@@ -42,13 +42,13 @@ import LastLoginField from "./bits/LastLoginField";
 
 const UserFilter = (props: any) => (
     <Filter {...props}>
-        <BooleanInput label="Admin" source="flag_edit_users" />
-        <BooleanInput label="Mod" source="flag_is_mod" />
+        <BooleanInput label="Admin" source="flag_edit_users" defaultValue={true} />
+        <BooleanInput label="Mod" source="flag_is_mod"  defaultValue={true} />
         <BooleanInput label="Email verified" source="flag_email_verified" defaultValue={true} />
         <TextInput label="Search by Email" source="email" alwaysOn />
         <TextInput label="Search by First name" source="first_name"/>
         <TextInput label="Search by Last Name" source="last_name"/>
-        <BooleanInput label="Email bouncing" source="email_bouncing" defaultValue={false} />
+        <BooleanInput label="Email bouncing" source="email_bouncing" defaultValue={true} />
         <BooleanInput label="Suspect" source="suspect" defaultValue={true} />
         <BooleanInput label="Non-academit email" source="is_non_academic" defaultValue={true} />
         <DateInput label="Start joined date" source="start_joined_date" />

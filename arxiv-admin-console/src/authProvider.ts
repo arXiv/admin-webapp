@@ -15,29 +15,10 @@ let logoutInProgress = false;
 export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => ({
 
     // called when the user attempts to log in
-    login: (props) => {
-        const {refresh} = props;
-        console.log("auth: /login " + JSON.stringify(props));
-        const token = getCookie(runtimeProps.ARXIV_COOKIE_NAME);
-        if (refresh && token) {
-            fetch(`${runtimeProps.AAA_URL}/refresh?next_page=`,
-                {
-                    method: "GET",
-                    credentials: "include",
-                }
-                ).then(
-                () => {
-                    console.log("login Did it work?");
-                }
-                ).finally(() => {
-                    console.log("login finallly ");
-            });
-            return Promise.resolve();
-        }
-        else {
-            window.location.href = `${runtimeProps.AAA_URL}/login?next_page=/admin-console/`;
-            return Promise.resolve();
-        }
+    login: () => {
+        const currentUrl = window.location.href;
+        window.location.href = `${runtimeProps.AAA_URL}/login?next_page=${encodeURIComponent(currentUrl)}`;
+        return Promise.resolve();
     },
     // called when the user clicks on the logout button
     logout: () => {
@@ -46,7 +27,7 @@ export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => 
             return Promise.resolve();
         }
         logoutInProgress = true;
-        console.log("auth: /logout in progress");
+        console.log("auth: /logout started");
 
         return fetch(`${runtimeProps.AAA_URL}/logout?next_page=/`, {
             method: 'GET',
@@ -62,10 +43,11 @@ export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => 
     // called when the API returns an error
     checkError: async ({ status }: { status: number }) => {
         if (status === 401) {
-            console.log("auth: checkError - token expired, attempting refresh");
+            console.log("auth: checkError - token expired.");
             const token = getCookie(runtimeProps.ARXIV_COOKIE_NAME);
 
             if (token) {
+                console.log("auth: checkError - old token exist, attempt refresh");
                 try {
                     const refreshResponse = await fetch(`${runtimeProps.AAA_URL}/refresh`, {
                         method: 'GET',

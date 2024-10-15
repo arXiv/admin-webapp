@@ -19,7 +19,7 @@ import { Dashboard } from './Dashboard';
 import {createAuthProvider} from './authProvider';
 import adminApiDataProvider from './adminApiDataProvider';
 import {EndorsementCreate, EndorsementEdit, EndorsementList} from "./endorsements";
-import {DocumentCreate, DocumentEdit, DocumentList} from "./documents";
+import {DocumentCreate, DocumentEdit, DocumentList, DocumentShow} from "./documents";
 import {CategoryList, CategoryCreate, CategoryEdit} from "./categories";
 import {ModeratorCreate, ModeratorEdit, ModeratorList} from "./moderators";
 import {OwnershipRequestEdit, OwnershipRequestList} from "./ownershipRequests";
@@ -61,8 +61,8 @@ const PingBackend: React.FC<PingBackendProps> = ({ children }) => {
             }
         };
 
-        // Ping the backend every 10 seconds (10000 milliseconds)
-        const intervalId = setInterval(pingBackend, 120000);
+        // Ping the backend every some seconds
+        const intervalId = setInterval(pingBackend, 1 * 60 * 1000);
 
         // Cleanup interval on component unmount
         return () => clearInterval(intervalId);
@@ -132,7 +132,7 @@ const AdminConsole: React.FC = () => {
                 <Resource
                     name="documents"
                     list={DocumentList}
-                    show={ShowGuesser}
+                    show={DocumentShow}
                     icon={DocumentIcon}
                     recordRepresentation="name"
                     edit={DocumentEdit}
