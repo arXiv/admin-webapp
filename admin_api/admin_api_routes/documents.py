@@ -56,6 +56,7 @@ async def list_documents(
         preset: Optional[str] = Query(None),
         start_date: Optional[date] = Query(None, description="Start date for filtering"),
         end_date: Optional[date] = Query(None, description="End date for filtering"),
+        paper_id: Optional[str] = Query(None, description="arXiv ID"),
         db: Session = Depends(get_db)
     ) -> List[DocumentModel]:
     query = DocumentModel.base_select(db)
@@ -64,8 +65,12 @@ async def list_documents(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Invalid start or end index")
     if id is None:
-        t0 = datetime.now()
 
+        if paper_id is not None:
+            query = query.filter(Document.paper_id.like(paper_id + "%"))
+            pass
+
+        t0 = datetime.now()
         order_columns = []
         if _sort:
             keys = _sort.split(",")
@@ -93,7 +98,6 @@ async def list_documents(
                 t_begin = datetime_to_epoch(start_date, VERY_OLDE)
                 t_end = datetime_to_epoch(end_date, date.today(), hour=23, minute=59, second=59)
                 query = query.filter(Document.dated.between(t_begin, t_end))
-
 
         for column in order_columns:
             if _order == "DESC":

@@ -74,6 +74,7 @@ const DocumentFilter = (props: any) => {
 
     return (
         <Filter {...props}>
+            <TextInput label="arXiv ID" source="paper_id" alwaysOn />
             <SelectInput
                 label="Preset Date Range"
                 source="preset"
