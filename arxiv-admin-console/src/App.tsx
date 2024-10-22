@@ -24,7 +24,7 @@ import {CategoryList, CategoryCreate, CategoryEdit} from "./categories";
 import {ModeratorCreate, ModeratorEdit, ModeratorList} from "./moderators";
 import {OwnershipRequestEdit, OwnershipRequestList} from "./ownershipRequests";
 import {RuntimeContext, RuntimeContextProvider} from "./RuntimeContext";
-import {SubmissionCreate, SubmissionEdit, SubmissionList} from "./submissions";
+import {SubmissionCreate, SubmissionEdit, SubmissionList, SubmissionShow} from "./submissions";
 import {TapirSessionEdit, TapirSessionList} from "./tapirSessions";
 
 
@@ -172,7 +172,7 @@ const AdminConsole: React.FC = () => {
                     name="submissions"
                     list={SubmissionList}
                     edit={SubmissionEdit}
-                    show={ShowGuesser}
+                    show={SubmissionShow}
                     icon={SubmissionIcon}
                     recordRepresentation="submission_id"
                 />

@@ -14,7 +14,7 @@ import {
     NumberInput,
     ReferenceField,
     ReferenceInput,
-    SelectInput,
+    SelectInput, Show,
     SimpleForm,
     SimpleList,
     SortPayload,
@@ -306,4 +306,76 @@ export const SubmissionCreate = () => (
     </Create>
 );
 
+/*
+ */
 
+export const SubmissionShow = () => {
+    return (
+        <Show>
+            <Grid container>
+                <Grid container item xs={12}>
+                    <Grid item xs={3}>
+                        <TextField source="id"/>
+                        {" / "}
+                        <TextField source="document_id"/>
+                    </Grid>
+                    <Grid item xs={9}>
+                        <TextField source="title" />
+                    </Grid>
+                </Grid>
+                <Grid container item xs={12}>
+                    <Grid item xs={2}>
+                        Authors:
+                    </Grid>
+                    <Grid item xs={10}>
+                        <TextField source="authors" />
+                    </Grid>
+                </Grid>
+                <Grid container item xs={12}>
+                    <Grid item xs={2}>
+                        Submitter:
+                    </Grid>
+                    <Grid item xs={10}>
+                        <ReferenceField source="submitter_id" reference="users" label={"Submitter"}
+                                        link={(record, reference) => `/${reference}/${record.id}`} >
+                            <TextField source={"last_name"} />
+                            {", "}
+                            <TextField source={"first_name"} />
+                        </ReferenceField>
+                    </Grid>
+                </Grid>
+                <Grid container item xs={12}>
+                    <Grid item xs={2}>
+                        Submission date:
+                    </Grid>
+                    <Grid item xs={3}>
+                        <DateField source="submit_time" />
+                    </Grid>
+                    <Grid item xs={2}>
+                        Release time:
+                    </Grid>
+                    <Grid item xs={3}>
+                        <DateField source="release_time" />
+                    </Grid>
+                </Grid>
+
+                <Grid container item xs={12}>
+                    <Grid item xs={2}>
+                        Comments
+                    </Grid>
+                    <Grid item xs={10}>
+                        <TextField source="comments" />
+                    </Grid>
+                </Grid>
+
+                <Grid container item xs={12}>
+                    <Grid item xs={2}>
+                        Abstract
+                    </Grid>
+                    <Grid item xs={10}>
+                        <TextField source="abstract"  />
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Show>
+    )};

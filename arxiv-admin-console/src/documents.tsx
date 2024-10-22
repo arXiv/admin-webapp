@@ -1,4 +1,4 @@
-import {Card, CardContent, Grid, Typography, useMediaQuery} from '@mui/material';
+import {Card, CardContent, Grid, ToggleButton, Typography, useMediaQuery, Switch, FormControlLabel} from '@mui/material';
 import {
     List,
     SimpleList,
@@ -115,6 +115,8 @@ const ShowArxivPdf = () => {
 }
 
 export const DocumentShow = () => {
+    const [showPdf, setShowPdf] = React.useState(true);
+
     return (
     <Show>
         <Grid container>
@@ -181,7 +183,16 @@ export const DocumentShow = () => {
                 </Grid>
             </Grid>
             <Grid container item xs={12}>
-            <ShowArxivPdf />
+                <FormControlLabel
+                    control={
+                        <Switch checked={showPdf} onChange={() => setShowPdf(!showPdf)} inputProps={{ 'aria-label': 'controlled'}} />
+                    }
+                    label="PDF"/>
+            </Grid>
+            <Grid container item xs={12}>
+                {
+                    showPdf ? <ShowArxivPdf /> : null
+                }
             </Grid>
         </Grid>
     </Show>
