@@ -36,16 +36,18 @@ async def is_admin_user(request: Request) -> bool:
     # temporary - use user claims in base
 
     user = await get_current_user(request)
-    if user and user.is_admin:
-        return True
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    if user:
+        if user.is_admin:
+            return True
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
 async def is_any_user(request: Request) -> bool:
     user = await get_current_user(request)
     if user:
         return True
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
 async def get_session_cookie(request: Request) -> str | None:

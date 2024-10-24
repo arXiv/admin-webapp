@@ -1,6 +1,10 @@
 import json
+import os
 from datetime import datetime, timezone
 
+import asyncio
+
+import httpcore
 import httpx
 from cachetools import TTLCache
 from arxiv.auth.user_claims import ArxivUserClaims
@@ -8,8 +12,12 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from admin_api_routes.authentication import logger
+from admin_api_routes.helpers.user_session import UserSession
 
 _token_cache = TTLCache(maxsize=100, ttl=10)
+
+refresh_timeout = int(os.environ.get('KC_TIMEOUT', '2'))
+refresh_retry = int(os.environ.get('KC_RETRY', '5'))
 
 # Define custom middleware to add a cookie to the response
 class SessionCookieMiddleware(BaseHTTPMiddleware):
@@ -37,26 +45,39 @@ class SessionCookieMiddleware(BaseHTTPMiddleware):
                 refreshed_tokens = _token_cache.get(session_cookie) if session_cookie else None
                 if refreshed_tokens is None:
                     AAA_TOKEN_REFRESH_URL = request.app.extra['AAA_TOKEN_REFRESH_URL']
-                    try:
-                        async with httpx.AsyncClient() as client:
-                            refresh_response = await client.post(
-                                AAA_TOKEN_REFRESH_URL,
-                                json={
-                                    "session": session_cookie,
-                                    "classic": cookies.get(classic_cookie_name),
-                                },
-                                cookies=cookies)
+                    for iter in range(refresh_retry):
+                        try:
+                            async with httpx.AsyncClient() as client:
+                                refresh_response = await client.post(
+                                    AAA_TOKEN_REFRESH_URL,
+                                    json={
+                                        "session": session_cookie,
+                                        "classic": cookies.get(classic_cookie_name),
+                                    },
+                                    cookies=cookies,
+                                    timeout=refresh_timeout,
+                                )
 
-                        if refresh_response.status_code == 200:
-                            # Extract the new token from the response
-                            refreshed_tokens = refresh_response.json()
-                            _token_cache[session_cookie] = refreshed_tokens
-                            logger.debug("refreshed_tokens: %s", json.dumps(refreshed_tokens))
-                        else:
-                            logger.warning("calling /refresh failed. status = %s", refresh_response.status_code)
-                    except Exception as exc:
-                        logger.warning("calling /refresh failed.", exc_info=exc)
-                        pass
+                            if refresh_response.status_code == 200:
+                                # Extract the new token from the response
+                                refreshed_tokens = refresh_response.json()
+                                _token_cache[session_cookie] = refreshed_tokens
+                                logger.debug("refreshed_tokens: %s", json.dumps(refreshed_tokens))
+                                break
+                            elif refresh_response.status_code >= 500 and refresh_response.status_code <= 599:
+                                logger.warning("post to %s status %s. iter=%d", AAA_TOKEN_REFRESH_URL, refresh_response.status_code, iter)
+                                continue
+                            else:
+                                logger.warning("calling /refresh failed. status = %s", refresh_response.status_code)
+                                break
+
+                        except httpcore.ConnectTimeout:
+                            logger.warning("post to %s timed out. iter=%d", AAA_TOKEN_REFRESH_URL, iter)
+                            continue
+
+                        except Exception as exc:
+                            logger.warning("calling /refresh failed.", exc_info=exc)
+                            break
                 else:
                     logger.debug("refreshed_tokens from cache")
 

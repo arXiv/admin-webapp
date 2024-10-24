@@ -36,6 +36,7 @@ from admin_api_routes.tapir_sessions import router as tapir_session_router
 
 from admin_api_routes.frontend import router as frontend_router
 from admin_api_routes.helpers.session_cookie_middleware import SessionCookieMiddleware
+from admin_api_routes.helpers.user_session import UserSession
 
 from arxiv.base.logging import getLogger
 
@@ -113,6 +114,8 @@ class LogMiddleware(BaseHTTPMiddleware):
 
         return response
 
+
+
 def create_app(*args, **kwargs) -> FastAPI:
     setup_logger()
 
@@ -135,6 +138,7 @@ def create_app(*args, **kwargs) -> FastAPI:
         AUTH_SESSION_COOKIE_NAME=AUTH_SESSION_COOKIE_NAME,
         CLASSIC_COOKIE_NAME=CLASSIC_COOKIE_NAME,
         AAA_TOKEN_REFRESH_URL=AAA_TOKEN_REFRESH_URL,
+        user_session=UserSession(),
     )
 
     if ADMIN_APP_URL not in origins:
@@ -227,6 +231,18 @@ def create_app(*args, **kwargs) -> FastAPI:
                                                     max_age=max_age, domain=domain, secure=secure, samesite=samesite)
                         else:
                             logger.warning("calling /fefresh failed. status = %s", refresh_response.status_code)
+                            pass
+                        pass
+                    pass
+                else:
+                    logger.debug("No refresh token")
+                    pass
+                pass
+            else:
+                logger.debug("No token")
+                pass
+            pass
+
         except Exception as _exc:
             logger.debug("ping", exc_info=True)
             pass
@@ -242,22 +258,22 @@ def create_app(*args, **kwargs) -> FastAPI:
                                                        _exc: AccessTokenExpired):
         logger = logging.getLogger(__name__)
         original_url = str(request.url)
-        logger.info('Access token expired %s', original_url)
+        logger.info('Handling access token expired %s', original_url)
         cookie_name = request.app.extra['AUTH_SESSION_COOKIE_NAME']
         classic_cookie_name = request.app.extra['CLASSIC_COOKIE_NAME']
 
         cookies = request.cookies
+        refresh_payload = {
+            "session": cookies.get(cookie_name),
+            "classic": cookies.get(classic_cookie_name),
+        },
         try:
             async with httpx.AsyncClient() as client:
-                refresh_response = await client.post(
-                    AAA_TOKEN_REFRESH_URL,
-                    json={
-                        "session": cookies.get(cookie_name),
-                        "classic": cookies.get(classic_cookie_name),
-                    },
-                    cookies=cookies)
+                refresh_response = await client.post(AAA_TOKEN_REFRESH_URL, json=refresh_payload, cookies=cookies)
 
             if refresh_response.status_code != 200:
+                logger.info('Token refresh returned not OK %s %s',  refresh_response.status_code,
+                            original_url, extra=refresh_payload)
                 return JSONResponse(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     content={"message": "Failed to refresh access token"}
@@ -276,6 +292,7 @@ def create_app(*args, **kwargs) -> FastAPI:
                                 max_age=max_age, domain=domain, secure=secure, samesite=samesite)
             response.set_cookie(classic_cookie_name, new_classic_cookie,
                                 max_age=max_age, domain=domain, secure=secure, samesite=samesite)
+            logger.debug('Token refresh success')
             return response
 
         except Exception as _exc:

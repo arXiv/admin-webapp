@@ -1,4 +1,6 @@
-"""Provides integration for the external user interface."""
+"""Provides integration for the external user interface.
+
+"""
 import urllib.parse
 
 from fastapi import APIRouter, Depends, status, Request
@@ -28,45 +30,6 @@ def login(request: Request) -> Response:
         url = url + "&state=" + urllib.parse.quote(next_page)
     logger.info(f"Login URL: {url}")
     return RedirectResponse(url)
-
-
-@router.get('/callback')
-def oauth2_callback(request: Request) -> Response:
-    """User can log in with username and password, or permanent token."""
-    code = request.query_params.get('code')
-    if code is None:
-        logger.warning("error: %s", repr(request.query_params))
-        request.session.clear()
-        return Response(status_code=status.HTTP_200_OK)
-
-    idp: ArxivOidcIdpClient = request.app.extra["idp"]
-    user_claims: ArxivUserClaims = idp.from_code_to_user_claims(code)
-
-    if user_claims is None:
-        logger.warning("Getting user claim failed. code: %s", repr(code))
-        request.session.clear()
-        return Response(status_code=status.HTTP_401_UNAUTHORIZED)
-
-    session_cookie_key = request.app.extra['AUTH_SESSION_COOKIE_NAME']
-    classic_cookie_key = request.app.extra['CLASSIC_COOKIE_NAME']
-
-    next_page = urllib.parse.unquote(request.query_params.get("state", "/"))  # Default to root if not provided
-    logger.debug("callback success: next page: %s", next_page)
-    response: Response = RedirectResponse(next_page, status_code=status.HTTP_303_SEE_OTHER)
-
-    # NG cookie
-    secret = request.app.extra['JWT_SECRET']
-    token = user_claims.encode_jwt_token(secret)
-    response.set_cookie(session_cookie_key, token, max_age=3600, samesite="lax")
-
-    # legacy cookie
-    try:
-        tapir_cookie = create_tapir_session_from_user_claims(user_claims)
-        response.set_cookie(classic_cookie_key, tapir_cookie, max_age=3600, samesite="lax")
-    except Exception as exc:
-        logger.error("Setting up Tapir session failed.", exc_info=exc)
-        pass
-    return response
 
 
 @router.get('/logout')
