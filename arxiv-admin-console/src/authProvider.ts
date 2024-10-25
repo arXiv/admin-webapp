@@ -10,6 +10,32 @@ function getCookie(name: string): string | null {
     return null;
 }
 
+/*
+
+ */
+const retryFetch = async (url: string, options: RequestInit, retries = 3, backoff = 1000): Promise<Response> => {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const response = await fetch(url, options);
+
+            if (response.ok) {
+                return response;
+            }
+            return Promise.reject(response);
+        } catch (error) {
+            console.warn(`auth: Attempt ${i + 1} failed:`, error);
+
+            if (i < retries - 1) {
+                await new Promise(resolve => setTimeout(resolve, backoff));
+            }
+        }
+    }
+
+    console.error('auth: retries all failed. Bug? oauth2-authenticator dead?');
+    return Promise.reject(new Error('NetworkError: Failed to fetch after multiple attempts.'));
+};
+
+
 let logoutInProgress = false;
 
 export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => ({
@@ -29,7 +55,7 @@ export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => 
         logoutInProgress = true;
         console.log("auth: /logout started");
 
-        return fetch(`${runtimeProps.AAA_URL}/logout?next_page=/`, {
+        return retryFetch(`${runtimeProps.AAA_URL}/logout?next_page=/`, {
             method: 'GET',
             credentials: 'include',
         }).then(() => {
@@ -49,7 +75,7 @@ export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => 
             if (token) {
                 console.log("auth: checkError - old token exist, attempt refresh");
                 try {
-                    const refreshResponse = await fetch(`${runtimeProps.AAA_URL}/refresh`, {
+                    const refreshResponse = await retryFetch(`${runtimeProps.AAA_URL}/refresh`, {
                         method: 'GET',
                         credentials: 'include',
                     });

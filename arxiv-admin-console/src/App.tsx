@@ -11,6 +11,7 @@ import ModeratorIcon from '@mui/icons-material/Policy';
 import OwnershipRequestIcon from '@mui/icons-material/Star';
 import SubmissionIcon from '@mui/icons-material/Draw';
 import TapirSessionIcon from '@mui/icons-material/ConfirmationNumberSharp';
+import MembershipInstitutionIcon from '@mui/icons-material/School';
 
 import {TemplateCreate, TemplateList, TemplateEdit} from './templates';
 import { UserList, UserEdit, UserCreate } from './users';
@@ -26,6 +27,7 @@ import {OwnershipRequestEdit, OwnershipRequestList} from "./ownershipRequests";
 import {RuntimeContext, RuntimeContextProvider} from "./RuntimeContext";
 import {SubmissionCreate, SubmissionEdit, SubmissionList, SubmissionShow} from "./submissions";
 import {TapirSessionEdit, TapirSessionList} from "./tapirSessions";
+import {MembershipInstitutionList} from "./membershipInstitutions";
 
 
 const RedirectComponent: React.FC<{to: string}> = ({ to }) => {
@@ -186,16 +188,37 @@ const AdminConsole: React.FC = () => {
                     recordRepresentation="submission_id"
                 />
 
+                <Resource
+                    name="membership_institutions"
+                    list={MembershipInstitutionList}
+                    edit={EditGuesser}
+                    show={ShowGuesser}
+                    icon={MembershipInstitutionIcon}
+                    recordRepresentation="id"
+                />
+
                 <Resource name="endorsement_requests_audit"/>
                 <Resource name="ownership_requests_audit"/>
                 <Resource name="paper_owners"/>
                 <Resource name="demographics"/>
                 <Resource name="admin_logs"/>
 
+
             </Admin>
         </PingBackend>
     )
 }
+
+/*
+                <Resource
+                    name="membership_institutions"
+                    list={MembershipInstitutionList}
+                    show={ShowGuesser}
+                    icon={MembershipInstitutionIcon}
+                    recordRepresentation="id"
+                />
+
+ */
 
 const App = () => {
     return (
