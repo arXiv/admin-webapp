@@ -6,7 +6,7 @@ import {
     GetListParams,
     RaRecord,
     GetManyParams,
-    GetManyResult
+    GetManyResult, GetOneParams, GetOneResult
 } from 'react-admin';
 import jsonServerProvider from 'ra-data-json-server';
 
@@ -86,7 +86,7 @@ class adminApiDataProvider implements DataProvider {
         return this.dataProvider.getList<T>(addTrailingSlash(resource), params);
     }
 
-    getOne: typeof this.dataProvider.getOne = (resource, params) =>
+    async getOne<T extends RaRecord>(resource: string, params: GetOneParams): Promise<GetOneResult<T>>
     {
         return this.dataProvider.getOne(resource, params);
     }

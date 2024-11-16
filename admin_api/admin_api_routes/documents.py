@@ -3,11 +3,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
 from typing import Optional, List
 from arxiv.base import logging
-from arxiv.db.models import Document
-from sqlalchemy.orm import Session
+from arxiv.db.models import Document, Submission
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, aliased
 from pydantic import BaseModel
 from datetime import datetime, date, timedelta
-from .models import CrossControlModel
+# from .models import CrossControlModel
 import re
 
 from . import is_admin_user, get_db, datetime_to_epoch, VERY_OLDE
@@ -27,11 +28,22 @@ class DocumentModel(BaseModel):
     primary_subject_class: Optional[str]
     created: Optional[datetime]
 
+    last_submission_id: Optional[int]
+
     class Config:
         orm_mode = True
 
     @staticmethod
     def base_select(db: Session):
+        subquery = (
+            select(
+                Submission.document_id,
+                func.max(Submission.submission_id).label("last_submission_id")  # id refers to submission_id
+            )
+            .group_by(Submission.document_id)
+            .subquery()
+        )
+
         return db.query(
             Document.document_id.label("id"),
             Document.paper_id,
@@ -41,8 +53,11 @@ class DocumentModel(BaseModel):
             Document.submitter_id,
             Document.dated,
             Document.primary_subject_class,
-            Document.created)
-
+            Document.created,
+            subquery.c.last_submission_id,
+        ).outerjoin(
+            subquery, Document.document_id == subquery.c.document_id
+        )
 
 
 @router.get('/')
@@ -118,18 +133,18 @@ def get_document(paper_id:str,
                  session: Session = Depends(get_db)) -> DocumentModel:
     """Display a paper."""
     query = DocumentModel.base_select(session).filter(Document.paper_id == paper_id)
-    doc = query.all()
+    doc = query.one_or_none()
     if not doc:
         raise HTTPException(status_code=404, detail="Paper not found")
-    return doc[0]
+    return doc
 
 @router.get("/{id:str}")
 def get_document(id:int,
                  session: Session = Depends(get_db)) -> DocumentModel:
     """Display a paper."""
     query = DocumentModel.base_select(session).filter(Document.document_id == id)
-    doc = query.all()
+    doc = query.one_or_none()
     if not doc:
         raise HTTPException(status_code=404, detail="Paper not found")
-    return doc[0]
+    return doc
 

@@ -121,34 +121,23 @@ export const DocumentShow = () => {
     <Show>
         <Grid container>
             <Grid container item xs={12}>
-                <Grid item xs={3}>
-                    <TextField source="id"/>
-                    {" / "}
+                <Grid item xs={2}>
+                    {" "}
+                </Grid>
+                <Grid item xs={10}>
                     <TextField source="paper_id"/>
-                </Grid>
-                <Grid item xs={9}>
-                    <TextField source="title" />
-                </Grid>
-            </Grid>
-            <Grid container item xs={12}>
-                <Grid item xs={2}>
-                    Authors:
-                </Grid>
-                <Grid item xs={10}>
-                    <TextField source="authors" />
+                    {" / "}
+                    <TextField source="id"/>
+                    {" ("}
+                    <ReferenceField source="last_submission_id" reference="submissions" label={"Submission"}>
+                        <TextField source="id"/>
+                    </ReferenceField>
+                    {")"}
                 </Grid>
             </Grid>
             <Grid container item xs={12}>
                 <Grid item xs={2}>
-                    Email:
-                </Grid>
-                <Grid item xs={10}>
-                    <EmailField source="submitter_email" />
-                </Grid>
-            </Grid>
-            <Grid container item xs={12}>
-                <Grid item xs={2}>
-                    Submitter:
+                    From:
                 </Grid>
                 <Grid item xs={10}>
                     <ReferenceField source="submitter_id" reference="users" label={"Submitter"}
@@ -156,9 +145,22 @@ export const DocumentShow = () => {
                         <TextField source={"last_name"} />
                         {", "}
                         <TextField source={"first_name"} />
+                        {" <"}
+                        <EmailField source={"email"} />
+                        {">"}
                     </ReferenceField>
                 </Grid>
             </Grid>
+
+            <Grid container item xs={12}>
+                <Grid item xs={2}>
+                    Submitter Email:
+                </Grid>
+                <Grid item xs={10}>
+                    <EmailField source="submitter_email" />
+                </Grid>
+            </Grid>
+
             <Grid container item xs={12}>
                 <Grid item xs={2}>
                     Submission date:
@@ -176,12 +178,53 @@ export const DocumentShow = () => {
 
             <Grid container item xs={12}>
                 <Grid item xs={2}>
-                    Cat
+                    Title:
+                </Grid>
+                <Grid item xs={10}>
+                    <TextField source="title" />
+                </Grid>
+            </Grid>
+
+            <Grid container item xs={12}>
+                <Grid item xs={2}>
+                    Authors:
+                </Grid>
+                <Grid item xs={10}>
+                    <TextField source="authors" />
+                </Grid>
+            </Grid>
+
+            <Grid container item xs={12}>
+                <Grid item xs={2}>
+                    Categories:
                 </Grid>
                 <Grid item xs={10}>
                     <TextField source="primary_subject_class" />
                 </Grid>
             </Grid>
+
+            <Grid container item xs={12}>
+                <Grid item xs={2}>
+                    License:
+                </Grid>
+                <Grid item xs={10}>
+                    <ReferenceField source="last_submission_id" reference="submissions" label={"Licence"} link={false}>
+                        <TextField source="license" />
+                    </ReferenceField>
+                </Grid>
+            </Grid>
+
+            <Grid container item xs={12}>
+                <Grid item xs={2}>
+                    Abstract:
+                </Grid>
+                <Grid item xs={10}>
+                    <ReferenceField source="last_submission_id" reference="submissions" label={"Abstract"} link={false}>
+                        <TextField source="abstract" />
+                    </ReferenceField>
+                </Grid>
+            </Grid>
+
             <Grid container item xs={12}>
                 <FormControlLabel
                     control={

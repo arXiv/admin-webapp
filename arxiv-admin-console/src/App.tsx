@@ -203,7 +203,6 @@ const AdminConsole: React.FC = () => {
                 <Resource name="demographics"/>
                 <Resource name="admin_logs"/>
 
-
             </Admin>
         </PingBackend>
     )

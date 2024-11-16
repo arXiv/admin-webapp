@@ -10,6 +10,7 @@ async def foo(refresh_url: str, original_url: str, cookies: dict, cookie, classi
                 "session": cookie,
                 "classic": classic_cookie,
             },
+            timeout=10,
             cookies=cookies)
 
     if refresh_response.status_code != 200:

@@ -373,7 +373,7 @@ export const SubmissionShow = () => {
                         Abstract
                     </Grid>
                     <Grid item xs={10}>
-                        <TextField source="abstract"  />
+                        <TextField source="abstract" />
                     </Grid>
                 </Grid>
             </Grid>

@@ -237,16 +237,16 @@ async def list_submissions(
     return result
 
 
-@router.get("/paper_id/{paper_id:str}")
+@router.get("/paper/{paper_id:str}")
 async def get_submission_by_paper_id(
         paper_id:str,
         session: Session = Depends(get_db)) -> SubmissionModel:
     """Display a paper."""
     query = SubmissionModel.base_select(session).filter(Submission.doc_paper_id == paper_id)
-    doc = query.all()
+    doc = query.one_or_none()
     if not doc:
         raise HTTPException(status_code=404, detail="Paper not found")
-    return doc[0]
+    return doc
 
 @router.get("/{id:int}")
 async def get_submission(
@@ -276,6 +276,18 @@ async def update_submission(
         sub.status = status
 
     return SubmissionModel.from_orm(sub)
+
+@router.get("/document/{document_id:str}")
+async def get_submission_by_document_id(
+        document_id: str,
+        session: Session = Depends(get_db)) -> SubmissionModel:
+    """Display a paper."""
+    query = SubmissionModel.base_select(session).filter(Submission.document_id == document_id)
+    doc = query.one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return doc
+
 
 def is_good():
     return True
