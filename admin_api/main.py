@@ -1,17 +1,20 @@
 import json
 import logging
 import os
+import time
 from datetime import timezone, datetime
-from sys import exc_info
 
 import httpx
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple, Any
+
+import sqlalchemy
+from sqlalchemy.engine import ExecutionContext
+
 from fastapi import FastAPI, Request, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.middleware.sessions import SessionMiddleware
+# from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import Response, RedirectResponse, JSONResponse
-
 
 from arxiv.base.globals import get_application_config
 from arxiv.auth.user_claims import ArxivUserClaims
@@ -124,8 +127,20 @@ def create_app(*args, **kwargs) -> FastAPI:
         CLASSIC_DB_URI = DB_URI,
         LATEXML_DB_URI = None
     )
-    from arxiv.db import init as arxiv_db_init, _classic_engine
+    from arxiv.db import init as arxiv_db_init
     arxiv_db_init(settings)
+    from arxiv.db import _classic_engine
+
+    @sqlalchemy.event.listens_for(_classic_engine, "before_cursor_execute")
+    def before_execute(conn: ExecutionContext, _cursor, _str_statement: str, _effective_parameters: Tuple[Any],
+                       _context, _context_executemany: bool):
+        conn.info["query_start_time"] = time.time()
+
+    @sqlalchemy.event.listens_for(_classic_engine, "after_cursor_execute")
+    def after_execute(conn: ExecutionContext, _cursor, str_statement: str, _effective_parameters: Tuple[Any],
+                      _context, _context_executemany: bool):
+        total_time = time.time() - conn.info["query_start_time"]
+        logging.info(f"Query Time: {total_time:.4f} seconds: {str_statement}")
 
     jwt_secret = get_application_config().get('JWT_SECRET', settings.SECRET_KEY)
 

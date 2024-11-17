@@ -10,12 +10,15 @@ from pydantic import BaseModel
 from datetime import datetime, date, timedelta
 # from .models import CrossControlModel
 import re
+import time
 
 from . import is_admin_user, get_db, datetime_to_epoch, VERY_OLDE
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(dependencies=[Depends(is_admin_user)], prefix="/documents")
+
+yymm_re = re.compile(r"^\d{4}\.")
 
 class DocumentModel(BaseModel):
     id: int # document_id
@@ -35,14 +38,14 @@ class DocumentModel(BaseModel):
 
     @staticmethod
     def base_select(db: Session):
-        subquery = (
-            select(
-                Submission.document_id,
-                func.max(Submission.submission_id).label("last_submission_id")  # id refers to submission_id
-            )
-            .group_by(Submission.document_id)
-            .subquery()
-        )
+        # subquery = (
+        #     select(
+        #         Submission.document_id,
+        #         func.max(Submission.submission_id).label("last_submission_id")  # id refers to submission_id
+        #     )
+        #     .group_by(Submission.document_id)
+        #     .subquery()
+        # )
 
         return db.query(
             Document.document_id.label("id"),
@@ -54,10 +57,51 @@ class DocumentModel(BaseModel):
             Document.dated,
             Document.primary_subject_class,
             Document.created,
-            subquery.c.last_submission_id,
-        ).outerjoin(
-            subquery, Document.document_id == subquery.c.document_id
         )
+
+
+class TimedCache:
+    def __init__(self, expiration_seconds=60):
+        self.cache = {}
+        self.expiration_seconds = expiration_seconds
+
+    def set(self, key, value):
+        self.cache[key] = (value, time.time() + self.expiration_seconds)
+
+    def get(self, key):
+        # Check if the key exists and is not expired
+        if key in self.cache:
+            value, expiry = self.cache[key]
+            if time.time() < expiry:
+                return value
+            else:
+                # Remove expired key
+                del self.cache[key]
+        return None  # Return None if not found or expired
+
+    def __contains__(self, key):
+        return self.get(key) is not None
+
+    def clear(self):
+        self.cache.clear()
+
+last_submission_cache = TimedCache()
+
+def populate_last_submission_id(session: Session, doc: DocumentModel) -> DocumentModel:
+    last_submission_id = last_submission_cache.get(doc.id)
+    if last_submission_id is None:
+        last_submission_id = (
+            session.query(func.max(Submission.submission_id))
+            .filter(Submission.document_id == doc.id)
+            .scalar()
+        )
+        if last_submission_id is None:
+            last_submission_id = 0
+        last_submission_cache.set(doc.id, last_submission_id)
+
+    if last_submission_id != 0:
+        doc.last_submission_id = last_submission_id
+    return doc
 
 
 @router.get('/')
@@ -80,10 +124,6 @@ async def list_documents(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Invalid start or end index")
     if id is None:
-
-        if paper_id is not None:
-            query = query.filter(Document.paper_id.like(paper_id + "%"))
-            pass
 
         t0 = datetime.now()
         order_columns = []
@@ -114,6 +154,15 @@ async def list_documents(
                 t_end = datetime_to_epoch(end_date, date.today(), hour=23, minute=59, second=59)
                 query = query.filter(Document.dated.between(t_begin, t_end))
 
+        if paper_id is not None:
+            if len(paper_id) >= 5 and yymm_re.match(paper_id):
+                least_paper_id = paper_id + "0000.00000"[len(paper_id):]
+                most_paper_id = paper_id + "9999.99999"[len(paper_id):]
+                query = query.filter(Document.paper_id.between(least_paper_id, most_paper_id))
+            else:
+                query = query.filter(Document.paper_id.like(paper_id + "%"))
+            pass
+
         for column in order_columns:
             if _order == "DESC":
                 query = query.order_by(column.desc())
@@ -124,7 +173,7 @@ async def list_documents(
 
     count = query.count()
     response.headers['X-Total-Count'] = str(count)
-    result = [DocumentModel.from_orm(item) for item in query.offset(_start).limit(_end - _start).all()]
+    result: List[DocumentModel] = [populate_last_submission_id(db, DocumentModel.from_orm(item)) for item in query.offset(_start).limit(_end - _start).all()]
     return result
 
 
@@ -146,5 +195,5 @@ def get_document(id:int,
     doc = query.one_or_none()
     if not doc:
         raise HTTPException(status_code=404, detail="Paper not found")
-    return doc
+    return populate_last_submission_id(session, DocumentModel.from_orm(doc))
 

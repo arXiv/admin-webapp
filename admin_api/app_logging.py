@@ -10,3 +10,4 @@ def setup_logger():
     logger = logging.getLogger()
     logger.addHandler(logHandler)
     logger.setLevel(logging.DEBUG)
+    logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)

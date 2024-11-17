@@ -45,6 +45,7 @@ const presetOptions = [
     { id: 'last_1_day', name: 'Last 1 Day' },
     { id: 'last_7_days', name: 'Last 7 Days' },
     { id: 'last_28_days', name: 'Last 28 Days' },
+    { id: 'last_366_days', name: 'Last 366 Days' },
 ];
 
 const calculatePresetDates = (preset: string) => {
@@ -56,6 +57,8 @@ const calculatePresetDates = (preset: string) => {
             return { startDate: addDays(today, -7), endDate: today };
         case 'last_28_days':
             return { startDate: addDays(today, -28), endDate: today };
+        case 'last_366_days':
+            return { startDate: addDays(today, -366), endDate: today };
         default:
             return { startDate: null, endDate: null };
     }
