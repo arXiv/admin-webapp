@@ -115,11 +115,11 @@ export const SubmissionList = () => {
                     <TextField source="id" label="Submission ID"  textAlign="right" />
                     <TextField source="title" />
                     <ReferenceField source="document_id" reference="documents" label={"Document"}
-                                    link={(record, reference) => `/${reference}/${record.id}`} >
+                                    link={(record, reference) => `/${reference}/${record.id}/show`} >
                         <LinkIcon />
                     </ReferenceField>
                     <ReferenceField source="submitter_id" reference="users" label={"Submitter"}
-                                    link={(record, reference) => `/${reference}/${record.id}`} >
+                                    link={(record, reference) => `/${reference}/${record.id}/show`} >
                         <TextField source={"last_name"} />
                         {", "}
                         <TextField source={"first_name"} />

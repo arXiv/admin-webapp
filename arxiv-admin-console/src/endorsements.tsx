@@ -25,6 +25,7 @@ import {
 import { addDays } from 'date-fns';
 
 import React from "react";
+import CategoryField from "./bits/CategoryField";
 /*
     endorser_id: Optional[int] # Mapped[Optional[int]] = mapped_column(ForeignKey('tapir_users.user_id'), index=True)
     endorsee_id: int # Mapped[int] = mapped_column(ForeignKey('tapir_users.user_id'), nullable=False, index=True, server_default=FetchedValue())
@@ -113,9 +114,7 @@ export const EndorsementList = () => {
                         <TextField source={"first_name"} />
                     </ReferenceField>
 
-                    <TextField source="archive" />
-
-                    <TextField source="subject_class" />
+                    <CategoryField sourceCategory="archive" sourceClass="subject_class" source="id" label="Category" />
                     <BooleanField source="flag_valid" label={"Valid"} FalseIcon={null} />
 
                     <TextField source="type" />
