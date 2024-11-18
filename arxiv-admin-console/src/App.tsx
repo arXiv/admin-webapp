@@ -202,6 +202,7 @@ const AdminConsole: React.FC = () => {
                 <Resource name="paper_owners"/>
                 <Resource name="demographics"/>
                 <Resource name="admin_logs"/>
+                <Resource name="submission_categories"/>
 
             </Admin>
         </PingBackend>

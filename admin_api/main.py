@@ -34,6 +34,7 @@ from admin_api_routes.ownership_requests import router as ownership_request_rout
 from admin_api_routes.ownership_requests_audit import router as ownership_request_audit_router
 from admin_api_routes.paper_owners import router as ownership_router
 from admin_api_routes.submissions import router as submission_router, meta_router as submission_meta_router
+from admin_api_routes.submission_categories import router as submission_categories_router
 from admin_api_routes.user import router as user_router
 from admin_api_routes.tapir_sessions import router as tapir_session_router
 from admin_api_routes.member_institutions import router as member_institution_router
@@ -192,6 +193,7 @@ def create_app(*args, **kwargs) -> FastAPI:
     app.include_router(member_institution_router, prefix="/v1")
     app.include_router(frontend_router)
     app.include_router(tapir_session_router, prefix="/v1")
+    app.include_router(submission_categories_router, prefix="/v1")
 
     @app.middleware("http")
     async def apply_response_headers(request: Request, call_next: Callable) -> Response:

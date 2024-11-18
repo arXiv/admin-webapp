@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(dependencies=[Depends(is_admin_user)], prefix="/documents")
 
-yymm_re = re.compile(r"^\d{4}\.")
+yymm_re = re.compile(r"^\d{4}\.\d{0,5}")
 
 class DocumentModel(BaseModel):
     id: int # document_id

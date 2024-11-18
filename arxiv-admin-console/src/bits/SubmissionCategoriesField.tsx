@@ -1,0 +1,83 @@
+import React, { useEffect, useState } from 'react';
+import {useRecordContext, useDataProvider, ReferenceField, RecordContextProvider} from 'react-admin';
+import { Grid, Typography } from '@mui/material';
+import CircularProgress from "@mui/material/CircularProgress";
+import CategoryField from "./CategoryField";
+import PrimaryIcon from '@mui/icons-material/Star';
+import PublishedIcon from '@mui/icons-material/Newspaper';
+
+interface SubmissionCategory {
+    category: string;
+    is_primary: boolean;
+    is_published: boolean | null;
+}
+
+const SubmissionCategoriesField: React.FC = () => {
+    const record = useRecordContext<{ last_submission_id: number }>();
+    const dataProvider = useDataProvider();
+    const [categories, setCategories] = useState<
+        {
+            id: number;
+            categories: SubmissionCategory[];
+        } | null
+    >(null);
+    const [loading, setLoading] = useState<boolean>(true);
+
+    useEffect(() => {
+        if (record?.last_submission_id) {
+            const fetchCategories = async () => {
+                try {
+                    setLoading(true);
+                    // Fetch categories using getOne()
+                    const { data } = await dataProvider.getOne('submission_categories', {
+                        id: record.last_submission_id,
+                    });
+                    console.log("submission categories: " + JSON.stringify(data));
+                    setCategories(data);
+                } catch (error) {
+                    console.error('Error fetching submission categories:', error);
+                    setCategories(null);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            fetchCategories();
+        }
+    }, [record, dataProvider]);
+
+    if (!record) return null;
+
+    if (loading) {
+        return <CircularProgress />;
+    }
+
+    if (!categories || categories.categories.length === 0) {
+        return <Typography>No categories available</Typography>;
+    }
+
+    return (
+        <Grid container>
+            {
+                categories.categories.map((category) => (
+                    <Grid item xs={1} key={category.category}>
+                        <RecordContextProvider value={{
+                            sourceCategory: category.category.split('.')[0] || '',
+                            sourceClass: category.category.split('.')[1] || null
+                        }}>
+                            <CategoryField source={category.category} sourceCategory="sourceCategory" sourceClass="sourceClass" />
+                        </RecordContextProvider>
+                        {
+                            category.is_primary ? <PrimaryIcon sx={{height: "40%"}} /> : null
+                        }
+                        {
+                            category.is_published ? <PublishedIcon sx={{height: "40%"}} /> : null
+                        }
+                    </Grid>
+                ))
+            }
+        </Grid>
+    );
+};
+
+export default SubmissionCategoriesField;
