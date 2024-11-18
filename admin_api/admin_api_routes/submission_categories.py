@@ -11,19 +11,17 @@ from arxiv.base import logging
 from arxiv.db import transaction
 from arxiv.db.models import Submission, Demographic, TapirUser, Category, SubmissionCategory
 
-from . import get_db, is_any_user, get_current_user
+from . import get_db, is_any_user, get_current_user, is_admin_user
 from .categories import CategoryModel
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/submission_categories", dependencies=[Depends(is_any_user)])
-
+router = APIRouter(prefix="/submission_categories", dependencies=[Depends(is_admin_user)])
 
 class SubmissionCategoryModel(BaseModel):
     class Config:
         orm_mode = True
 
-    id: int
     category: str
     is_primary: bool
     is_published: Optional[bool]
@@ -31,25 +29,25 @@ class SubmissionCategoryModel(BaseModel):
     @staticmethod
     def base_select(db: Session):
         return db.query(
-            SubmissionCategory.submission_id.label("id"),
             SubmissionCategory.category,
             SubmissionCategory.is_primary,
             SubmissionCategory.is_published
         )
+
+
+class SubmissionCategoryResultModel(BaseModel):
+    class Config:
+        orm_mode = True
+
+    id: int
+    categories: List[SubmissionCategoryModel]
+
     pass
 
-
-@router.get('/{id:int}/category/')
+@router.get('/{id:int}')
 async def get_submission_categories(id: int,
-                                  db: Session = Depends(get_db)) -> List[SubmissionCategoryModel]:
-    cats = SubmissionCategoryModel.base_select(db).filter(SubmissionCategory.submission_id == id).all()
-    return [SubmissionCategoryModel.from_orm(item) for item in cats]
-
-@router.get('/{id:int}/category/{category:str}')
-async def get_submission_category(id: int,
-                                  category: str,
-                                  db: Session = Depends(get_db)) -> SubmissionCategoryModel:
-    item = SubmissionCategoryModel.base_select(db).filter(SubmissionCategory.submission_id == id).filter(SubmissionCategory.category == category).one_or_none()
-    if item is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    return SubmissionCategoryModel.from_orm(item)
+                                    db: Session = Depends(get_db)) -> SubmissionCategoryResultModel:
+    cats = SubmissionCategoryModel.base_select(db).filter(SubmissionCategory.submission_id == id).order_by(SubmissionCategory.is_primary.desc()).all()
+    categories = [SubmissionCategoryModel.from_orm(item) for item in cats]
+    result = SubmissionCategoryResultModel(id=id, categories=categories)
+    return result
