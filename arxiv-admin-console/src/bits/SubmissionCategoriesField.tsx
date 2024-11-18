@@ -56,11 +56,16 @@ const SubmissionCategoriesField: React.FC = () => {
         return <Typography>No categories available</Typography>;
     }
 
+    const is_published = categories.categories.some((category) => category.is_published);
+
     return (
         <Grid container>
             {
-                categories.categories.map((category) => (
-                    <Grid item xs={1} key={category.category}>
+                categories.categories.map((category, index) => (
+                    <Grid item key={category.category} >
+                        {
+                            index ? ", " : ""
+                        }
                         <RecordContextProvider value={{
                             sourceCategory: category.category.split('.')[0] || '',
                             sourceClass: category.category.split('.')[1] || null
@@ -68,10 +73,10 @@ const SubmissionCategoriesField: React.FC = () => {
                             <CategoryField source={category.category} sourceCategory="sourceCategory" sourceClass="sourceClass" />
                         </RecordContextProvider>
                         {
-                            category.is_primary ? <PrimaryIcon sx={{height: "40%"}} /> : null
+                            category.is_primary ? <PrimaryIcon sx={{height: "16px"}} /> : ""
                         }
                         {
-                            category.is_published ? <PublishedIcon sx={{height: "40%"}} /> : null
+                            (is_published && index === 0) ? <PublishedIcon sx={{height: "16px"}} /> : ""
                         }
                     </Grid>
                 ))
