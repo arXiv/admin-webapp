@@ -30,6 +30,7 @@ import {TapirSessionEdit, TapirSessionList} from "./tapirSessions";
 import {MembershipInstitutionList} from "./membershipInstitutions";
 import {darkTheme, lightTheme} from "./navTheme";
 
+import { defaultTheme, defaultDarkTheme } from 'react-admin';
 
 const RedirectComponent: React.FC<{to: string}> = ({ to }) => {
     useEffect(() => {

@@ -3,17 +3,12 @@ import { defaultTheme, defaultDarkTheme } from 'react-admin';
 
 const lightTheme = createTheme({
     ...defaultTheme,
-    palette: {
-        ...defaultTheme.palette,
-        primary: {
-            main: '#1010A0',
-        },
-    },
     components: {
+        ...defaultTheme.components,
         MuiAppBar: {
             styleOverrides: {
                 root: {
-                    backgroundColor: '#990000', // Background color for AppBar in light theme
+                    backgroundColor: '#b31b1b', // Background color for AppBar in light theme
                 },
             },
         },
@@ -22,18 +17,12 @@ const lightTheme = createTheme({
 
 const darkTheme = createTheme({
     ...defaultDarkTheme,
-    palette: {
-        ...defaultDarkTheme.palette,
-        mode: 'dark',
-        primary: {
-            main: '#B0B0FF',
-        },
-    },
     components: {
+        ...defaultDarkTheme.components,
         MuiAppBar: {
             styleOverrides: {
                 root: {
-                    backgroundColor: '#990000', // Background color for AppBar in dark theme
+                    backgroundColor: '#b31b1b', // Background color for AppBar in dark theme
                 },
             },
         },
