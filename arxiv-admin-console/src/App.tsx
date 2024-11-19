@@ -28,6 +28,7 @@ import {RuntimeContext, RuntimeContextProvider} from "./RuntimeContext";
 import {SubmissionCreate, SubmissionEdit, SubmissionList, SubmissionShow} from "./submissions";
 import {TapirSessionEdit, TapirSessionList} from "./tapirSessions";
 import {MembershipInstitutionList} from "./membershipInstitutions";
+import {darkTheme, lightTheme} from "./navTheme";
 
 
 const RedirectComponent: React.FC<{to: string}> = ({ to }) => {
@@ -90,6 +91,9 @@ const AdminConsole: React.FC = () => {
                 dashboard={Dashboard}
 
                 loginPage={(<RedirectComponent to={`${runtimeProps.AAA_URL}/login?next=${runtimeProps.ADMIN_APP_ROOT}`}/>)}
+
+                theme={lightTheme}
+                darkTheme={darkTheme}
             >
                 <Resource
                     name="users"
