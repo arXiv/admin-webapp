@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {useRecordContext, useDataProvider, ReferenceField, RecordContextProvider} from 'react-admin';
+import {useRecordContext, useDataProvider, ReferenceField, RecordContextProvider, FieldProps} from 'react-admin';
 import { Grid, Typography } from '@mui/material';
 import CircularProgress from "@mui/material/CircularProgress";
 import CategoryField from "./CategoryField";
@@ -10,6 +10,49 @@ interface SubmissionCategory {
     category: string;
     is_primary: boolean;
     is_published: boolean | null;
+}
+
+interface CategoryListProps {
+    categories: SubmissionCategory[];
+}
+
+export const CategoryList: React.FC<CategoryListProps> = ({categories}) => {
+    const is_published = categories.some((category) => category.is_published);
+
+    return (
+        <Grid container>
+            {
+                categories.map((category, index) => (
+                    <Grid item key={category.category} >
+                        {
+                            index ? ", " : ""
+                        }
+                        <RecordContextProvider value={{
+                            sourceCategory: category.category.split('.')[0] || '',
+                            sourceClass: category.category.split('.')[1] || null
+                        }}>
+                            <CategoryField source={category.category} sourceCategory="sourceCategory" sourceClass="sourceClass" />
+                        </RecordContextProvider>
+                        {
+                            category.is_primary ? <PrimaryIcon sx={{height: "16px"}} /> : ""
+                        }
+                        {
+                            (is_published && index === 0) ? <PublishedIcon sx={{height: "16px"}} /> : ""
+                        }
+                    </Grid>
+                ))
+            }
+        </Grid>
+    );
+}
+
+export const CategoriesField: React.FC<FieldProps> = ({source}) => {
+    const record = useRecordContext();
+
+    if (!record || !source || !record[source]) return null;
+    return (
+        <CategoryList categories={record[source]} />
+    );
 }
 
 const SubmissionCategoriesField: React.FC = () => {
@@ -56,31 +99,9 @@ const SubmissionCategoriesField: React.FC = () => {
         return <Typography>No categories available</Typography>;
     }
 
-    const is_published = categories.categories.some((category) => category.is_published);
-
     return (
         <Grid container>
-            {
-                categories.categories.map((category, index) => (
-                    <Grid item key={category.category} >
-                        {
-                            index ? ", " : ""
-                        }
-                        <RecordContextProvider value={{
-                            sourceCategory: category.category.split('.')[0] || '',
-                            sourceClass: category.category.split('.')[1] || null
-                        }}>
-                            <CategoryField source={category.category} sourceCategory="sourceCategory" sourceClass="sourceClass" />
-                        </RecordContextProvider>
-                        {
-                            category.is_primary ? <PrimaryIcon sx={{height: "16px"}} /> : ""
-                        }
-                        {
-                            (is_published && index === 0) ? <PublishedIcon sx={{height: "16px"}} /> : ""
-                        }
-                    </Grid>
-                ))
-            }
+            <CategoryList categories={categories.categories} />
         </Grid>
     );
 };

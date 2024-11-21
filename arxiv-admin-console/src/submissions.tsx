@@ -14,7 +14,9 @@ import {
     NumberInput,
     ReferenceField,
     ReferenceInput,
-    SelectInput, Show,
+    SelectInput,
+    SelectArrayInput,
+    Show,
     SimpleForm,
     SimpleList,
     SortPayload,
@@ -34,6 +36,8 @@ import React, {useState} from "react";
 import SubmissionStateField, {submissionStatusOptions} from "./bits/SubmissionStateField";
 import {AdminLogs} from "./AdminLogs";
 import CategoryInputField from "./bits/CategoryInputField";
+import SubmissionCategoriesField, {CategoriesField, CategoryList} from "./bits/SubmissionCategoriesField";
+import IsOkField from "./bits/IsOkField";
 
 const presetOptions = [
     { id: 'last_1_day', name: 'Last 1 Day' },
@@ -61,31 +65,28 @@ const SubmissionFilter = (props: any) => {
         const { startDate, endDate } = calculatePresetDates(event.target.value);
         setFilters({
             ...filterValues,
-            startDate: startDate ? startDate.toISOString().split('T')[0] : '',
-            endDate: endDate ? endDate.toISOString().split('T')[0] : '',
         });
     };
 
     return (
         <Filter {...props}>
             <NumberInput label="Submission ID" source="id" alwaysOn />
-            <SelectInput
-                label="Preset Date Range"
-                source="preset"
-                choices={presetOptions}
-                onChange={(event) => handlePresetChange(event as React.ChangeEvent<HTMLSelectElement>)}
-                alwaysOn
-            />
-            <DateInput label="Start Date" source="start_date" />
-            <DateInput label="End Date" source="end_date" />
-            <BooleanInput label="Valid" source="flag_valid" />
-
-            <SelectInput
+            <SelectArrayInput
                 label="Status"
                 source="submission_status"
                 choices={submissionStatusOptions}
                 alwaysOn
             />
+            <DateInput label="Start Date" source="start_date" />
+            <DateInput label="End Date" source="end_date" />
+            <SelectInput
+                label="Preset Date Range"
+                source="preset"
+                choices={presetOptions}
+                onChange={(event) => handlePresetChange(event as React.ChangeEvent<HTMLSelectElement>)}
+            />
+            <BooleanInput label="Valid" source="flag_valid" />
+
         </Filter>
     );
 };
@@ -113,19 +114,20 @@ export const SubmissionList = () => {
             ) : (
                 <Datagrid rowClick="edit" sort={sorter}>
                     <TextField source="id" label="Submission ID"  textAlign="right" />
-                    <TextField source="title" />
-                    <ReferenceField source="document_id" reference="documents" label={"Document"}
-                                    link={(record, reference) => `/${reference}/${record.id}/show`} >
-                        <LinkIcon />
-                    </ReferenceField>
+                    <CategoriesField source="submission_categories" />
                     <ReferenceField source="submitter_id" reference="users" label={"Submitter"}
                                     link={(record, reference) => `/${reference}/${record.id}/show`} >
                         <TextField source={"last_name"} />
                         {", "}
                         <TextField source={"first_name"} />
                     </ReferenceField>
-                    <DateField source="submit_time" label={"When"}/>
+                    <TextField source="title" />
+                    <ReferenceField source="document_id" reference="documents" label={"Document"}
+                                    link={(record, reference) => `/${reference}/${record.id}/show`} >
+                        <LinkIcon />
+                    </ReferenceField>
                     <SubmissionStateField source="status"/>
+                    <IsOkField source="is_ok" label={"OK?"}/>
                 </Datagrid>
             )}
         </List>

@@ -138,10 +138,10 @@ def create_app(*args, **kwargs) -> FastAPI:
         conn.info["query_start_time"] = time.time()
 
     @sqlalchemy.event.listens_for(_classic_engine, "after_cursor_execute")
-    def after_execute(conn: ExecutionContext, _cursor, str_statement: str, _effective_parameters: Tuple[Any],
+    def after_execute(conn: ExecutionContext, _cursor, str_statement: str, effective_parameters: Tuple[Any],
                       _context, _context_executemany: bool):
         total_time = time.time() - conn.info["query_start_time"]
-        logging.info(f"Query Time: {total_time:.4f} seconds: {str_statement}")
+        logging.info(f"Query Time: {total_time:.4f} seconds: {str_statement} with {effective_parameters!r}")
 
     jwt_secret = get_application_config().get('JWT_SECRET', settings.SECRET_KEY)
 

@@ -196,11 +196,14 @@ async def list_submissions(
     if id is not None:
         query = query.filter(Submission.submission_id.in_(id))
     else:
+        if submission_status is not None:
+            if isinstance(submission_status, list):
+                query = query.filter(Submission.status.in_(submission_status))
+            else:
+                query = query.filter(Submission.status == submission_status)
+
         if stage is not None:
             query = query.filter(Submission.stage.in_(stage))
-
-        if submission_status is not None:
-            query = query.filter(Submission.status == submission_status)
 
         if document_id is not None:
             query = query.filter(Submission.document_id == document_id)
@@ -224,7 +227,6 @@ async def list_submissions(
                 t_end = end_date if end_date else datetime.now()
                 query = query.filter(Submission.submit_time.between(t_begin, t_end))
 
-
     for column in order_columns:
         if _order == "DESC":
             query = query.order_by(column.desc())
@@ -234,6 +236,8 @@ async def list_submissions(
     count = query.count()
     response.headers['X-Total-Count'] = str(count)
     result = [SubmissionModel.from_orm(item) for item in query.offset(_start).limit(_end - _start).all()]
+    for sub in result:
+        sub.submission_categories = [SubmissionCategoryModel.from_orm(cat) for cat in SubmissionCategoryModel.base_select(db).filter(SubmissionCategory.submission_id == sub.id).all()]
     return result
 
 
