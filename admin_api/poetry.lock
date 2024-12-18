@@ -57,13 +57,14 @@ validators = "*"
 wtforms = "*"
 
 [package.extras]
+postgres = ["psycopg2-binary (>=2.9.9)"]
 sphinx = ["sphinx", "sphinx-autodoc-typehints", "sphinxcontrib-websupport"]
 
 [package.source]
 type = "git"
 url = "https://github.com/arXiv/arxiv-base.git"
-reference = "ed2d66194e1fc71adce6b09f7f169c2afee7f780"
-resolved_reference = "ed2d66194e1fc71adce6b09f7f169c2afee7f780"
+reference = "ba1e354e60fa444824cf347f8dce2fc65c4a52fe"
+resolved_reference = "ba1e354e60fa444824cf347f8dce2fc65c4a52fe"
 
 [[package]]
 name = "async-property"
@@ -2732,4 +2733,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "a51d591a0446e79cd8bc180ff2410f363b14e809a0c009f33327aa9849c6e0b5"
+content-hash = "3336651d6c07575b2135ddab515f6b5897adbbd0b8c11e2c452572967c87de26"
