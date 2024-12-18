@@ -104,8 +104,22 @@ export const createAuthProvider = (runtimeProps: RuntimeProps): AuthProvider => 
 
     // called when the user navigates to a new location, to check for authentication
     checkAuth: async () => {
-        const token = getCookie(runtimeProps.ARXIV_COOKIE_NAME);
-        return token ? Promise.resolve() : Promise.reject();
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('access_token');
+        // const token_type = urlParams.get('token_type') || 'Bearer';
+        // If no token, reject the promise
+        const arxiv_token = getCookie(runtimeProps.ARXIV_COOKIE_NAME);
+
+        // If no token, reject the promise
+
+        if (token && arxiv_token) {
+            // Store the token in local storage
+            localStorage.setItem('access_token', token);
+            localStorage.setItem('arxiv_session_token', arxiv_token);
+            return Promise.resolve();
+        }
+
+        return Promise.reject();
     },
 
     // called when the user navigates to a new location, to check for permissions / roles

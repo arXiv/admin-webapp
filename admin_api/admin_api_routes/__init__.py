@@ -57,52 +57,7 @@ async def get_session_cookie(request: Request) -> str | None:
 
 async def get_current_user(request: Request) -> ArxivUserClaims | None:
     logger = getLogger(__name__)
-    session_cookie_key = request.app.extra['AUTH_SESSION_COOKIE_NAME']
-    token = request.cookies.get(session_cookie_key)
-    if not token:
-        logger.debug(f"There is no cookie '{session_cookie_key}'")
-        raise LoginRequired()
-
-    secret = request.app.extra['JWT_SECRET']
-    if not secret:
-        logger.error("The app is misconfigured or no JWT secret has been set")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    tokens, jwt_payload = ArxivUserClaims.unpack_token(token)
-    while True:
-        try:
-            claims = ArxivUserClaims.decode_jwt_payload(tokens, jwt_payload, secret)
-            return claims
-        except jwcrypto.jwt.JWTExpired:
-            if 'refresh' in tokens:
-                # idp: ArxivOidcIdpClient = request.app.extra['idp']
-                #  claims = idp.refresh_access_token(tokens['refresh'])
-                #return claims
-                raise AccessTokenExpired()
-
-            raise LoginRequired()
-
-        except jwt.ExpiredSignatureError:
-            if 'refresh' in tokens:
-                # idp: ArxivOidcIdpClient = request.app.extra['idp']
-                #  claims = idp.refresh_access_token(tokens['refresh'])
-                #return claims
-                raise AccessTokenExpired()
-
-            raise LoginRequired()
-
-
-        except jwcrypto.jwt.JWTInvalidClaimFormat:
-            logger.warning(f"Chowed cookie '{token}'")
-            raise BadCookie()
-
-        except jwt.DecodeError:
-            logger.warning(f"Chowed cookie '{token}'")
-            raise BadCookie()
-
-        except Exception as exc:
-            logger.warning(f"token {token} is wrong?", exc_info=exc)
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return request.state.user_claims
 
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False)

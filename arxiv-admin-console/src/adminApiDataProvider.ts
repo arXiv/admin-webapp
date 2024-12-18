@@ -22,11 +22,21 @@ interface HttpError extends Error {
 }
 
 const retryHttpClient = (url: string, options: fetchUtils.Options = {}) => {
-    return fetchUtils.fetchJson(url, options).catch((error: HttpError) => {
+    const access_token = localStorage.getItem('access_token');
+    const token_type = localStorage.getItem('token_type') || "Bearer";
+
+    const optionsWithToken = {
+        ...options,
+        user: access_token
+            ? { authenticated: true, token: token_type + " " + access_token }
+            : options.user, // Keep original user if no token
+    };
+
+    return fetchUtils.fetchJson(url, optionsWithToken).catch((error: HttpError) => {
         if (error.status === 500 && retryCount < 3) {
             retryCount += 1;
             // Optionally retry the request or handle it gracefully
-            return fetchUtils.fetchJson(url, options);
+            return fetchUtils.fetchJson(url, optionsWithToken);
         } else {
             retryCount = 0;
             throw error;
