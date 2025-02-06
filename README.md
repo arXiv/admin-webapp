@@ -6,6 +6,7 @@ This repo provides a web app for for admin tools, forms, reports and APIs.
 ```bash
 cd admin-webapp
 pip install poetry
+pip install "cython<3.0.0" && pip install --no-build-isolation pyyaml==6.0 # see below
 poetry install  # installs to a venv
 poetry shell    # activates the venv
 LOCALHOST_DEV=1 \
@@ -35,6 +36,14 @@ You should be able to go to a page like  http://localhost:5000/login  or  http:/
 After setting up you should be able to run the tests with
 `pytest`. This will create a sqlite db in a file and use that during
 testing.
+
+# what is the deal with the pyyaml install?
+Pyyaml doesn't seem to build with cython. But some packages require a broken version.
+We used a hack from see https://github.com/yaml/pyyaml/issues/724
+This is only needed if the install of pyyaml gives an error about cython.
+
+Once the packages are more modern this could be removed.
+
 
 # Contributing
 See [CONTRIBUTING](./CONTRIBUTING.md)

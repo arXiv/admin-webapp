@@ -160,7 +160,7 @@ class TestLoginLogoutRoutes(TestCase):
         classic_cookie = cookies[classic_cookie_name]
 
         # Verify that the domain is correct.
-        self.assertEqual(cookie['Domain'], '.arxiv.org', 'Domain is set')
+        self.assertEqual(cookie['Domain'], '.arxiv.org', 'Domain is set')  # if you get .localhost.arxiv.org you probably have env var LOCALHOST_DEV set
         self.assertEqual(classic_cookie['Domain'], '.arxiv.org',
                          'Domain is set')
 
