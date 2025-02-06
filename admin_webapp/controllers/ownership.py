@@ -3,8 +3,6 @@
 from datetime import datetime, timedelta
 import logging
 
-from socket import gethostbyaddr
-
 from flask import Blueprint, request, \
     current_app, Response, abort
 

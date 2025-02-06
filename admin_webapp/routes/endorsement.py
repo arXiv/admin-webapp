@@ -62,11 +62,6 @@ def flip_score(endorsement_req_id:int) -> Response:
     return redirect(url_for('endorsement.request_detail', endorsement_req_id=endorsement_req_id))
 
 
-@blueprint.route('/<int:endorsement_id>', methods=['GET'])
-def detail(endorsement_id: int) -> Response:
-    """Display a single endorsement."""
-    abort(500)
-
 def endorsement_listing(report_type:str, per_page:int, page: int, days_back:int,
                         flagged:bool, not_positive:bool=False):
     """Get data for a list of endorsement requests."""
@@ -84,6 +79,7 @@ def endorsement_listing(report_type:str, per_page:int, page: int, days_back:int,
         count_stmt = count_stmt.filter(Demographics.flag_suspect == 1)
 
     if not_positive:
+        # are joins needed?
         report_stmt = report_stmt.join(Endorsements, EndorsementRequests.request_id == Endorsements.request_id)
         report_stmt = report_stmt.filter(Endorsements.point_value <= 0)
         count_stmt = count_stmt.join(Endorsements, EndorsementRequests.request_id == Endorsements.request_id)
@@ -140,7 +136,7 @@ def negative() -> Response:
     page = args.get('page', default=1, type=int)
     days_back = args.get('days_back', default=7, type=int)
     _check_report_args(per_page, page, days_back, 0)
-    data = endorsement_listing('negative', per_page, page, days_back, False, not_positive=True)
+    data = endorsement_listing('negative', per_page, page, days_back, False, not_positive=1)
     data['title'] = "Negative Endorsement Requests"
     return render_template('endorsement/list.html', **data)
 

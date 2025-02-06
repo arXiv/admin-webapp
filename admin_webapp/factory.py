@@ -2,7 +2,7 @@
 
 import logging
 
-from flask import Flask
+from flask import Flask, current_app
 from flask_s3 import FlaskS3
 from flask_bootstrap import Bootstrap5
 

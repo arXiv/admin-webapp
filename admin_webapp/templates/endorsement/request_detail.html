@@ -35,7 +35,7 @@
       <tr><td>  Has Seen Paper?:</td><td> {{ yn(endo_req.audit.flag_seen_paper ) }}</td></tr>
       <tr><td>  Type:</td><td> {% if endo_req.endorsement %}{{endo_req.endorsement.type}}{% else %}(endorsement missing){% endif %}</td></tr>
       <tr><td>Points:</td><td> {{endo_req.endorsement.point_value}}</td></tr>
-      <tr><td>Endorsement:</td><td> {% if endo_req.endorsement %}<a href='{{url_for('endorsement.detail', endorsement_id=endo_req.endorsement.endorsement_id)}}'>{{endo_req.endorsement.endorsement_id}}</a>{% else %}(endorsement missing){% endif %}</td></tr>
+      <tr><td>Endorsement:</td><td> {% if endo_req.endorsement %}<a href='{{url_for('endorsement.request_detail', endorsement_req_id=endo_req.endorsement.endorsement_id)}}'>{{endo_req.endorsement.endorsement_id}}</a>{% else %}(endorsement missing){% endif %}</td></tr>
     </table>
   </div>
 
