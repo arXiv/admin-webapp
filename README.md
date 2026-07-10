@@ -1,3 +1,7 @@
+# This app has been archived and is not a part of the production system. 
+No updates should be expected or forthcoming.
+[Jake: 2026-07-10]
+
 # admin-webapp
 
 This repo provides a web app for for admin tools, forms, reports and APIs.
